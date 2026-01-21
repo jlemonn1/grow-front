@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
-import { DataTable, type ColumnDef } from '@/components/common/DataTable';
+import { type ColumnDef } from '@/components/common/DataTable';
 import { CardList } from '@/components/common/CardList';
 import { SaleHistoryCard } from '@/components/common/SaleHistoryCard';
 import { Tabs, type Tab } from '@/components/common/Tabs';
@@ -197,7 +197,7 @@ export function CustomerDetailPage() {
     {
       header: 'Acciones',
       accessor: 'id',
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <Link
           to={`/sales/${row.id}`}
           className="sale-link"

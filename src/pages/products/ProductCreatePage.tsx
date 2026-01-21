@@ -346,7 +346,7 @@ export function ProductCreatePage() {
     setShowUnsavedChangesModal(false);
 
     try {
-      const product = await createProduct({
+      await createProduct({
         name: formData.name.trim(),
         categoryId: formData.categoryId,
         pricePerGram: formData.pricePerGram,

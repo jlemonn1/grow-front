@@ -276,13 +276,16 @@ export function generateColorPalette(baseColor: string): ColorPalette {
   // Generar colores neon
   const neonColors = generateNeonGlow(baseColor);
   
+  const neutralColors = generateNeutralColors(baseColor);
+  
   return {
     primary: baseColor,
     primaryLight: lightenColor(baseColor, 30),
     primaryDark: darkenColor(baseColor, 20),
     primaryAlpha: baseColor + '80', // 50% opacity en hex
     complement: getComplementaryColor(baseColor),
-    ...generateNeutralColors(baseColor),
+    neutralLight: neutralColors.light,
+    neutralDark: neutralColors.dark,
     // Colores neon intensificados
     neonPrimary: neonColors.neon,
     neonGlow: neonColors.glow,

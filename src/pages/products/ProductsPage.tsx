@@ -105,7 +105,7 @@ export function ProductsPage() {
     {
       header: 'Acciones',
       accessor: 'id',
-      cell: (value, row) => (
+      cell: (_value, row) => (
         <Button
           variant="danger"
           onClick={(e) => handleDeleteClick(e, row)}

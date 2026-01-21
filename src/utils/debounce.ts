@@ -28,7 +28,6 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
   wait: number
 ): (...args: Parameters<T>) => Promise<ReturnType<T>> {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  let lastPromise: Promise<ReturnType<T>> | null = null;
 
   return function debounced(...args: Parameters<T>): Promise<ReturnType<T>> {
     return new Promise((resolve, reject) => {
@@ -39,10 +38,8 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
       timeoutId = setTimeout(async () => {
         try {
           const result = await func(...args);
-          lastPromise = Promise.resolve(result);
           resolve(result);
         } catch (error) {
-          lastPromise = null;
           reject(error);
         }
       }, wait);

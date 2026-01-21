@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useConfig } from '@/context/config.context';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { SaleItemsTable } from '@/components/sale/SaleItemsTable';

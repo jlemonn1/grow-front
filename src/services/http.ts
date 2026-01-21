@@ -1,4 +1,4 @@
-import type { ApiError, ApiResponse, ValidationError } from '@/types/api';
+import type { ApiError, ValidationError } from '@/types/api';
 
 // Obtener la URL base de la API desde variables de entorno
 // En desarrollo: VITE_API_URL o por defecto localhost:8080

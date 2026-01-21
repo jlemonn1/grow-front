@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiFilter } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
-import { DataTable, type ColumnDef } from '@/components/common/DataTable';
+import { type ColumnDef } from '@/components/common/DataTable';
 import { CardList } from '@/components/common/CardList';
 import { SaleCard } from '@/components/common/SaleCard';
 import { DateRangePicker, type DateRange } from '@/components/common/DateRangePicker';

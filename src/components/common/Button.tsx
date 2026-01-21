@@ -3,12 +3,14 @@ import './Button.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'small' | 'medium' | 'large';
   loading?: boolean;
   children: ReactNode;
 }
 
 export function Button({
   variant = 'primary',
+  size = 'medium',
   loading = false,
   disabled,
   children,
@@ -17,7 +19,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`btn btn-${variant} ${loading ? 'btn-loading' : ''} ${className}`}
+      className={`btn btn-${variant} btn-${size} ${loading ? 'btn-loading' : ''} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

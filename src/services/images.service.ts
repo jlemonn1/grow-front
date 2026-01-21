@@ -1,5 +1,3 @@
-import { post } from './http';
-
 export interface ImageUploadResponse {
   filename: string;
   url: string;
