@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { configService, type GrowConfiguration, type UpdateGrowConfigurationRequest } from '@/services/config.service';
-import { generateColorPalette, applyColorSystem, type ColorPalette } from '@/utils/colorSystem';
+import { generateColorPalette, applyColorSystem } from '@/utils/colorSystem';
 
 interface ConfigContextValue {
   config: GrowConfiguration | null;

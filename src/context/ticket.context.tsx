@@ -22,17 +22,6 @@ interface TicketContextValue {
 const TicketContext = createContext<TicketContextValue | undefined>(undefined);
 const TICKET_STORAGE_KEY = 'growshop_ticket';
 
-interface StoredTicket {
-  customer: Customer | null;
-  items: Array<{
-    productId: string;
-    grams: number;
-    pricePerGram: number;
-    subtotal: number;
-  }>;
-  cashGiven: number;
-}
-
 interface TicketProviderProps {
   children: ReactNode;
 }

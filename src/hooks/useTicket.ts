@@ -80,14 +80,21 @@ export function useTicket() {
    */
   const addProductToTicket = useCallback(async (product: Product, grams: number) => {
     // Obtener producto actualizado si no está en cache
-    let currentProduct = products.find(p => p.id === product.id);
+    let currentProduct: Product | undefined = products.find(p => p.id === product.id);
     if (!currentProduct) {
       try {
-        currentProduct = await getProductById(product.id);
+        const fetchedProduct = await getProductById(product.id);
+        currentProduct = fetchedProduct ?? undefined;
       } catch {
         // Si falla, usar el producto pasado
         currentProduct = product;
       }
+    }
+
+    // Si aún no tenemos producto, no podemos continuar
+    if (!currentProduct) {
+      console.error('No se pudo obtener el producto para agregar al ticket');
+      return;
     }
 
     // Obtener el índice antes de agregar (será el índice del nuevo item)
@@ -106,7 +113,7 @@ export function useTicket() {
     // Validar inmediatamente usando el stock calculado antes de agregar
     // El índice es correcto porque sabemos que el nuevo item estará en newItemIndex
     ticket.validateItem(newItemIndex, availableStockBeforeAdd);
-  }, [ticket, products, getProductById, getProductStock]);
+  }, [ticket, products, getProductById, computeAvailableStock]);
 
   /**
    * Actualiza gramos de un item y valida
@@ -158,7 +165,7 @@ export function useTicket() {
       // Intentar cargar productos faltantes
       itemsWithoutProduct.forEach(async (item) => {
         try {
-          const product = await getProductById(item.productId);
+          await getProductById(item.productId);
           // Actualizar el item con el producto cargado
           // Esto se hace a través del contexto, pero necesitamos una forma de actualizar
           // Por ahora, la validación se encargará de mostrar errores si el producto no existe

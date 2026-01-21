@@ -29,8 +29,7 @@ export function TicketItemsList({
     return (
       <div className="ticket-items-list-empty">
         <EmptyState
-          message="No hay productos en el ticket"
-          description="Agrega productos usando el selector de productos"
+          message="No hay productos en el ticket. Agrega productos usando el selector de productos"
         />
       </div>
     );

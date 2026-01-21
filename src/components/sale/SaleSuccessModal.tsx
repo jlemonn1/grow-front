@@ -17,7 +17,7 @@ export function SaleSuccessModal({ isOpen, sale, onClose, onNewSale }: SaleSucce
   const { config } = useConfig();
   const showCashDetails = config?.showCashDetails ?? true;
   const [showAnimation, setShowAnimation] = useState(false);
-  const [autoCloseTimer, setAutoCloseTimer] = useState<NodeJS.Timeout | null>(null);
+  const [autoCloseTimer, setAutoCloseTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOpen && sale) {
