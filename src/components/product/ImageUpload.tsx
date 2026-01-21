@@ -149,14 +149,14 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
             )}
             {uploading && (
               <div className="image-upload-overlay">
-                <Spinner size="small" />
+                <Spinner size="sm" />
               </div>
             )}
           </div>
         ) : (
           <div className={`image-upload-placeholder ${dragOver ? 'image-upload-drag-over' : ''}`}>
             {uploading ? (
-              <Spinner size="small" />
+              <Spinner size="sm" />
             ) : (
               <span>Sin imagen</span>
             )}

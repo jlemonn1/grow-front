@@ -81,7 +81,7 @@ export function TrendChart({ data, loading, comparisonData }: TrendChartProps) {
             stroke={borderColor}
           />
           <Tooltip 
-            formatter={(value: number) => formatMoney(value)}
+            formatter={(value: number | undefined) => value !== undefined ? formatMoney(value) : ''}
             contentStyle={{
               backgroundColor: 'var(--bg-primary)',
               border: '1px solid var(--border-led-color)',

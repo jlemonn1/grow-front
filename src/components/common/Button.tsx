@@ -5,6 +5,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'small' | 'medium' | 'large';
   loading?: boolean;
+  icon?: ReactNode;
   children: ReactNode;
 }
 
@@ -13,6 +14,7 @@ export function Button({
   size = 'medium',
   loading = false,
   disabled,
+  icon,
   children,
   className = '',
   ...props
@@ -24,6 +26,7 @@ export function Button({
       {...props}
     >
       {loading && <span className="btn-spinner" />}
+      {icon && <span className="btn-icon">{icon}</span>}
       <span className={loading ? 'btn-content-loading' : ''}>{children}</span>
     </button>
   );

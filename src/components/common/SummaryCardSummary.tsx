@@ -1,5 +1,4 @@
 import type { SummaryRow } from '@/types/models';
-import { formatMoney } from '@/utils/money';
 import './SummaryCardSummary.css';
 
 interface SummaryCardSummaryProps {

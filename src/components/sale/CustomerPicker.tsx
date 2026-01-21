@@ -150,7 +150,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
               setShowResults(true);
             }
           }}
-          onBlur={(e) => {
+          onBlur={() => {
             // Pequeño delay para permitir que el click en el item se procese primero
             setTimeout(() => {
               // Si hay un cliente seleccionado, mantener su nombre en el input

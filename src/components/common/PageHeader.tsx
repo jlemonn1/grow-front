@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { HiArrowLeft } from 'react-icons/hi';
 import { IconType } from 'react-icons';
 import { Button } from './Button';

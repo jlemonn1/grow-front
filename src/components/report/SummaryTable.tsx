@@ -3,7 +3,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { CardList } from '@/components/common/CardList';
 import { SummaryCard } from '@/components/common/SummaryCard';
-import { DataTable, type ColumnDef } from '@/components/common/DataTable';
+import { type ColumnDef } from '@/components/common/DataTable';
 import type { SummaryRow } from '@/types/models';
 import './SummaryTable.css';
 
@@ -50,7 +50,7 @@ export function SummaryTable({
         data={rows}
         loading={false}
         emptyMessage={emptyMessage}
-        renderCard={(row, isExpanded, onToggleExpand) => (
+        renderCard={(row) => (
           <SummaryCard
             row={row}
             columns={columns}

@@ -30,7 +30,7 @@ export function CardList<T extends Record<string, any>>({
   pagination,
   onPageChange,
   onRowClick,
-  onDelete,
+  onDelete: _onDelete,
   emptyMessage = 'No hay datos disponibles',
   renderCard,
 }: CardListProps<T>) {
