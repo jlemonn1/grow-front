@@ -37,7 +37,6 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     reset,
     getProductStock,
     addProductToTicket,
-    updateItemGrams,
   } = ticket;
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -45,7 +44,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
-  const [loadingTopProducts, setLoadingTopProducts] = useState(false);
+  const [_loadingTopProducts, setLoadingTopProducts] = useState(false);
   const [showAddMore, setShowAddMore] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +103,8 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     // Calcular altura base del modal body
     let totalHeight = modalBody.scrollHeight;
     const bodyRect = modalBody.getBoundingClientRect();
-    const bodyTop = bodyRect.top;
+    // bodyTop calculado pero no usado actualmente - reservado para futuras mejoras
+    // const bodyTop = bodyRect.top;
 
     // Función auxiliar para calcular altura adicional de elementos posicionados absolutamente
     const getAbsoluteElementHeight = (element: HTMLElement): number => {
@@ -170,7 +170,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let rafId: number;
 
     const debouncedUpdate = () => {
@@ -349,11 +349,12 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     setSelectedProduct(product);
     if (product) {
       // Asegurarse de que el producto esté en el contexto antes de obtener el stock
-      let productInContext = products.find(p => p.id === product.id);
+      let productInContext: Product | undefined = products.find(p => p.id === product.id);
       if (!productInContext) {
         try {
           // Si no está en el contexto, obtenerlo para actualizar el cache
-          productInContext = await getProductById(product.id);
+          const fetchedProduct = await getProductById(product.id);
+          productInContext = fetchedProduct ?? undefined;
         } catch (error) {
           console.error('Error al obtener producto:', error);
           // Si falla, usar el producto seleccionado directamente

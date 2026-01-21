@@ -1,5 +1,6 @@
 import { CardList } from '@/components/common/CardList';
 import { SaleItemCard } from '@/components/common/SaleItemCard';
+import { type ColumnDef } from '@/components/common/DataTable';
 import type { SaleItem } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import './SaleItemsTable.css';
@@ -26,17 +27,17 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
     {
       header: 'Gramos',
       accessor: 'grams',
-      cell: (value) => `${value}g`,
+      cell: (value: unknown) => `${value}g`,
     },
     {
       header: 'Precio/gramo',
       accessor: 'pricePerGram',
-      cell: (value) => formatMoney(value as number),
+      cell: (value: unknown) => formatMoney(value as number),
     },
     {
       header: 'Subtotal',
       accessor: 'lineTotal',
-      cell: (value) => formatMoney(value as number),
+      cell: (value: unknown) => formatMoney(value as number),
     },
   ];
 

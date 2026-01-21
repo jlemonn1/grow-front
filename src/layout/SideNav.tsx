@@ -108,7 +108,6 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
                 `side-nav-link ${isActive ? 'side-nav-link-active' : ''}`
               }
               onClick={handleNavClick}
-              aria-current={({ isActive }) => isActive ? 'page' : undefined}
             >
               <span className="side-nav-icon" aria-hidden="true">{item.icon}</span>
               <span className="side-nav-label">{item.label}</span>

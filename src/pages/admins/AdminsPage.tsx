@@ -104,7 +104,7 @@ export function AdminsPage() {
       <div className="admins-page">
         <PageHeader title="Administradores" />
         <div className="admins-loading">
-          <Spinner size="large" />
+          <Spinner size="lg" />
         </div>
       </div>
     );
