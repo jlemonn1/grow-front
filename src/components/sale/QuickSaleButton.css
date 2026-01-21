@@ -1,0 +1,149 @@
+.quick-sale-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-primary) 0%, var(--border-led-color) 100%);
+  color: var(--text-inverse);
+  border: var(--border-led-width) solid var(--border-led-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-neon-lg), 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  overflow: hidden;
+  animation: buttonPulse 3s ease-in-out infinite;
+}
+
+.quick-sale-button::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 70%
+  );
+  animation: buttonRotate 4s linear infinite;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.quick-sale-button::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-primary), var(--border-led-color));
+  z-index: -1;
+  opacity: 0.5;
+  filter: blur(8px);
+  animation: buttonGlow 2s ease-in-out infinite;
+}
+
+@keyframes buttonPulse {
+  0%, 100% {
+    box-shadow: var(--shadow-neon-lg), 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 24px var(--neon-glow-primary), 
+      0 0 48px var(--neon-glow-secondary), 
+      0 0 64px var(--neon-glow-primary),
+      0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes buttonRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes buttonGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.quick-sale-button:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 0 32px var(--neon-glow-primary), 
+    0 0 64px var(--neon-glow-secondary), 
+    0 0 96px var(--neon-glow-primary),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, var(--border-led-color) 0%, var(--neon-primary) 100%);
+}
+
+.quick-sale-button:hover::after {
+  opacity: 0.8;
+  filter: blur(12px);
+}
+
+.quick-sale-button:active {
+  transform: scale(1.05);
+  box-shadow: 
+    0 0 16px var(--neon-glow-primary), 
+    0 0 32px var(--neon-glow-secondary),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quick-sale-button-icon {
+  width: 28px;
+  height: 28px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+  transition: filter var(--transition-glow), transform var(--transition-fast);
+}
+
+.quick-sale-button:hover .quick-sale-button-icon {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 16px var(--neon-glow-primary));
+  transform: rotate(5deg);
+}
+
+@media (max-width: 768px) {
+  .quick-sale-button {
+    width: 56px;
+    height: 56px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .quick-sale-button-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-sale-button {
+    animation: none;
+  }
+  
+  .quick-sale-button::before {
+    animation: none;
+    opacity: 0;
+  }
+  
+  .quick-sale-button::after {
+    animation: none;
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,72 @@
+.sale-history-card-details {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  animation: slideDown var(--transition-base);
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.sale-history-card-details::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--border-led-color) 50%, 
+    transparent 100%);
+  opacity: 0.4;
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.sale-history-card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sale-history-card-link {
+  text-decoration: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+.sale-history-card-action-button {
+  width: 100%;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .sale-history-card-details {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+  }
+
+  .sale-history-card-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .sale-history-card-link {
+    width: 100%;
+    min-width: unset;
+  }
+}

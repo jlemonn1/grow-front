@@ -1,0 +1,148 @@
+.customer-card-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.customer-card-main-info {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.customer-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.customer-card-name {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+
+.customer-card-pin-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: monospace;
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+  border: 1px solid var(--border-led-color);
+}
+
+.customer-card-notes-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.customer-card-secondary-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.customer-card-phone {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.customer-card-phone-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.customer-card-phone-value {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.customer-card-expand-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--transition-fast), box-shadow var(--transition-glow);
+  flex-shrink: 0;
+}
+
+.customer-card-expand-button:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-led-color);
+  color: var(--neon-primary);
+  box-shadow: 0 0 12px var(--neon-glow-primary);
+}
+
+.customer-card-expand-button:focus-visible {
+  outline: 2px solid var(--border-led-color);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.customer-card-expand-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 640px) {
+  .customer-card-summary {
+    gap: var(--spacing-sm);
+  }
+
+  .customer-card-name {
+    font-size: var(--font-size-base);
+  }
+
+  .customer-card-secondary-info {
+    margin-top: var(--spacing-xs);
+  }
+
+  .customer-card-expand-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+
+  .customer-card-expand-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

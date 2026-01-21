@@ -1,0 +1,160 @@
+.customer-create-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.customer-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.form-field-with-icon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field-with-icon .form-field {
+  position: relative;
+}
+
+.form-field-icon {
+  position: absolute;
+  top: 38px;
+  left: var(--spacing-md);
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+  transition: color var(--transition-fast), filter var(--transition-glow);
+}
+
+.form-field-with-icon:focus-within .form-field-icon {
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 4px var(--neon-glow-primary));
+}
+
+.form-field-with-icon input[type="text"],
+.form-field-with-icon input[type="tel"] {
+  padding-left: calc(var(--spacing-md) + 28px);
+}
+
+.form-field-with-icon textarea {
+  padding-left: calc(var(--spacing-md) + 28px);
+  padding-top: var(--spacing-sm);
+}
+
+.customer-create-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  position: relative;
+  transition: border-color var(--transition-base);
+}
+
+.customer-create-actions::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.5;
+}
+
+.pin-checking {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.pin-suggestions {
+  margin-top: var(--spacing-sm);
+}
+
+.pin-suggestions-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.pin-suggestions-list {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.pin-suggestion-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid var(--border-led-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast), box-shadow var(--transition-glow);
+  box-shadow: var(--shadow-sm);
+}
+
+.pin-suggestion-button:hover {
+  background: var(--neon-primary);
+  color: white;
+  border-color: var(--neon-primary);
+  box-shadow: var(--shadow-neon-md), 0 0 12px var(--neon-glow-primary);
+  transform: translateY(-1px);
+}
+
+.pin-suggestion-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+@media (max-width: 768px) {
+  .customer-create-container {
+    padding: var(--spacing-md);
+  }
+
+  .customer-create-form {
+    gap: var(--spacing-lg);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .customer-create-actions {
+    flex-direction: column-reverse;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+  }
+
+  .customer-create-actions button {
+    width: 100%;
+  }
+}

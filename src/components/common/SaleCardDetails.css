@@ -1,0 +1,120 @@
+.sale-card-details {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  animation: slideDown var(--transition-base);
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.sale-card-details::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--border-led-color) 50%, 
+    transparent 100%);
+  opacity: 0.4;
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.sale-card-detail-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.sale-card-detail-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.sale-card-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.sale-card-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.sale-card-detail-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sale-card-detail-value {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.sale-card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sale-card-link {
+  text-decoration: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+.sale-card-action-button {
+  width: 100%;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .sale-card-details {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+  }
+
+  .sale-card-detail-section {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .sale-card-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .sale-card-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+  }
+
+  .sale-card-link {
+    width: 100%;
+    min-width: unset;
+  }
+}

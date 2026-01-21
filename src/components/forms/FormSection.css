@@ -1,0 +1,116 @@
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  position: relative;
+}
+
+.form-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  transition: border-color var(--transition-fast);
+}
+
+.form-section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    var(--border-led-color) 0%, 
+    var(--neon-primary) 50%, 
+    transparent 100%);
+  box-shadow: 0 0 8px var(--neon-glow-primary),
+              0 0 16px var(--neon-glow-secondary);
+  transition: width var(--transition-base);
+}
+
+.form-section:focus-within .form-section-header::after,
+.form-section:hover .form-section-header::after {
+  width: 100%;
+}
+
+.form-section:focus-within .form-section-header {
+  border-bottom-color: var(--border-led-color);
+}
+
+.form-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  transition: color var(--transition-fast),
+              text-shadow var(--transition-glow);
+}
+
+.form-section:focus-within .form-section-title {
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.form-section-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  line-height: 1.5;
+  transition: color var(--transition-fast);
+}
+
+.form-section:focus-within .form-section-description {
+  color: var(--text-primary);
+}
+
+.form-section-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--color-info);
+  transition: color var(--transition-fast),
+              filter var(--transition-glow);
+}
+
+.form-section:focus-within .form-section-icon {
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 4px var(--neon-glow-primary));
+}
+
+.form-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  transition: gap var(--transition-base);
+}
+
+@media (max-width: 768px) {
+  .form-section-header {
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .form-section-title {
+    font-size: var(--font-size-base);
+  }
+
+  .form-section-content {
+    gap: var(--spacing-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-section-header::after {
+    transition: none;
+  }
+
+  .form-section-title,
+  .form-section-icon {
+    transition: color var(--transition-fast);
+  }
+}

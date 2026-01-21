@@ -1,0 +1,318 @@
+Perfecto 👍 entonces **apagamos el chip técnico** y nos quedamos **solo en UX/UI**.
+Nada de React, hooks ni servicios. Vamos a pensar **pantallas, navegación, flujos mentales y validaciones visuales**.
+
+Voy a ir **de más alto nivel → a detalle**, como haría un diseñador de producto.
+
+---
+
+# 🧠 Modelo mental del usuario (clave UX)
+
+El usuario de esta app:
+
+* Está **trabajando** (no explorando)
+* Quiere **rapidez**, **cero errores**, **poca lectura**
+* Flujo principal del día a día:
+
+  1. Llegar
+  2. Dispensar (venta)
+  3. Ver stock
+  4. Recargar cuando falta
+
+👉 **La app gira alrededor de “Caja / Dispensar”**, todo lo demás acompaña.
+
+---
+
+# 🧭 Navegación principal
+
+### Navegación fija (sidebar o topbar)
+
+Orden **por frecuencia de uso**, no por entidad técnica:
+
+1. **Caja**
+2. **Productos**
+3. **Clientes**
+4. **Reportes**
+
+> Nada más.
+> No “categorías” sueltas, no “stock” separado: todo vive dentro de producto.
+
+---
+
+# 🗂️ Mapa de pantallas (alto nivel)
+
+```text
+Caja (home)
+├─ Ticket activo
+│  ├─ Añadir producto
+│  ├─ Calcular total
+│  └─ Cobrar
+│
+Productos
+├─ Listado
+│  ├─ Detalle producto
+│  │  ├─ Historial
+│  │  └─ Recargar
+│  └─ Crear producto
+│
+Clientes
+├─ Listado
+│  ├─ Perfil cliente
+│  └─ Crear cliente
+│
+Reportes
+└─ Resúmenes
+```
+
+---
+
+# 🧾 PANTALLA 1 — **Caja / Dispensar** (la más importante)
+
+### Objetivo UX
+
+👉 Hacer una venta **sin pensar**, sin errores, rápido.
+
+---
+
+## Layout (de arriba a abajo)
+
+### 1️⃣ Selección de cliente (SIEMPRE visible arriba)
+
+* Campo grande:
+
+  * 🔍 “Seleccionar cliente…”
+  * Autocompletar
+* Botón `+ Nuevo cliente` (modal)
+
+🔒 **Regla UX**
+Si no hay cliente seleccionado:
+
+* No se puede añadir productos
+* CTA bloqueado visualmente
+
+---
+
+### 2️⃣ Ticket activo (zona central)
+
+Cada línea:
+
+* Producto (select con búsqueda)
+* Stock disponible (texto pequeño)
+* Input gramos
+* Subtotal automático
+* ❌ eliminar línea
+
+👉 Añadir producto = **1 clic + escribir gramos**
+
+---
+
+### 3️⃣ Resumen (zona derecha o inferior)
+
+* Total grande, muy visible
+* Campo:
+
+  * “Entrega (€)”
+* Cambio:
+
+  * **verde si ≥ 0**
+  * **rojo si falta dinero**
+
+🔒 **Regla UX**
+
+* Botón **“Confirmar venta”**:
+
+  * Deshabilitado si:
+
+    * No hay cliente
+    * No hay líneas
+    * Falta dinero
+    * Algún stock supera disponible
+
+---
+
+### 4️⃣ Feedback post-venta
+
+* Pantalla/overlay:
+
+  * ✅ “Venta registrada”
+  * Total + cambio
+* CTA:
+
+  * “Nueva venta” (limpia ticket)
+  * “Ver cliente”
+
+---
+
+## Validaciones visuales (MUY importantes)
+
+* Gramos > stock:
+
+  * Input rojo
+  * Mensaje inline: “Stock insuficiente”
+* Backend dice 409:
+
+  * Refrescar stock
+  * Resaltar línea afectada
+
+---
+
+# 📦 PANTALLA 2 — **Productos / Inventario**
+
+### Objetivo UX
+
+👉 Ver **qué hay**, **cuánto hay**, y **recargar rápido**.
+
+---
+
+## /Productos (listado)
+
+### Tabla simple
+
+* Nombre
+* Categoría
+* €/gr
+* **Stock (gr)** ← muy visible
+* Acciones: `Ver` | `Recargar`
+
+### Detalles UX
+
+* Stock bajo:
+
+  * Color ámbar/rojo
+* Click en fila → detalle
+
+---
+
+## /Productos/:id (detalle)
+
+### Header
+
+* Nombre grande
+* Stock actual destacado
+* Botón **“Recargar stock”**
+
+---
+
+### Tabs
+
+#### 🧩 Tab 1 — Info
+
+* Datos del producto
+* Editar €/gr y descripción
+
+#### 🧩 Tab 2 — Historial
+
+* Timeline vertical:
+
+  * Recarga +X
+  * Venta −X
+* Filtro rápido:
+
+  * [ ] Solo recargas
+
+---
+
+## Recargar stock (modal o página)
+
+* Input gramos (+)
+* Nota opcional
+* CTA: **Añadir stock**
+
+✔ Feedback inmediato:
+
+* “Stock actualizado a XXX g”
+
+---
+
+# 👤 PANTALLA 3 — **Clientes**
+
+### Objetivo UX
+
+👉 Encontrar rápido un cliente y ver qué ha comprado.
+
+---
+
+## /Clientes (listado)
+
+* Nombre
+* Última compra
+* Total gastado (opcional)
+* Acción: Ver
+
+---
+
+## /Clientes/:id (perfil)
+
+### Header
+
+* Nombre grande
+* Total gastado
+
+### Tabs
+
+#### 🧩 Compras
+
+* Lista de tickets
+* Fecha + total
+* Click → detalle
+
+#### 🧩 Resumen
+
+* Tabla:
+
+  * Producto
+  * Total gramos
+  * Total €
+
+---
+
+# 📊 PANTALLA 4 — **Reportes**
+
+### Objetivo UX
+
+👉 Visión general, **sin marear**.
+
+---
+
+## Layout
+
+* Selector rango fechas arriba
+* Cards:
+
+  * 💰 Total vendido
+  * 📦 Stock incorporado
+* Tabla resumen:
+
+  * Por producto
+
+---
+
+# 🧪 Validación global de flujos (UX)
+
+| Flujo               | Cómo se valida visualmente   |
+| ------------------- | ---------------------------- |
+| Crear producto      | Required + feedback al crear |
+| Recargar stock      | Confirmación inmediata       |
+| Dispensar           | Inputs bloqueados + colores  |
+| Cambio              | Verde / rojo                 |
+| Stock insuficiente  | Inline + refresh             |
+| Cliente obligatorio | CTA bloqueado                |
+
+---
+
+# 🎯 Principios UX que estamos siguiendo
+
+* **Una acción principal por pantalla**
+* **Bloquear errores antes de que ocurran**
+* **Feedback inmediato**
+* **Colores como lenguaje**
+* **Menos clicks > más velocidad**
+
+---
+
+Si quieres, siguiente paso natural (aún sin programar):
+
+* 📐 **Wireframes en texto / ASCII**
+* 🧩 **Componentes UI reutilizables**
+* 🎨 **Sistema visual (colores, tamaños, jerarquía)**
+
+Dime cuál y vamos a fondo.

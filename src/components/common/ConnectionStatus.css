@@ -1,0 +1,150 @@
+.connection-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.95) 0%,
+    rgba(251, 191, 36, 0.95) 50%,
+    rgba(245, 158, 11, 0.95) 100%
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-inverse);
+  padding: var(--spacing-sm) var(--spacing-md);
+  z-index: 9999;
+  border-bottom: var(--border-led-width) solid rgba(251, 191, 36, 0.8);
+  box-shadow: 
+    0 0 16px rgba(245, 158, 11, 0.6),
+    0 0 32px rgba(245, 158, 11, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slideDownGlow var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de pulso en el borde LED */
+.connection-status::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--border-led-width);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 191, 36, 1) 20%,
+    rgba(245, 158, 11, 1) 50%,
+    rgba(251, 191, 36, 1) 80%,
+    transparent
+  );
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+
+.connection-status-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.connection-status-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 0 8px rgba(251, 191, 36, 1),
+    0 0 16px rgba(245, 158, 11, 0.8),
+    0 0 24px rgba(245, 158, 11, 0.6);
+  animation: blinkLed 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.connection-status-message {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-shadow: 
+    0 0 8px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.3px;
+}
+
+@keyframes slideDownGlow {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    box-shadow: 
+      0 0 16px rgba(245, 158, 11, 0.6),
+      0 0 32px rgba(245, 158, 11, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes blinkLed {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 
+      0 0 8px rgba(251, 191, 36, 1),
+      0 0 16px rgba(245, 158, 11, 0.8),
+      0 0 24px rgba(245, 158, 11, 0.6);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 
+      0 0 4px rgba(251, 191, 36, 0.6),
+      0 0 8px rgba(245, 158, 11, 0.4),
+      0 0 12px rgba(245, 158, 11, 0.3);
+  }
+}
+
+@keyframes pulseBorder {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 12px rgba(251, 191, 36, 1);
+  }
+}
+
+/* Respetar preferencia de animación reducida */
+@media (prefers-reduced-motion: reduce) {
+  .connection-status {
+    animation: slideDown var(--transition-base);
+  }
+  
+  .connection-status::before {
+    animation: none;
+    opacity: 0.8;
+  }
+  
+  .connection-status-led {
+    animation: none;
+    opacity: 0.9;
+  }
+  
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}

@@ -1,0 +1,187 @@
+Vale. Te dejo los **flujos principales** bien aterrizados para una app simple de growshop que gestiona **mercancía (stock + recargas)** y **dispensaciones (ventas por gramos + cambio)**, con **resúmenes e historial**.
+
+## 1) Flujos de inventario (mercancía)
+
+### 1.1 Crear producto nuevo (alta)
+
+* Entrar a “Nuevo producto”
+* Rellenar: **Nombre, Categoría, €/gr, Descripción**
+* Añadir **stock base inicial (cantidad en gramos)**
+* Guardar
+* Se registra evento en historial: **“Stock inicial”** (fecha, cantidad, nota opcional, responsable)
+
+### 1.2 Editar producto existente
+
+* Buscar/seleccionar producto
+* Cambiar datos (€/gr, descripción, categoría, nombre)
+* Guardar
+* (Opcional) registrar historial de cambios de precio/datos
+
+### 1.3 Recargar stock de un producto (entrada)
+
+* Seleccionar producto
+* “Añadir cantidad”
+* Introducir **+X gramos**
+* (Opcional) añadir nota (lote, proveedor, motivo)
+* Guardar
+* Se registra en historial: **recarga** (fecha, +gramos, responsable, nota)
+
+### 1.4 Ajuste/corrección de stock (inventario real)
+
+* Seleccionar producto
+* “Ajustar stock”
+* Motivo: merma, error, rotura, inventario físico
+* Elegir: **poner stock a N** o **sumar/restar X**
+* Guardar
+* Se registra evento: **ajuste** (con motivo)
+
+### 1.5 Ver ficha de producto + historial de recargas/movimientos
+
+* Ver stock actual, precio €/gr, categoría
+* Ver timeline de eventos: stock inicial, recargas, dispensaciones, ajustes
+
+---
+
+## 2) Flujos de dispensación (venta por gramos)
+
+### 2.1 Dispensar a un usuario (venta)
+
+* Buscar/seleccionar **usuario** (o crear rápido si no existe)
+* Elegir **producto**
+* Introducir **gramos solicitados**
+* Validación: que haya stock suficiente (o permitir “venta parcial” si lo queréis)
+* La app calcula:
+
+  * **importe = gramos × €/gr**
+* Cobro:
+
+  * Introducir **dinero entregado**
+  * Calcular **cambio = entregado − importe**
+* Confirmar venta
+* Se descuenta stock del producto
+* Se registra movimiento:
+
+  * venta (fecha, usuario, producto, gramos, €/gr, total, entregado, cambio, responsable)
+
+### 2.2 Dispensación multi-producto (ticket)
+
+* Un usuario compra varias cosas en el mismo momento:
+
+  * Añadir varios productos con gramos cada uno
+* Totaliza el ticket
+* Cobro único → cambio
+* Se descuenta stock de cada producto
+* Se registra ticket + líneas
+
+### 2.3 Cancelar / corregir una venta
+
+* Buscar ticket/venta reciente
+* Opción: **anular** (revierte stock) o **editar** (ajusta diferencias)
+* Se registra evento: anulación/corrección (audit)
+
+---
+
+## 3) Flujos de usuarios (clientes)
+
+### 3.1 Alta de usuario
+
+* Crear usuario con datos mínimos:
+
+  * Nombre/alias (y opcional: teléfono, notas)
+* Guardar
+
+### 3.2 Ver “perfil usuario” (historial de compras)
+
+* Lista de compras (tickets)
+* Totales:
+
+  * gramos totales por producto
+  * gasto total
+  * última compra
+* Filtros por fecha / producto
+
+### 3.3 Gestión básica
+
+* Editar usuario
+* Desactivar/archivar (para no borrar histórico)
+
+---
+
+## 4) Flujos de resúmenes y reportes
+
+### 4.1 Resumen de ventas
+
+* Total vendido (importe) por:
+
+  * día/semana/mes
+  * producto
+  * categoría
+  * usuario
+* Top productos / top usuarios
+
+### 4.2 Resumen de stock incorporado (recargas)
+
+* Total recargado por:
+
+  * rango de fechas
+  * producto/categoría
+* Historial de recargas filtrable
+
+### 4.3 Balance “stock vs vendido”
+
+* Por producto:
+
+  * stock inicial + recargas − dispensado − ajustes = stock actual
+* Ideal para detectar descuadres
+
+### 4.4 Exportación simple (opcional MVP+)
+
+* Exportar CSV/PDF de:
+
+  * ventas por periodo
+  * movimientos de un producto
+  * compras de un usuario
+
+---
+
+## 5) Flujos de búsqueda, navegación y control rápido
+
+### 5.1 Buscar producto
+
+* Por nombre / categoría
+* Ver stock al instante
+
+### 5.2 Alertas de stock bajo (muy útil aunque sea simple)
+
+* Umbral por producto (opcional)
+* Lista “Productos bajos”
+
+### 5.3 Pantalla “Caja rápida”
+
+* Dispensar rápido con:
+
+  * selector producto
+  * gramos
+  * dinero entregado
+  * cambio automático
+
+---
+
+## 6) Flujos de gestión (si metes roles)
+
+### 6.1 Login + roles (admin / empleado)
+
+* Empleado: dispensar + ver productos
+* Admin: crear/editar productos, recargas, ajustes, reportes completos
+
+### 6.2 Auditoría mínima
+
+* Cada movimiento guarda: quién lo hizo + timestamp
+
+---
+
+Si quieres, te lo convierto en:
+
+* **mapa de pantallas (UI)** + navegación,
+* y/o **modelo de datos** (tablas/colecciones: products, stock_movements, users, sales, sale_items)
+  para que puedas empezar a codearlo ya.

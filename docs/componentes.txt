@@ -1,0 +1,324 @@
+Perfecto. Te lo desgloso **por página**, con los **componentes UI** que necesitas (los que se ven), y qué hace cada uno a nivel UX (sin hablar de código).
+
+---
+
+# 1) Caja / Dispensar (`/sales/new`)
+
+### Estructura general
+
+* **AppLayout**
+
+  * **TopBar**
+  * **SideNav**
+  * **PageHeader** (“Caja” + fecha/hora opcional)
+
+### Componentes de la página
+
+**A. CustomerSelect**
+
+* Input tipo buscador con dropdown
+* Estado: vacío / seleccionado
+* Acciones:
+
+  * **+ NewCustomerButton** (abre modal)
+  * **ClearCustomerButton**
+
+**B. TicketItemsList**
+Contenedor de líneas del ticket.
+
+* **TicketItemRow** (repetible)
+
+  * **ProductSearchSelect**
+
+    * búsqueda + dropdown
+    * muestra stock actual en la opción (pequeño)
+  * **StockBadge**
+
+    * “Stock: 275g” (y color si bajo)
+  * **GramsInput**
+
+    * stepper o input numérico
+    * validación inline (rojo si > stock o <=0)
+  * **LineSubtotal**
+
+    * “€XX.XX” automático
+  * **RemoveLineButton** (icono X)
+
+* **AddItemButton**
+
+  * “+ Añadir producto”
+  * (alternativa: siempre hay una fila vacía al final)
+
+**C. TicketSummaryCard**
+Bloque fijo (derecha o abajo en móvil)
+
+* **TotalAmountDisplay** (muy grande)
+* **CashGivenInput** (“Entrega €”)
+* **ChangeDisplay**
+
+  * verde si >=0
+  * rojo si falta
+* **ConfirmSaleButton**
+
+  * deshabilitado si:
+
+    * no hay cliente
+    * no hay items
+    * grams inválidos
+    * cashGiven < total
+* **ResetTicketButton** (opcional, “Vaciar”)
+
+**D. Feedback / estados**
+
+* **InlineValidationMessage** (por línea o general)
+* **Toast / Snackbar**
+
+  * “Venta registrada”
+* **SuccessOverlay** (opcional)
+
+  * resumen + botones: “Nueva venta”, “Ver cliente”
+
+**E. Modal: NewCustomerModal**
+
+* **ModalShell**
+* **CustomerFormMini** (nombre + notas)
+* **PrimaryButton** “Crear”
+* **SecondaryButton** “Cancelar”
+
+---
+
+# 2) Ventas listado (`/sales`)
+
+### Componentes
+
+* **PageHeader** (“Ventas”)
+* **FiltersBar**
+
+  * **DateRangePicker**
+  * **CustomerFilterSelect** (opcional)
+  * **ClearFiltersButton**
+* **SalesTable**
+
+  * columnas: Fecha, Cliente, Total, Entrega, Cambio
+  * fila clickable
+* **PaginationControls** (si hace falta)
+* **EmptyState** (sin resultados)
+
+---
+
+# 3) Venta detalle (`/sales/:id`)
+
+### Componentes
+
+* **Breadcrumbs** (Ventas > Ticket)
+* **SaleHeaderCard**
+
+  * id/fecha, cliente, total
+* **SaleItemsTable**
+
+  * Producto, gramos, €/gr, subtotal
+* **PaymentSummary**
+
+  * Entrega, cambio
+* **BackButton**
+
+---
+
+# 4) Productos listado (`/products`)
+
+### Componentes
+
+* **PageHeader** (“Productos” + botón “Nuevo”)
+
+  * **PrimaryButton** “+ Nuevo producto”
+* **ProductsFiltersBar**
+
+  * **SearchInput** (nombre)
+  * **CategorySelect**
+  * **ClearFiltersButton**
+* **ProductsTable**
+
+  * Nombre, Categoría, €/gr, Stock
+  * **StockPill** (color según nivel)
+  * Acciones por fila:
+
+    * **ViewButton**
+    * **RechargeButton** (abre modal)
+* **PaginationControls**
+* **EmptyState**
+
+**Modal opcional: RechargeStockModal**
+
+* Igual que en detalle: gramos + nota
+
+---
+
+# 5) Crear producto (`/products/new`)
+
+### Componentes
+
+* **PageHeader** (“Nuevo producto”)
+* **ProductForm**
+
+  * **TextInput** Nombre (required)
+  * **CategorySelect** (required)
+  * **PricePerGramInput** (required > 0)
+  * **Textarea** Descripción (optional)
+  * **InitialStockInput** (required >= 0)
+* **FormActions**
+
+  * **PrimaryButton** “Crear”
+  * **SecondaryButton** “Cancelar”
+* **FormFieldError** (por campo)
+* **Toast** éxito/error
+
+---
+
+# 6) Producto detalle (`/products/:id`)
+
+### Componentes
+
+* **ProductHeader**
+
+  * Nombre grande
+  * **StockBigDisplay** (muy visible)
+  * **RechargeButton** (modal/página)
+* **ProductInfoCard**
+
+  * categoría, €/gr, descripción
+  * **EditInline** o **EditButton**
+* **Tabs**
+
+  * **Tab: Movimientos**
+
+    * **MovementsFilters**
+
+      * DateRange (opcional)
+      * TypeSelect (opcional: Solo recargas)
+    * **MovementsTable**
+
+      * fecha, tipo, delta, antes/después, nota
+  * (si lo quieres aún más simple)
+
+    * solo **MovementsTable** sin filtros
+* **LoadingSkeleton** / **ErrorState** (si el fetch falla)
+
+---
+
+# 7) Recargar stock (`/products/:id/recharge` o modal)
+
+### Componentes
+
+* **ModalShell** o **PageCard**
+* **RechargeForm**
+
+  * **GramsInput** (required > 0)
+  * **Textarea** nota (optional)
+* **PrimaryButton** “Añadir stock”
+* **SecondaryButton** “Cancelar”
+* **InlineSuccessMessage** (“Stock actualizado”)
+
+---
+
+# 8) Clientes listado (`/customers`)
+
+### Componentes
+
+* **PageHeader** (“Clientes” + “Nuevo”)
+* **CustomersSearchBar**
+
+  * **SearchInput** (nombre/alias)
+* **CustomersTable/List**
+
+  * nombre, notas (opc), última compra (opc)
+  * **ViewButton**
+* **PaginationControls**
+* **EmptyState**
+
+---
+
+# 9) Crear cliente (`/customers/new`)
+
+### Componentes
+
+* **PageHeader** (“Nuevo cliente”)
+* **CustomerForm**
+
+  * **TextInput** displayName (required)
+  * **Textarea** notes (optional)
+* **FormActions**
+
+  * **PrimaryButton** “Crear”
+  * **SecondaryButton** “Cancelar”
+* **FieldErrors**
+
+---
+
+# 10) Cliente perfil (`/customers/:id`)
+
+### Componentes
+
+* **CustomerHeader**
+
+  * nombre grande
+  * notas (si hay)
+  * **QuickStatsRow**
+
+    * total gastado
+    * total compras
+* **Tabs**
+
+  * **Tab: Compras**
+
+    * **SalesTableMini** (fecha, total, link)
+  * **Tab: Resumen**
+
+    * **CustomerSummaryTable**
+
+      * producto, gramos totales, total €
+* **EmptyStates** (si no hay compras)
+
+---
+
+# 11) Reportes (`/reports`)
+
+### Componentes
+
+* **PageHeader** (“Reportes”)
+* **ReportsFiltersBar**
+
+  * **DateRangePicker**
+  * **GroupBySelect** (producto/categoría/cliente si lo expones)
+* **KpiCardsRow**
+
+  * **KpiCard** Total vendido
+  * **KpiCard** Stock incorporado
+* **SummaryTable**
+
+  * key/label, gramos, €
+* **EmptyState**
+* (Opcional) **LoadingSkeleton**
+
+---
+
+# Componentes transversales (globales)
+
+Estos se usan en varias páginas:
+
+* **AppLayout / SideNav / TopBar**
+* **PageHeader**
+* **PrimaryButton / SecondaryButton / IconButton**
+* **ModalShell**
+* **DataTable** (tabla genérica)
+* **FormField** (label + input + error)
+* **Toast/Snackbar**
+* **ConfirmDialog** (si alguna vez pides confirmación)
+* **LoadingSkeleton / Spinner**
+* **EmptyState / ErrorState**
+
+---
+
+Si quieres, el siguiente paso UX puro sería:
+
+* definir **jerarquía visual exacta** de Caja (qué va grande, qué va pequeño),
+* y luego hacer **wireframe textual** página por página (con disposición desktop + mobile).

@@ -1,0 +1,171 @@
+.sale-detail-container {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  margin-top: var(--spacing-lg);
+}
+
+.sale-detail-section {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  position: relative;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.sale-detail-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.6;
+}
+
+.sale-detail-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+  transition: color var(--transition-base), text-shadow var(--transition-glow);
+}
+
+.sale-detail-section-title:hover {
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.sale-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.sale-detail-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.sale-detail-info-item:hover {
+  background: var(--bg-tertiary);
+  box-shadow: var(--shadow-neon-sm);
+  transform: translateX(2px);
+}
+
+.sale-detail-info-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  transition: color var(--transition-base);
+}
+
+.sale-detail-info-item:hover .sale-detail-info-label {
+  color: var(--neon-primary);
+}
+
+.sale-detail-info-value {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  transition: color var(--transition-base), text-shadow var(--transition-glow);
+}
+
+.sale-detail-info-item:hover .sale-detail-info-value {
+  text-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.sale-detail-info-value-monospace {
+  font-family: monospace;
+}
+
+.sale-detail-status-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  box-shadow: var(--shadow-sm);
+}
+
+.sale-detail-status-completed {
+  background-color: var(--color-success);
+  color: var(--text-inverse);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3), var(--shadow-sm);
+}
+
+.sale-detail-status-cancelled {
+  background-color: var(--color-error);
+  color: var(--text-inverse);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3), var(--shadow-sm);
+}
+
+.sale-detail-customer-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: color var(--transition-fast), text-shadow var(--transition-glow);
+}
+
+.sale-detail-customer-link:hover {
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.sale-detail-total-amount {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+  transition: text-shadow var(--transition-glow);
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow: 0 0 8px var(--neon-glow-primary);
+  }
+  50% {
+    text-shadow: 0 0 16px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+  }
+}
+
+@media (max-width: 640px) {
+  .sale-detail-section {
+    padding: var(--spacing-md);
+  }
+
+  .sale-detail-info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .sale-detail-info-item:hover {
+    transform: none;
+  }
+}

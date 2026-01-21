@@ -1,0 +1,94 @@
+.confirm-unsaved-changes-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.confirm-unsaved-changes-message {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  padding: var(--spacing-md);
+  border-left: 2px solid var(--color-warning);
+  background: rgba(245, 158, 11, 0.05);
+  border-radius: var(--border-radius-sm);
+  position: relative;
+  animation: fadeInMessage var(--transition-base);
+}
+
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efecto LED sutil en el borde de advertencia */
+.confirm-unsaved-changes-message::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-warning);
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);
+  animation: pulseWarningBorder 2s ease-in-out infinite;
+}
+
+@keyframes pulseWarningBorder {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+    opacity: 0.8;
+  }
+}
+
+.confirm-unsaved-changes-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.confirm-unsaved-changes-actions button {
+  width: 100%;
+  min-height: 44px;
+  transition: all var(--transition-fast), box-shadow var(--transition-glow);
+}
+
+.confirm-unsaved-changes-actions button:hover {
+  box-shadow: var(--shadow-neon-sm);
+}
+
+@media (min-width: 480px) {
+  .confirm-unsaved-changes-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .confirm-unsaved-changes-actions button {
+    width: auto;
+    min-width: 120px;
+  }
+}
+
+/* Respetar preferencia de animación reducida */
+@media (prefers-reduced-motion: reduce) {
+  .confirm-unsaved-changes-message {
+    animation: none;
+  }
+  
+  .confirm-unsaved-changes-message::before {
+    animation: none;
+    opacity: 0.8;
+  }
+}

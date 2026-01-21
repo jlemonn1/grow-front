@@ -1,0 +1,350 @@
+.cash-money-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.cash-money-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.cash-coins-section,
+.cash-bills-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.cash-coins-buttons,
+.cash-bill-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.cash-coins-buttons {
+  justify-content: space-between;
+}
+
+.cash-bill-buttons {
+  justify-content: space-between;
+}
+
+.cash-bill-button {
+  position: relative;
+  flex: 1;
+  min-width: 90px;
+  max-width: 90px;
+  height: 55px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast), filter var(--transition-glow);
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+/* Colores específicos por billete con efectos neon mejorados */
+.cash-bill-5 {
+  filter: drop-shadow(0 0 6px rgba(139, 69, 19, 0.6)) drop-shadow(0 0 12px rgba(139, 69, 19, 0.4));
+}
+
+.cash-bill-5:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(139, 69, 19, 0.9)) 
+          drop-shadow(0 0 24px rgba(139, 69, 19, 0.6))
+          drop-shadow(0 0 36px rgba(139, 69, 19, 0.4));
+}
+
+.cash-bill-10 {
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.6)) drop-shadow(0 0 12px rgba(34, 197, 94, 0.4));
+}
+
+.cash-bill-10:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.9)) 
+          drop-shadow(0 0 24px rgba(34, 197, 94, 0.6))
+          drop-shadow(0 0 36px rgba(34, 197, 94, 0.4));
+}
+
+.cash-bill-20 {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 12px rgba(59, 130, 246, 0.4));
+}
+
+.cash-bill-20:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.9)) 
+          drop-shadow(0 0 24px rgba(59, 130, 246, 0.6))
+          drop-shadow(0 0 36px rgba(59, 130, 246, 0.4));
+}
+
+.cash-bill-50 {
+  filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6)) drop-shadow(0 0 12px rgba(168, 85, 247, 0.4));
+}
+
+.cash-bill-50:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.9)) 
+          drop-shadow(0 0 24px rgba(168, 85, 247, 0.6))
+          drop-shadow(0 0 36px rgba(168, 85, 247, 0.4));
+}
+
+.cash-bill-svg {
+  width: 100%;
+  height: 100%;
+  transition: all var(--transition-fast);
+  pointer-events: none;
+}
+
+.cash-bill-button:hover:not(:disabled) {
+  transform: scale(1.1) translateY(-3px);
+}
+
+.cash-bill-button:hover:not(:disabled) .cash-bill-svg {
+  transform: scale(1.05);
+}
+
+.cash-bill-button:active:not(:disabled) {
+  transform: scale(0.95) translateY(0);
+}
+
+.cash-bill-clicked {
+  animation: billClickPulse 0.4s ease-out;
+}
+
+.cash-bill-clicked .cash-bill-svg {
+  animation: svgGlow 0.4s ease-out;
+}
+
+@keyframes billClickPulse {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(1.2) translateY(-5px) rotate(2deg);
+  }
+  60% {
+    transform: scale(1.15) translateY(-3px) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes svgGlow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.4);
+  }
+}
+
+/* Efecto de brillo animado en el SVG */
+.bill-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* Estilos para monedas */
+.cash-coin-button {
+  position: relative;
+  flex: 1;
+  min-width: 48px;
+  max-width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast), filter var(--transition-glow);
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+.cash-coin-svg {
+  width: 100%;
+  height: 100%;
+  transition: all var(--transition-fast);
+  pointer-events: none;
+}
+
+/* Colores específicos por moneda con efectos neon */
+.cash-coin-0-10 {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));
+}
+
+.cash-coin-0-10:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)) 
+          drop-shadow(0 0 24px rgba(245, 158, 11, 0.6))
+          drop-shadow(0 0 36px rgba(245, 158, 11, 0.4));
+}
+
+.cash-coin-0-20 {
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6)) drop-shadow(0 0 12px rgba(239, 68, 68, 0.4));
+}
+
+.cash-coin-0-20:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.9)) 
+          drop-shadow(0 0 24px rgba(239, 68, 68, 0.6))
+          drop-shadow(0 0 36px rgba(239, 68, 68, 0.4));
+}
+
+.cash-coin-0-50 {
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6)) drop-shadow(0 0 12px rgba(139, 92, 246, 0.4));
+}
+
+.cash-coin-0-50:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.9)) 
+          drop-shadow(0 0 24px rgba(139, 92, 246, 0.6))
+          drop-shadow(0 0 36px rgba(139, 92, 246, 0.4));
+}
+
+.cash-coin-1 {
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 12px rgba(16, 185, 129, 0.4));
+}
+
+.cash-coin-1:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.9)) 
+          drop-shadow(0 0 24px rgba(16, 185, 129, 0.6))
+          drop-shadow(0 0 36px rgba(16, 185, 129, 0.4));
+}
+
+.cash-coin-2 {
+  filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.6)) drop-shadow(0 0 12px rgba(6, 182, 212, 0.4));
+}
+
+.cash-coin-2:hover:not(:disabled) {
+  filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.9)) 
+          drop-shadow(0 0 24px rgba(6, 182, 212, 0.6))
+          drop-shadow(0 0 36px rgba(6, 182, 212, 0.4));
+}
+
+.cash-coin-button:hover:not(:disabled) {
+  transform: scale(1.15) translateY(-3px);
+}
+
+.cash-coin-button:hover:not(:disabled) .cash-coin-svg {
+  transform: scale(1.1);
+}
+
+.cash-coin-button:active:not(:disabled) {
+  transform: scale(0.95) translateY(0);
+}
+
+.cash-coin-clicked {
+  animation: coinClickPulse 0.4s ease-out;
+}
+
+.cash-coin-clicked .cash-coin-svg {
+  animation: coinSvgGlow 0.4s ease-out;
+}
+
+@keyframes coinClickPulse {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(1.3) translateY(-5px) rotate(5deg);
+  }
+  60% {
+    transform: scale(1.25) translateY(-3px) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes coinSvgGlow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cash-coins-buttons,
+  .cash-bill-buttons {
+    gap: var(--spacing-sm);
+    justify-content: center;
+  }
+
+  .cash-bill-button {
+    width: 75px;
+    height: 46px;
+  }
+
+  .cash-coin-button {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cash-bill-button {
+    width: 65px;
+    height: 40px;
+  }
+
+  .cash-coin-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cash-money-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Respetar preferencia de animación reducida */
+@media (prefers-reduced-motion: reduce) {
+  .cash-bill-button,
+  .cash-coin-button {
+    transition: filter var(--transition-fast);
+  }
+
+  .cash-bill-button:hover:not(:disabled),
+  .cash-coin-button:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .cash-bill-clicked,
+  .cash-coin-clicked {
+    animation: none;
+  }
+
+  .cash-bill-clicked .cash-bill-svg,
+  .cash-coin-clicked .cash-coin-svg {
+    animation: none;
+  }
+
+  .bill-shimmer {
+    animation: none;
+  }
+}

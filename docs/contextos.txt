@@ -1,0 +1,378 @@
+Perfecto. Aquí tienes **TODO lo técnico sobre los contextos**, explicado **de forma unificada** y aplicado **página por página**, para que luego programar sea casi mecánico.
+
+> Enfoque: **qué contexto existe, qué estado maneja, quién lo modifica y quién lo consume**.
+> Sin UX, sin backend, sin código: **arquitectura mental del front**.
+
+---
+
+# 1️⃣ Contextos existentes (visión técnica)
+
+## 🧠 UIContext — estado visual global
+
+**Responsabilidad**
+
+* Estado transversal de la app (feedback, bloqueos, overlays)
+
+**Estado que gestiona**
+
+* `globalLoading`
+* `toasts[]`
+* `activeModal`
+* `confirmDialog`
+
+**Quién lo usa**
+
+* Todas las páginas
+* Todos los servicios (indirectamente)
+
+**Regla**
+
+> Ningún componente gestiona loaders o toasts por su cuenta.
+
+---
+
+## 🧾 TicketContext — venta en curso (CRÍTICO)
+
+**Responsabilidad**
+
+* Representar una venta viva, mutable y validada
+
+**Estado**
+
+* `customer`
+* `items[]`
+
+  * productId
+  * grams
+  * priceSnapshot
+  * stockSnapshot
+  * validationState
+* `total`
+* `cashGiven`
+* `change`
+* `isValid`
+
+**Regla**
+
+> Solo existe **una venta activa** en toda la app.
+
+---
+
+## 📦 ProductsContext — productos + stock
+
+**Responsabilidad**
+
+* Fuente única del stock mostrado en UI
+
+**Estado**
+
+* `products[]`
+* `productsById`
+* `loading`
+* `lastUpdatedAt`
+
+**Funciones clave**
+
+* actualizar stock tras venta
+* actualizar stock tras recarga
+* refrescar producto puntual (409)
+
+**Regla**
+
+> Ninguna pantalla calcula stock: **se consume desde aquí**.
+
+---
+
+## 👤 CustomersContext — clientes
+
+**Responsabilidad**
+
+* Clientes disponibles y búsquedas
+
+**Estado**
+
+* `customersCache`
+* `searchResults`
+* `loading`
+
+**Nota**
+
+* **NO mantiene cliente activo** (eso vive en TicketContext)
+
+---
+
+## 📊 ReportsContext — análisis y resúmenes
+
+**Responsabilidad**
+
+* Estado persistente de filtros + resultados de reportes
+
+**Estado**
+
+* `dateRange`
+* `groupBy`
+* `salesSummary`
+* `stockSummary`
+* `loading`
+
+---
+
+## 🧭 NavigationContext (opcional pero potente)
+
+**Responsabilidad**
+
+* Mantener intención de navegación
+
+**Estado**
+
+* `origin`
+* `returnTo`
+* `lastAction`
+
+**Uso**
+
+* Flujos tipo: *“crear cliente desde caja y volver”*
+
+---
+
+# 2️⃣ Aplicación de contextos por página
+
+---
+
+## 🟢 Caja / Dispensar (`/sales/new`)
+
+### Contextos activos
+
+* **TicketContext** (principal)
+* **ProductsContext**
+* **CustomersContext**
+* **UIContext**
+
+### Qué hace cada uno aquí
+
+**TicketContext**
+
+* Añadir/eliminar items
+* Validar gramos
+* Calcular total y cambio
+* Validar venta completa
+* Reset tras confirmación
+
+**ProductsContext**
+
+* Mostrar stock al seleccionar producto
+* Validar gramos <= stock (soft)
+* Actualizar stock tras venta
+
+**CustomersContext**
+
+* Buscar clientes
+* Seleccionar cliente para el ticket
+
+**UIContext**
+
+* Loader al confirmar
+* Toast éxito / error
+* Mostrar errores 409 / 422
+
+---
+
+## 📄 Ventas listado (`/sales`)
+
+### Contextos activos
+
+* **UIContext**
+
+> Página pasiva, no modifica estado global
+
+---
+
+## 📄 Venta detalle (`/sales/:id`)
+
+### Contextos activos
+
+* **UIContext**
+
+> No toca TicketContext (es histórico)
+
+---
+
+## 📦 Productos listado (`/products`)
+
+### Contextos activos
+
+* **ProductsContext**
+* **UIContext**
+
+**ProductsContext**
+
+* Proveer listado
+* Mostrar stock actual
+* Refrescar tras recarga
+
+**UIContext**
+
+* Loader
+* Modal de recarga
+* Toast “stock actualizado”
+
+---
+
+## ➕ Crear producto (`/products/new`)
+
+### Contextos activos
+
+* **ProductsContext**
+* **UIContext**
+
+**ProductsContext**
+
+* Añadir producto nuevo al cache
+
+**UIContext**
+
+* Errores de validación
+* Toast de éxito
+
+---
+
+## 📦 Producto detalle (`/products/:id`)
+
+### Contextos activos
+
+* **ProductsContext**
+* **UIContext**
+
+**ProductsContext**
+
+* Obtener producto
+* Actualizar stock tras recarga
+
+**UIContext**
+
+* Loader
+* Toast
+
+---
+
+## 🔁 Recargar stock (modal o `/recharge`)
+
+### Contextos activos
+
+* **ProductsContext**
+* **UIContext**
+
+**ProductsContext**
+
+* Incrementar stock
+* Sincronizar producto en cache
+
+**UIContext**
+
+* Feedback inmediato
+
+---
+
+## 👤 Clientes listado (`/customers`)
+
+### Contextos activos
+
+* **CustomersContext**
+* **UIContext**
+
+---
+
+## ➕ Crear cliente (`/customers/new`)
+
+### Contextos activos
+
+* **CustomersContext**
+* **TicketContext** (si viene desde Caja)
+* **NavigationContext**
+* **UIContext**
+
+**Flujo típico**
+
+1. Se crea cliente
+2. Se selecciona automáticamente en TicketContext
+3. Se navega de vuelta a Caja
+
+---
+
+## 👤 Cliente perfil (`/customers/:id`)
+
+### Contextos activos
+
+* **UIContext**
+
+> Vista histórica, no muta contextos
+
+---
+
+## 📊 Reportes (`/reports`)
+
+### Contextos activos
+
+* **ReportsContext**
+* **UIContext**
+
+**ReportsContext**
+
+* Mantiene filtros
+* Guarda resultados
+* Evita refetch innecesario
+
+---
+
+# 3️⃣ Interacción entre contextos (reglas técnicas)
+
+### Venta confirmada
+
+1. TicketContext valida
+2. SaleService ejecuta
+3. ProductsContext actualiza stock
+4. TicketContext se resetea
+5. UIContext muestra éxito
+
+---
+
+### Error de stock (409)
+
+1. ProductsContext refresca producto
+2. TicketContext invalida línea
+3. UIContext muestra aviso
+
+---
+
+### Crear cliente desde Caja
+
+1. NavigationContext guarda intención
+2. CustomersContext crea cliente
+3. TicketContext asigna cliente
+4. Navegación vuelve a Caja
+
+---
+
+# 4️⃣ Reglas de oro (para no liarla luego)
+
+* ❌ Ningún componente guarda estado crítico
+* ❌ No hay duplicación de stock
+* ❌ No hay lógica de venta fuera de TicketContext
+* ✅ Cada página **consume**, no **posee** estado
+* ✅ Los servicios solo mutan contextos, nunca UI directa
+
+---
+
+## 🧠 Resumen ultra corto
+
+* **UIContext** → cómo se siente la app
+* **TicketContext** → qué se está vendiendo ahora
+* **ProductsContext** → qué hay y cuánto hay
+* **CustomersContext** → a quién
+* **ReportsContext** → qué pasó
+* **NavigationContext** → por qué navegas
+
+Si quieres, el siguiente paso natural es:
+
+* 🔄 **diagrama de flujo entre contextos**
+* o 🧱 **qué contextos se montan en App root vs por ruta**

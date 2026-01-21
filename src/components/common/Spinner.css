@@ -1,0 +1,97 @@
+.spinner {
+  border: 3px solid transparent;
+  border-top-color: var(--border-led-color);
+  border-right-color: var(--neon-primary);
+  border-radius: 50%;
+  animation: spin-neon 0.8s linear infinite;
+  box-shadow: var(--shadow-neon-sm);
+  position: relative;
+}
+
+/* Gradiente LED animado en el borde */
+.spinner::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--neon-primary) 0deg,
+    var(--border-led-color) 90deg,
+    var(--neon-primary) 180deg,
+    transparent 270deg,
+    var(--neon-primary) 360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin-neon 1.2s linear infinite reverse;
+  opacity: 0.6;
+}
+
+.spinner-sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.spinner-sm::before {
+  inset: -1px;
+  padding: 1px;
+}
+
+.spinner-md {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.spinner-lg {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.spinner-lg::before {
+  inset: -3px;
+  padding: 3px;
+}
+
+@keyframes spin-neon {
+  0% {
+    transform: rotate(0deg);
+    box-shadow: var(--shadow-neon-sm);
+  }
+  25% {
+    box-shadow: var(--shadow-neon-md);
+  }
+  50% {
+    box-shadow: var(--shadow-neon-sm);
+  }
+  75% {
+    box-shadow: var(--shadow-neon-md);
+  }
+  100% {
+    transform: rotate(360deg);
+    box-shadow: var(--shadow-neon-sm);
+  }
+}
+
+/* Respetar preferencia de animación reducida */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: spin 1.2s linear infinite;
+  }
+  
+  .spinner::before {
+    animation: none;
+    opacity: 0.3;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

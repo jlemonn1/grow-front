@@ -1,0 +1,54 @@
+.product-card {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.product-card:hover {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-md), 0 0 20px var(--neon-glow-primary);
+  transform: translateY(-2px);
+}
+
+.product-card:focus-visible {
+  outline: 2px solid var(--border-led-color);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-neon-sm), 0 0 12px var(--neon-glow-primary);
+}
+
+.product-card-expanded {
+  border: var(--border-led-width) solid var(--border-led-color);
+  box-shadow: var(--shadow-neon-lg);
+}
+
+@media (max-width: 640px) {
+  .product-card {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+  }
+
+  .product-card:hover {
+    transform: none;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .product-card {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1025px) {
+  .product-card {
+    padding: var(--spacing-lg);
+  }
+}

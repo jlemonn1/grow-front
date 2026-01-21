@@ -1,0 +1,17 @@
+.month-selector {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .month-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .month-selector select {
+    width: 100%;
+  }
+}

@@ -1,0 +1,159 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  width: 100%;
+  position: relative;
+}
+
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color var(--transition-fast), text-shadow var(--transition-glow);
+}
+
+.form-field:focus-within .form-label {
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.form-required {
+  color: var(--color-error);
+  margin-left: 2px;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-glow),
+              background-color var(--transition-fast);
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.form-textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  transition: opacity var(--transition-base);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .form-textarea::placeholder {
+    animation: placeholder-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes placeholder-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--border-led-color);
+  border-width: 2px;
+  box-shadow: 0 0 8px var(--neon-glow-primary),
+              0 0 16px var(--neon-glow-secondary),
+              0 0 24px var(--neon-glow-primary),
+              0 0 0 2px var(--border-led-color);
+  background-color: var(--bg-primary);
+}
+
+.form-textarea:not(:focus):not(.form-textarea-error):not(.form-textarea-success) {
+  border-width: 1px;
+}
+
+.form-textarea:disabled {
+  background-color: var(--bg-tertiary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  border-color: var(--border-color);
+  box-shadow: none;
+}
+
+.form-textarea-success {
+  border-color: var(--color-success);
+}
+
+.form-textarea-success:focus {
+  border-color: var(--color-success);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3),
+              0 0 16px rgba(16, 185, 129, 0.2),
+              0 0 24px rgba(16, 185, 129, 0.3),
+              0 0 0 2px var(--color-success);
+}
+
+.form-textarea-error {
+  border-color: var(--color-error);
+  border-width: 2px;
+}
+
+.form-textarea-error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3),
+              0 0 16px rgba(239, 68, 68, 0.2),
+              0 0 24px rgba(239, 68, 68, 0.3),
+              0 0 0 2px var(--color-error);
+}
+
+.form-textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.form-textarea::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.form-textarea::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+.form-textarea:focus::-webkit-scrollbar-thumb {
+  background: var(--border-led-color);
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.form-textarea::-webkit-resizer {
+  border-bottom-right-radius: var(--border-radius);
+  background: var(--bg-secondary);
+}
+
+.form-textarea:focus::-webkit-resizer {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--border-led-color) 100%);
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.form-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  margin-top: var(--spacing-xs);
+  text-shadow: 0 0 4px rgba(239, 68, 68, 0.3);
+  animation: error-appear 0.2s ease-out;
+}
+
+@keyframes error-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

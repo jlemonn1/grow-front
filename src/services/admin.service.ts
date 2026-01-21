@@ -1,0 +1,35 @@
+import { get, post, del } from './http';
+import type { Admin } from '@/types/models';
+
+export interface CreateAdminRequest {
+  username: string;
+  password: string;
+}
+
+/**
+ * Obtiene el admin actual autenticado
+ */
+export async function getCurrentAdmin(): Promise<Admin> {
+  return get<Admin>('/admins/me');
+}
+
+/**
+ * Lista todos los administradores (solo admin principal)
+ */
+export async function getAllAdmins(): Promise<Admin[]> {
+  return get<Admin[]>('/admins');
+}
+
+/**
+ * Crea un nuevo administrador (solo admin principal)
+ */
+export async function createAdmin(username: string, password: string): Promise<Admin> {
+  return post<Admin>('/admins', { username, password });
+}
+
+/**
+ * Desactiva un administrador (solo admin principal)
+ */
+export async function deleteAdmin(id: string): Promise<void> {
+  return del(`/admins/${id}`);
+}

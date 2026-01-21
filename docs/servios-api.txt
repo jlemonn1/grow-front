@@ -1,0 +1,205 @@
+Vale, pero lo voy a explicar **desde UX/arquitectura de front**, no desde “cómo lo programo”. La idea es: **la UI habla con una capa de servicios**, y esa capa es la única que conoce la API. Así la app se siente sólida y consistente.
+
+---
+
+## Cómo se comunica el front con la API (visión limpia)
+
+### 1) UI (páginas/componentes)
+
+* Pintan pantallas, formularios, tablas.
+* Llaman a **acciones** (ej: “confirmar venta”, “recargar stock”).
+
+### 2) Capa de “Servicios” (API client)
+
+* Es el “traductor” entre UI ↔ backend.
+* Se encarga de:
+
+  * construir requests (URL, query params, body)
+  * parsear responses
+  * normalizar errores (422, 409, 404…)
+  * (opcional) cache/refetch
+
+### 3) Backend (tu Spring Boot)
+
+* Devuelve JSON consistente
+* Garantiza validaciones y reglas “hard” (stock insuficiente, etc.)
+
+**Resultado:** la UI no sabe de endpoints, solo sabe de cosas como:
+
+* `saleService.createSale(ticket)`
+* `productService.listProducts(filters)`
+* `stockService.recharge(productId, grams, note)`
+
+---
+
+## Contrato de comunicación (lo importante para UX)
+
+### A. Reglas de respuesta “feliz”
+
+* Cuando algo sale bien:
+
+  * el service devuelve un objeto ya “listo para pintar”
+  * la UI actualiza pantallas y muestra feedback (toast/overlay)
+
+Ejemplos:
+
+* `createSale` devuelve:
+
+  * total, cambio, items, saleId
+* `rechargeStock` devuelve:
+
+  * stockAfterGrams + movimiento creado
+* `createProduct` devuelve:
+
+  * producto ya con `stockGrams` actualizado
+
+---
+
+### B. Reglas de error (y cómo se ven en pantalla)
+
+Hay 3 tipos de error que importan muchísimo:
+
+#### 1) **422 Validation Error (input mal)**
+
+* Ej: `grams <= 0`, `cashGiven < total`, `pricePerGram <= 0`
+* UX: error **en el campo exacto**, no “algo salió mal”.
+* La capa de servicios convierte la respuesta a un formato estándar:
+
+  * `fieldErrors: { grams: "Debe ser > 0" }`
+
+**En UI:**
+
+* Input rojo + texto debajo
+* Botón principal sigue deshabilitado hasta corregir
+
+#### 2) **409 Conflict (stock insuficiente)**
+
+* Esto es clave: aunque el front valide, el backend manda la verdad (porque stock puede cambiar).
+* UX ideal:
+
+  1. service detecta 409
+  2. la UI resalta la línea del ticket afectada
+  3. muestra mensaje: “Stock insuficiente, stock actualizado”
+  4. refresca stock y permite corregir gramos
+
+Esto hace que el usuario sienta: **“la app me protege”**.
+
+#### 3) **404 Not Found**
+
+* Ej: producto borrado o ID incorrecto.
+* UX: pantalla de “No encontrado” con CTA:
+
+  * “Volver a productos” o “Volver a caja”
+
+---
+
+## Cómo se evita que la UI se vuelva lenta o inconsistente
+
+### 1) Caching ligero (UX)
+
+Sin entrar en librerías:
+
+* El listado de productos se cachea un ratito.
+* Pero tras una venta o recarga, se hace:
+
+  * **refetch del producto afectado** o
+  * **actualización local** (stock - grams / + grams)
+
+Lo importante UX: el stock cambia al instante en pantalla.
+
+### 2) “Single source of truth” visual
+
+* Para stock, hay dos formas de mostrarlo en “Caja”:
+
+  * **Live**: cuando eliges producto, enseña stock actual.
+  * **Snapshot**: stock mostrado cuando se añadió la línea.
+
+Recomendación UX: **live + auto-refresh si hay conflicto**, para no vender humo.
+
+---
+
+## Servicios que necesitas (conceptualmente) y qué endpoints tocan
+
+### ProductService
+
+* “listar productos” → `GET /products`
+* “crear producto” → `POST /products`
+* “ver detalle” → `GET /products/{id}`
+* “editar” → `PATCH /products/{id}`
+
+### StockService
+
+* “recargar” → `POST /products/{id}/stock/recharges`
+* “historial movimientos” → `GET /products/{id}/stock/movements`
+
+### CustomerService
+
+* “listar/buscar” → `GET /customers?q=`
+* “crear” → `POST /customers`
+* “detalle” → `GET /customers/{id}`
+* “ventas del cliente” → `GET /customers/{id}/sales`
+* “resumen cliente” → `GET /customers/{id}/summary`
+
+### SaleService
+
+* “crear venta” → `POST /sales`
+* “listar ventas” → `GET /sales`
+* “detalle venta” → `GET /sales/{id}`
+
+### ReportService
+
+* “resumen ventas” → `GET /reports/sales/summary`
+* “resumen stock” → `GET /reports/stock/summary`
+
+---
+
+## Comunicaciones típicas por pantalla (para que veas el “baile”)
+
+### Caja / Dispensar
+
+* Al buscar cliente: `GET /customers?q=`
+* Al buscar producto: `GET /products?q=`
+* Al confirmar:
+
+  * `POST /sales`
+  * si OK: limpiar ticket + toast + (opcional) actualizar stock local
+  * si 409: refrescar productos afectados
+
+### Detalle producto
+
+* `GET /products/{id}`
+* `GET /products/{id}/stock/movements`
+
+### Reportes
+
+* Con rango fechas:
+
+  * `GET /reports/sales/summary?from&to&groupBy=product`
+  * `GET /reports/stock/summary?from&to&groupBy=product`
+
+---
+
+## “Cómo se siente” la app cuando está bien hecha (UX)
+
+* Siempre hay feedback:
+
+  * loading skeleton en tablas
+  * botón “Confirmar” con spinner
+  * toast de éxito
+* Los errores son accionables:
+
+  * 422 = “corrige esto”
+  * 409 = “ajusta cantidad, stock actualizado”
+* Nunca te deja en un estado raro:
+
+  * tras confirmar venta, ticket se resetea y el cliente se mantiene opcional (según tu preferencia UX)
+
+---
+
+Si me dices **qué prefieres en Caja**:
+
+1. Tras una venta, ¿mantener el mismo cliente seleccionado o resetearlo?
+2. ¿Quieres que al añadir un producto al ticket se “congele” el €/gr (snapshot) o que siempre use el precio actual?
+
+Con esas 2 decisiones cierro el diseño de comunicación UI↔API para que sea coherente al 100%.
+ 

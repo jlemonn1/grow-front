@@ -1,0 +1,237 @@
+Aquí va una estructura **React web** que es **ligera**, con **services + contexts + hooks**, sin “enterprise paja”, y **del mismo nivel de dificultad** que tu backend monolítico con capas.
+
+## Árbol de carpetas y archivos (simple y escalable)
+
+```text
+growshop-web/
+├─ package.json
+├─ vite.config.ts
+├─ index.html
+└─ src/
+   ├─ main.tsx
+   ├─ App.tsx
+   ├─ routes.tsx
+   ├─ styles.css
+   │
+   ├─ layout/
+   │  ├─ AppLayout.tsx
+   │  └─ SideNav.tsx
+   │
+   ├─ pages/
+   │  ├─ sales/
+   │  │  ├─ SaleCreatePage.tsx      # Caja
+   │  │  ├─ SalesPage.tsx           # listado ventas
+   │  │  └─ SaleDetailPage.tsx      # detalle ticket
+   │  ├─ products/
+   │  │  ├─ ProductsPage.tsx
+   │  │  ├─ ProductCreatePage.tsx
+   │  │  └─ ProductDetailPage.tsx
+   │  ├─ customers/
+   │  │  ├─ CustomersPage.tsx
+   │  │  ├─ CustomerCreatePage.tsx
+   │  │  └─ CustomerDetailPage.tsx
+   │  └─ reports/
+   │     └─ ReportsPage.tsx
+   │
+   ├─ components/
+   │  ├─ common/
+   │  │  ├─ PageHeader.tsx
+   │  │  ├─ DataTable.tsx
+   │  │  ├─ Modal.tsx
+   │  │  ├─ ToastHost.tsx
+   │  │  ├─ Spinner.tsx
+   │  │  └─ EmptyState.tsx
+   │  ├─ forms/
+   │  │  ├─ Input.tsx
+   │  │  ├─ Select.tsx
+   │  │  └─ NumberInput.tsx
+   │  └─ sale/
+   │     ├─ CustomerPicker.tsx
+   │     ├─ ProductPicker.tsx
+   │     ├─ TicketItemRow.tsx
+   │     └─ TicketSummary.tsx
+   │
+   ├─ context/
+   │  ├─ AppProviders.tsx           # monta todos los providers
+   │  ├─ ui.context.tsx             # toasts, modal, loading global
+   │  ├─ ticket.context.tsx         # venta en curso (Caja)
+   │  ├─ products.context.tsx       # cache productos + stock
+   │  ├─ customers.context.tsx      # cache + búsqueda clientes
+   │  └─ reports.context.tsx        # filtros y resultados reportes
+   │
+   ├─ hooks/
+   │  ├─ useUI.ts
+   │  ├─ useTicket.ts
+   │  ├─ useProducts.ts
+   │  ├─ useCustomers.ts
+   │  └─ useReports.ts
+   │
+   ├─ services/
+   │  ├─ http.ts                    # fetch wrapper + manejo errores
+   │  ├─ products.service.ts
+   │  ├─ stock.service.ts
+   │  ├─ customers.service.ts
+   │  ├─ sales.service.ts
+   │  └─ reports.service.ts
+   │
+   ├─ types/
+   │  ├─ models.ts                  # Product, Customer, Sale, etc.
+   │  └─ api.ts                     # DTOs request/response API
+   │
+   └─ utils/
+      ├─ money.ts                   # formato €
+      ├─ dates.ts                   # rango fechas
+      └─ validate.ts                # validaciones simples (grams>0, etc.)
+```
+
+### Por qué esta estructura encaja con lo que quieres
+
+* **pages/**: una pantalla = un archivo (como controllers)
+* **context/**: estado global por “módulo” (como services de backend)
+* **services/**: solo HTTP (como repo/clients del backend)
+* **hooks/**: acceso limpio a contextos, cero acoplamiento
+* **components/**: piezas UI reutilizables sin lógica “de negocio”
+* **types/**: contratos claros (como DTOs)
+
+---
+
+# Roadmap de implementación vertical ascendente (propuesto)
+
+“Vertical ascendente” = **cada paso entrega algo usable end-to-end** (UI + estado + llamadas API), no construir infraestructura por construir.
+
+## Fase 0 — Esqueleto y navegación
+
+**Objetivo:** app navegable y base visual.
+
+* Crear layout (SideNav + AppLayout)
+* Montar rutas (`routes.tsx`)
+* Montar `AppProviders` con `UIContext` + `ToastHost`
+* Componentes comunes mínimos: `PageHeader`, `Spinner`, `EmptyState`, `Modal`
+
+✅ Resultado: puedes moverte por pantallas y ya tienes feedback global.
+
+---
+
+## Fase 1 — Productos (lectura) + Clientes (lectura)
+
+**Objetivo:** tener datos reales en UI para construir Caja sin inventar.
+
+* `products.service.getList` + `ProductsContext` (cache simple)
+* `/products` listado (tabla + búsqueda simple)
+* `customers.service.getList` + `CustomersContext` (búsqueda)
+* `/customers` listado
+
+✅ Resultado: ya ves productos y clientes desde API.
+
+---
+
+## Fase 2 — Crear Cliente (vertical completo)
+
+**Objetivo:** primer flujo CRUD completo.
+
+* `/customers/new` formulario + validación básica
+* `customers.service.create`
+* Al crear, actualizar `CustomersContext` y navegar a `/customers/:id`
+
+✅ Resultado: alta de cliente operativa.
+
+---
+
+## Fase 3 — Crear Producto + Detalle + Historial
+
+**Objetivo:** inventario real y trazabilidad.
+
+* `/products/new` (incluye stock inicial)
+* `/products/:id` detalle
+* `stock.service.getMovements` para el historial
+* Componente “Recargar stock” (modal o page)
+
+✅ Resultado: gestionas inventario base y ves movimientos.
+
+---
+
+## Fase 4 — Caja (core) v1: 1 producto por ticket
+
+**Objetivo:** “ya se puede vender”.
+
+* `TicketContext` (customer + 1 línea)
+* CustomerPicker (con búsqueda)
+* ProductPicker + GramsInput + Total + CashGiven + Cambio
+* `sales.service.create`
+* Tras éxito:
+
+  * reset ticket
+  * actualizar stock en `ProductsContext` (decremento)
+  * toast “Venta registrada”
+
+✅ Resultado: flujo principal de negocio funcionando.
+
+---
+
+## Fase 5 — Caja v2: multi-producto + robustez errores
+
+**Objetivo:** terminar la Caja “de verdad”.
+
+* Múltiples líneas (TicketItemsList)
+* Validación por línea (grams > 0, stock suficiente)
+* Manejo 422 (errores por campo)
+* Manejo 409 (stock insuficiente):
+
+  * refrescar producto(s) en ProductsContext
+  * marcar línea(s) inválida(s)
+  * toast “Stock actualizado”
+
+✅ Resultado: Caja sólida y difícil de romper.
+
+---
+
+## Fase 6 — Ventas: listado + detalle
+
+**Objetivo:** trazabilidad de dispensaciones.
+
+* `/sales` con filtros básicos (fecha / cliente opcional)
+* `/sales/:id` detalle de ticket
+
+✅ Resultado: operación diaria + consulta de históricos.
+
+---
+
+## Fase 7 — Perfil de cliente (historial + resumen)
+
+**Objetivo:** “todo lo que compró un usuario”.
+
+* `/customers/:id` con tabs:
+
+  * compras (`/customers/{id}/sales`)
+  * resumen (`/customers/{id}/summary`)
+
+✅ Resultado: trazabilidad por usuario completa.
+
+---
+
+## Fase 8 — Reportes (resúmenes)
+
+**Objetivo:** visión global: vendido/incorporado.
+
+* `/reports` con dateRange
+* `reports.service.salesSummary` y `stockSummary`
+* Cards de KPIs + tabla por producto
+
+✅ Resultado: reporting MVP cerrado.
+
+---
+
+## Fase 9 — Pulido UX (sin añadir features nuevas)
+
+**Objetivo:** que se sienta pro.
+
+* Loading skeletons en tablas
+* Atajos de teclado en Caja (opcional)
+* Confirmación visual post-venta
+* Mejoras de accesibilidad (focus/enter/tab)
+
+✅ Resultado: app “rápida y de trabajo”, no demo.
+
+---
+
+Si quieres, en el siguiente mensaje te saco el **“orden exacto de implementación”** por archivos (qué creas primero, y qué depende de qué) para que vayas tachando como checklist.

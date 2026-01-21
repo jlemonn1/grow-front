@@ -1,0 +1,129 @@
+.renew-subscription-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.renew-subscription-info {
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  border: 1px solid var(--border-led-color);
+  box-shadow: var(--shadow-neon-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto LED sutil en el borde de la info */
+.renew-subscription-info::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.6;
+}
+
+.renew-subscription-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  position: relative;
+  z-index: 1;
+}
+
+.renew-subscription-current-date,
+.renew-subscription-new-date {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Efecto LED en las fechas destacadas */
+.renew-subscription-current-date strong,
+.renew-subscription-new-date strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.renew-subscription-current-date::after,
+.renew-subscription-new-date::after {
+  content: attr(data-date-value);
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Glow neon en el valor de la fecha */
+.renew-subscription-new-date {
+  color: var(--neon-primary);
+  font-weight: 500;
+  text-shadow: 0 0 4px var(--neon-glow-primary);
+  transition: text-shadow var(--transition-glow);
+}
+
+.renew-subscription-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.renew-subscription-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid transparent;
+  position: relative;
+}
+
+/* Línea separadora con gradiente LED */
+.renew-subscription-actions::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .renew-subscription-actions {
+    flex-direction: column-reverse;
+  }
+
+  .renew-subscription-actions button {
+    width: 100%;
+  }
+}

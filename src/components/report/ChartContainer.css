@@ -1,0 +1,35 @@
+.chart-container {
+  background: var(--bg-primary);
+  border: var(--border-led-width) solid var(--border-led-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-neon-sm);
+  transition: box-shadow var(--transition-glow),
+              border-color var(--transition-glow);
+}
+
+.chart-container-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+  text-shadow: 0 0 6px var(--neon-glow-primary);
+  transition: text-shadow var(--transition-glow);
+}
+
+.chart-container-content {
+  width: 100%;
+  min-height: 300px;
+}
+
+@media (max-width: 640px) {
+  .chart-container {
+    padding: var(--spacing-md);
+  }
+
+  .chart-container-content {
+    min-height: 250px;
+  }
+}

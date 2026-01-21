@@ -1,0 +1,95 @@
+.page-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.page-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  background: var(--bg-primary);
+  border: var(--border-led-width) solid var(--border-led-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all var(--transition-fast), box-shadow var(--transition-glow), border-color var(--transition-glow);
+  flex-shrink: 0;
+  box-shadow: 0 0 2px var(--neon-glow-primary);
+  position: relative;
+}
+
+.page-header-back-button:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--neon-primary);
+  color: var(--neon-primary);
+  box-shadow: var(--shadow-neon-sm);
+  transform: translateX(-2px);
+}
+
+.page-header-back-button:active {
+  transform: translateX(-1px) scale(0.98);
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.page-header-back-button:focus-visible {
+  outline: 2px solid var(--neon-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.page-header-back-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.page-header-title {
+  margin-bottom: var(--spacing-xs);
+  text-shadow: 0 0 8px var(--neon-glow-primary), 0 0 16px var(--neon-glow-secondary);
+  color: var(--text-primary);
+}
+
+.page-header-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 640px) {
+  .page-header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header-left {
+    gap: var(--spacing-sm);
+  }
+
+  .page-header-back-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .page-header-back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

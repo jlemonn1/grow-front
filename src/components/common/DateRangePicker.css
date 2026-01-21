@@ -1,0 +1,100 @@
+.date-range-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  transition: all var(--transition-glow), box-shadow var(--transition-glow);
+  position: relative;
+}
+
+/* Borde LED sutil que se activa cuando hay focus en los inputs */
+.date-range-picker:has(input:focus) {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+.date-range-picker-inputs {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+  position: relative;
+}
+
+/* Efecto glow cuando los inputs están en focus */
+.date-range-picker-inputs:has(input:focus)::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: var(--border-radius);
+  background: transparent;
+  box-shadow: 0 0 12px var(--neon-glow-primary);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  animation: fadeInGlow var(--transition-base) forwards;
+}
+
+@keyframes fadeInGlow {
+  to {
+    opacity: 1;
+  }
+}
+
+.date-range-picker-error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 2px solid var(--color-error);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  animation: pulseError var(--transition-base);
+}
+
+@keyframes pulseError {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  }
+}
+
+/* Mejoras para el botón "Limpiar fechas" */
+.date-range-picker button {
+  transition: all var(--transition-fast), box-shadow var(--transition-glow);
+}
+
+.date-range-picker button:hover {
+  box-shadow: var(--shadow-neon-sm);
+}
+
+@media (max-width: 768px) {
+  .date-range-picker-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .date-range-picker {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Respetar preferencia de animación reducida */
+@media (prefers-reduced-motion: reduce) {
+  .date-range-picker-inputs:has(input:focus)::before {
+    animation: none;
+    opacity: 0.5;
+  }
+  
+  .date-range-picker-error {
+    animation: none;
+  }
+}

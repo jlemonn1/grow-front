@@ -1,0 +1,242 @@
+.config-page {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.config-page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.config-color-selector {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.config-color-input {
+  width: 60px;
+  height: 40px;
+  border: var(--border-led-width) solid var(--border-led-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  box-shadow: var(--shadow-neon-sm);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  position: relative;
+}
+
+.config-color-input:hover {
+  box-shadow: var(--shadow-neon-md);
+  border-color: var(--neon-primary);
+  transform: scale(1.05);
+}
+
+.config-color-input:focus {
+  outline: none;
+  box-shadow: var(--shadow-neon-md);
+  border-color: var(--neon-primary);
+}
+
+.config-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.config-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+}
+
+.config-color-info {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.config-color-preview {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
+  border-radius: var(--border-radius);
+  border: var(--border-led-width) solid var(--border-color);
+  box-shadow: var(--shadow-neon-sm);
+  position: relative;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.config-color-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.6;
+}
+
+.config-color-preview h4 {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.config-color-swatches {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.config-color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.config-color-swatch-color {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border-radius);
+  border: var(--border-led-width) solid var(--border-color);
+  box-shadow: var(--shadow-neon-sm);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.config-color-swatch-color:hover {
+  box-shadow: var(--shadow-neon-md);
+  border-color: var(--border-led-color);
+  transform: scale(1.1);
+}
+
+.config-color-swatch-color::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: var(--border-radius);
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    var(--border-led-color),
+    var(--neon-primary),
+    var(--border-led-color)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.config-color-swatch-color:hover::after {
+  opacity: 0.6;
+}
+
+.config-color-swatch span {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.config-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.config-toggle-button {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  background-color: var(--color-secondary);
+  border-radius: 14px;
+  border: var(--border-led-width) solid var(--border-color);
+  cursor: pointer;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  padding: 0;
+  box-shadow: 0 0 2px transparent;
+}
+
+.config-toggle-button:hover {
+  border-color: var(--border-led-color);
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.config-toggle-button.active {
+  background-color: var(--color-primary);
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+.config-toggle-button.active:hover {
+  box-shadow: var(--shadow-neon-md);
+}
+
+.config-toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform var(--transition-base), box-shadow var(--transition-glow);
+  box-shadow: var(--shadow-sm);
+}
+
+.config-toggle-button.active .config-toggle-slider {
+  transform: translateX(22px);
+  box-shadow: 0 0 8px var(--neon-glow-primary), var(--shadow-sm);
+  animation: sliderGlow 2s ease-in-out infinite;
+}
+
+@keyframes sliderGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--neon-glow-primary), var(--shadow-sm);
+  }
+  50% {
+    box-shadow: 0 0 12px var(--neon-glow-primary), 0 0 16px var(--neon-glow-secondary), var(--shadow-sm);
+  }
+}
+
+.config-toggle-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.config-toggle-description {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.config-actions {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
