@@ -1,6 +1,9 @@
 import type { ApiError, ApiResponse, ValidationError } from '@/types/api';
 
-const BASE_URL = 'http://localhost:8080/api/v1';
+// Obtener la URL base de la API desde variables de entorno
+// En desarrollo: VITE_API_URL o por defecto localhost:8080
+// En producción: se debe configurar en Vercel como variable de entorno
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 /**
  * Obtiene el token JWT del localStorage
