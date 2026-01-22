@@ -346,6 +346,13 @@
   font-weight: 500;
 }
 
+/* Prevenir zoom automático en móviles iOS - font-size mínimo 16px */
+@media screen and (max-width: 768px) {
+  .ticket-item-row-input .form-input {
+    font-size: 16px !important;
+  }
+}
+
 .ticket-item-row-input-separator {
   font-size: 18px;
   color: var(--text-secondary);

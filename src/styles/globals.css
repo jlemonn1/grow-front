@@ -232,7 +232,10 @@ select {
 }
 
 /* Prevenir zoom automático en móviles (iOS Safari hace zoom si font-size < 16px) */
+/* Regla universal para TODOS los inputs en móviles - DEBE ser la última regla */
 @media screen and (max-width: 768px) {
+  /* Todos los tipos de input - regla más específica posible */
+  input,
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -246,6 +249,7 @@ select {
   textarea,
   select {
     font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
   }
   
   /* Asegurar que los inputs dentro de componentes también tengan 16px */
@@ -254,8 +258,33 @@ select {
   .form-select,
   input.form-input,
   textarea.form-textarea,
-  select.form-select {
+  select.form-select,
+  .global-search-modal-input .form-input,
+  .global-search-modal-input input,
+  .ticket-item-row-input .form-input,
+  .ticket-item-row-input input,
+  .dispense-input-field input,
+  .dispense-number-input input,
+  .dispense-field-layout input {
     font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+  
+  /* Capturar cualquier input con clases específicas */
+  [class*="input"] input,
+  [class*="Input"] input,
+  [class*="Input"] input[type="text"],
+  [class*="Input"] input[type="number"] {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+  
+  /* Regla catch-all para cualquier input que pueda haber quedado fuera */
+  * input,
+  * textarea,
+  * select {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
   }
 }
 

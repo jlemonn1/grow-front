@@ -191,6 +191,13 @@
   border: var(--border-led-width) solid var(--border-led-color);
 }
 
+/* Prevenir zoom automático en móviles iOS - font-size mínimo 16px */
+@media screen and (max-width: 768px) {
+  .global-search-modal-input :global(.form-input) {
+    font-size: 16px !important;
+  }
+}
+
 .global-search-modal-hint {
   position: absolute;
   top: calc(100% + var(--spacing-xs));
