@@ -541,6 +541,14 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
         updateProductStock(item.productId, newStock);
       });
 
+      // Resetear el ticket primero
+      reset();
+      
+      // Limpiar estados locales antes de cerrar
+      setSelectedProduct(null);
+      setGramsToAdd(0);
+      setShowAddMore(false);
+
       showToast('Venta completada exitosamente', 'success');
       onClose();
     } catch (error) {
