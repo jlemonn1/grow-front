@@ -6,7 +6,8 @@ import { useConfig } from '@/context/config.context';
 import { useAuth } from '@/context/auth.context';
 import { AdminPermission } from '@/types/models';
 import { buildResourceUrl } from '@/utils/apiUrl';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { triggerCompleteReset } from '@/services/panic.service';
 import './SideNav.css';
 
 interface SideNavProps {
@@ -21,6 +22,11 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
   const { config } = useConfig();
   const { currentUser, logout, hasPermission } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Estados para el easter egg de reset completo
+  const [configClickCount, setConfigClickCount] = useState(0);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Detectar si estamos en móvil
   useEffect(() => {
@@ -83,6 +89,85 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
     }
   };
 
+  // Manejar clics en el botón de configuración para el easter egg
+  const handleConfigClick = (e: React.MouseEvent) => {
+    // Solo activar el easter egg si el usuario está autenticado
+    if (!currentUser) {
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    const newCount = configClickCount + 1;
+    setConfigClickCount(newCount);
+
+    // Si llegamos a 3 clics, mostrar confirmación
+    if (newCount === 3) {
+      const confirmed = window.confirm(
+        '⚠️ RESET COMPLETO ⚠️\n\n' +
+        'Estás a punto de ejecutar un reset completo de la base de datos.\n\n' +
+        'Esto borrará ABSOLUTAMENTE TODO incluyendo:\n' +
+        '- Todas las ventas\n' +
+        '- Todos los productos\n' +
+        '- Todos los clientes\n' +
+        '- Todos los administradores\n' +
+        '- Toda la configuración\n\n' +
+        'Esta operación es IRREVERSIBLE.\n\n' +
+        '¿Estás seguro de que quieres continuar?'
+      );
+
+      if (confirmed) {
+        executeCompleteReset();
+      } else {
+        // Resetear contador si cancela
+        setConfigClickCount(0);
+      }
+    } else {
+      // Resetear contador después de 2 segundos sin actividad
+      clickTimeoutRef.current = setTimeout(() => {
+        setConfigClickCount(0);
+      }, 2000);
+    }
+  };
+
+  // Ejecutar el reset completo
+  const executeCompleteReset = async () => {
+    if (isResetting) return;
+
+    setIsResetting(true);
+    setConfigClickCount(0);
+
+    try {
+      showToast('Ejecutando reset completo...', 'info');
+      await triggerCompleteReset();
+      
+      showToast('Reset completo ejecutado exitosamente', 'success');
+      
+      // Esperar un momento antes de hacer logout
+      setTimeout(() => {
+        logout();
+        navigate('/login', { replace: true });
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error al ejecutar reset completo:', error);
+      const errorMessage = error?.message || 'Error al ejecutar reset completo';
+      showToast(errorMessage, 'error');
+      setIsResetting(false);
+    }
+  };
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <nav 
       className={`side-nav ${isOpen ? 'open' : ''}`}
@@ -118,20 +203,30 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
         </Link>
       </div>
       <ul className="side-nav-list">
-        {navItems.map((item) => (
-          <li key={item.path}>
-            <NavLink
-              to={item.path}
-              className={({ isActive }) =>
-                `side-nav-link ${isActive ? 'side-nav-link-active' : ''}`
+        {navItems.map((item) => {
+          // Manejar clics especiales para el botón de configuración
+          const handleClick = item.path === '/config' 
+            ? (e: React.MouseEvent) => {
+                handleConfigClick(e);
+                handleNavClick();
               }
-              onClick={handleNavClick}
-            >
-              <span className="side-nav-icon" aria-hidden="true">{item.icon}</span>
-              <span className="side-nav-label">{item.label}</span>
-            </NavLink>
-          </li>
-        ))}
+            : handleNavClick;
+
+          return (
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `side-nav-link ${isActive ? 'side-nav-link-active' : ''}`
+                }
+                onClick={handleClick}
+              >
+                <span className="side-nav-icon" aria-hidden="true">{item.icon}</span>
+                <span className="side-nav-label">{item.label}</span>
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
       <div className="side-nav-footer">
         <button
