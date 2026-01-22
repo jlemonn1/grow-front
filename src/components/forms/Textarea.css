@@ -39,6 +39,13 @@
   font-family: inherit;
 }
 
+/* Prevenir zoom automático en móviles iOS - font-size mínimo 16px */
+@media screen and (max-width: 768px) {
+  .form-textarea {
+    font-size: 16px !important;
+  }
+}
+
 .form-textarea::placeholder {
   color: var(--text-secondary);
   opacity: 0.5;

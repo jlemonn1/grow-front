@@ -231,6 +231,34 @@ select {
   font-size: inherit;
 }
 
+/* Prevenir zoom automático en móviles (iOS Safari hace zoom si font-size < 16px) */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Asegurar que los inputs dentro de componentes también tengan 16px */
+  .form-input,
+  .form-textarea,
+  .form-select,
+  input.form-input,
+  textarea.form-textarea,
+  select.form-select {
+    font-size: 16px !important;
+  }
+}
+
 /* Utilidades */
 .sr-only {
   position: absolute;

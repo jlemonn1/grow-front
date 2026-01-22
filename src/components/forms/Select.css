@@ -33,6 +33,13 @@
   appearance: none;
 }
 
+/* Prevenir zoom automático en móviles iOS - font-size mínimo 16px */
+@media screen and (max-width: 768px) {
+  .select {
+    font-size: 16px !important;
+  }
+}
+
 .select:focus {
   outline: none;
   border-color: var(--border-led-color);

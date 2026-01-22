@@ -37,6 +37,13 @@
   position: relative;
 }
 
+/* Prevenir zoom automático en móviles iOS - font-size mínimo 16px */
+@media screen and (max-width: 768px) {
+  .form-input {
+    font-size: 16px !important;
+  }
+}
+
 .form-input::placeholder {
   color: var(--text-secondary);
   opacity: 0.5;
