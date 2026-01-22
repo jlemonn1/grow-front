@@ -12,11 +12,13 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 2000;
   padding: var(--spacing-md);
+  padding-top: var(--spacing-xl);
   animation: fadeIn var(--transition-base);
+  overflow-y: auto;
 }
 
 /* Efecto de scan lines sutil */
@@ -62,6 +64,7 @@
   animation: slideUpGlow var(--transition-base);
   position: relative;
   z-index: 1;
+  margin-top: 0;
 }
 
 .global-search-modal-header {
@@ -373,11 +376,26 @@
 @media (max-width: 768px) {
   .global-search-modal-content {
     max-width: 100%;
-    max-height: 100vh;
+    max-height: calc(100vh - env(keyboard-inset-height, 0px) - var(--spacing-xl));
     border-radius: 0;
+    margin-top: 0;
   }
 
   .global-search-modal-overlay {
     padding: 0;
+    padding-top: var(--spacing-lg);
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+  
+  /* Asegurar que el modal esté visible cuando aparece el teclado */
+  @supports (height: 100dvh) {
+    .global-search-modal-overlay {
+      height: 100dvh;
+    }
+    
+    .global-search-modal-content {
+      max-height: calc(100dvh - env(keyboard-inset-height, 0px) - var(--spacing-lg));
+    }
   }
 }
