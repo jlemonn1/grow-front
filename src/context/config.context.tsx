@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { configService, type GrowConfiguration, type UpdateGrowConfigurationRequest } from '@/services/config.service';
 import { generateColorPalette, applyColorSystem } from '@/utils/colorSystem';
+import { hasToken } from '@/services/auth.service';
 
 interface ConfigContextValue {
   config: GrowConfiguration | null;
@@ -54,6 +55,13 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(getInitialTheme);
 
   const loadConfiguration = useCallback(async () => {
+    // Solo cargar configuración si hay token
+    if (!hasToken()) {
+      setLoading(false);
+      setConfig(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -132,10 +140,52 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     }
   }, [config?.primaryColor]);
 
-  // Cargar configuración al montar
+  // Cargar configuración al montar solo si hay token
   useEffect(() => {
-    loadConfiguration();
+    if (hasToken()) {
+      loadConfiguration();
+    } else {
+      setLoading(false);
+      setConfig(null);
+    }
   }, [loadConfiguration]);
+
+  // Escuchar cambios en el token (cuando se hace login/logout)
+  // Solo verificar cuando no hay config cargada pero podría haber token
+  useEffect(() => {
+    // Si ya hay config cargada, no necesitamos verificar cambios en el token
+    if (config) return;
+
+    const checkTokenAndLoad = () => {
+      if (hasToken()) {
+        // Si hay token y no hay config cargada, cargar configuración
+        loadConfiguration();
+      } else {
+        // Si no hay token, asegurar que loading esté en false
+        setLoading(false);
+      }
+    };
+
+    // Verificar periódicamente si cambió el token (solo cuando no hay config)
+    // Esto es necesario porque localStorage no dispara eventos en la misma pestaña
+    // Usamos un intervalo más largo para no ser demasiado agresivo
+    const interval = setInterval(() => {
+      checkTokenAndLoad();
+    }, 2000);
+
+    // También escuchar eventos de storage (para cambios desde otras pestañas)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token') {
+        checkTokenAndLoad();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [config, loadConfiguration]);
 
   // Escuchar cambios del tema del sistema
   useEffect(() => {
@@ -153,10 +203,21 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   }, []);
 
   // Función para determinar si se necesita onboarding
+  // Solo se evalúa si hay token (usuario autenticado)
   const needsOnboarding = useCallback((): boolean => {
+    // Si no hay token, no se necesita onboarding
+    if (!hasToken()) return false;
+    
+    // Si está cargando o no hay configuración, no se necesita onboarding aún
     if (!config || loading) return false;
-    // Onboarding necesario si tiene valores por defecto
-    return config.growName === 'Growshop' && config.logoUrl === null;
+    
+    // Onboarding necesario si:
+    // - Logo vacío (null) O
+    // - Nombre vacío O nombre es "Growshop"
+    const hasEmptyLogo = config.logoUrl === null;
+    const hasEmptyOrDefaultName = !config.growName || config.growName.trim() === '' || config.growName === 'Growshop';
+    
+    return hasEmptyLogo || hasEmptyOrDefaultName;
   }, [config, loading]);
 
   const value: ConfigContextValue = {

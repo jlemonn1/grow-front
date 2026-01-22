@@ -4,6 +4,7 @@ import { login, hasToken } from '@/services/auth.service';
 import { useUI } from '@/context/ui.context';
 import { useAuth } from '@/context/auth.context';
 import { useVisitor } from '@/context/visitor.context';
+import { useConfig } from '@/context/config.context';
 import { RegisterMainAdminModal } from '@/components/auth/RegisterMainAdminModal';
 import './LoginPage.css';
 
@@ -16,6 +17,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { refreshUser } = useAuth();
+  const { refreshConfiguration } = useConfig();
   const { activateVisitorMode, deactivateVisitorMode } = useVisitor();
   const clickCountRef = useRef(0);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,6 +38,8 @@ export function LoginPage() {
       // Desactivar modo visitante al iniciar sesión exitosamente
       deactivateVisitorMode();
       await refreshUser();
+      // Recargar configuración después del login para verificar si necesita onboarding
+      await refreshConfiguration();
       showToast('Sesión iniciada correctamente', 'success');
       navigate('/home', { replace: true });
     } catch (err: any) {
@@ -56,6 +60,8 @@ export function LoginPage() {
     // Desactivar modo visitante al registrar admin principal
     deactivateVisitorMode();
     await refreshUser();
+    // Recargar configuración después del registro para verificar si necesita onboarding
+    await refreshConfiguration();
     setShowRegisterModal(false);
     // Después del registro, redirigir al onboarding
     navigate('/onboarding', { replace: true });
