@@ -18,12 +18,13 @@ import { listCategories, createCategory } from '@/services/categories.service';
 import type { CreateCustomerRequest, CreateProductRequest, CreateSaleRequest } from '@/types/models';
 import { useAuth } from '@/context/auth.context';
 import { registerMainAdmin, hasToken } from '@/services/auth.service';
+import { triggerCompleteReset } from '@/services/panic.service';
 import './ConfigPage.css';
 
 export function ConfigPage() {
   const { config, loading, updateConfiguration, refreshConfiguration } = useConfig();
   const { showToast } = useUI();
-  const { currentAdmin, refreshUser } = useAuth();
+  const { currentAdmin, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   
   // Estados para el formulario de registro del admin principal
@@ -50,11 +51,16 @@ export function ConfigPage() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoadRef = useRef(true);
   
-  // Estados para el easter egg (solo para admin principal)
+  // Estados para el easter egg de datos de prueba (solo para admin principal)
   const [clickCount, setClickCount] = useState(0);
   const [scrollListenerActive, setScrollListenerActive] = useState(false);
   const [loadingTestData, setLoadingTestData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  
+  // Estados para el easter egg de reset completo (secuencia de colores)
+  const [colorSequence, setColorSequence] = useState<string[]>([]);
+  const sequenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Detectar si se requiere registro del admin principal
   useEffect(() => {
@@ -453,6 +459,105 @@ export function ConfigPage() {
   // Generar paleta de colores para previsualización
   const colorPalette = generateColorPalette(formData.primaryColor);
 
+  // Ejecutar el reset completo
+  const executeCompleteReset = useCallback(async () => {
+    if (isResetting) return;
+
+    setIsResetting(true);
+    setColorSequence([]);
+
+    try {
+      showToast('Ejecutando reset completo...', 'info');
+      await triggerCompleteReset();
+      
+      showToast('Reset completo ejecutado exitosamente', 'success');
+      
+      // Esperar un momento antes de hacer logout
+      setTimeout(() => {
+        logout();
+        navigate('/login', { replace: true });
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error al ejecutar reset completo:', error);
+      const errorMessage = error?.message || 'Error al ejecutar reset completo';
+      showToast(errorMessage, 'error');
+      setIsResetting(false);
+    }
+  }, [isResetting, showToast, logout, navigate]);
+
+  // Manejar clic en swatch de color para el easter egg
+  const handleColorSwatchClick = useCallback((colorType: 'primary' | 'primaryLight' | 'primaryDark') => {
+    // Solo activar el easter egg si el usuario está autenticado
+    if (!currentAdmin) {
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    if (sequenceTimeoutRef.current) {
+      clearTimeout(sequenceTimeoutRef.current);
+    }
+
+    const newSequence = [...colorSequence, colorType];
+    setColorSequence(newSequence);
+
+    // Secuencia esperada: principal → claro → oscuro → oscuro → claro → principal
+    const expectedSequence = ['primary', 'primaryLight', 'primaryDark', 'primaryDark', 'primaryLight', 'primary'];
+    
+    // Verificar si la secuencia coincide
+    if (newSequence.length === expectedSequence.length) {
+      const matches = newSequence.every((val, idx) => val === expectedSequence[idx]);
+      
+      if (matches) {
+        // Secuencia completa, mostrar confirmación
+        const confirmed = window.confirm(
+          '⚠️ RESET COMPLETO ⚠️\n\n' +
+          'Estás a punto de ejecutar un reset completo de la base de datos.\n\n' +
+          'Esto borrará ABSOLUTAMENTE TODO incluyendo:\n' +
+          '- Todas las ventas\n' +
+          '- Todos los productos\n' +
+          '- Todos los clientes\n' +
+          '- Todos los administradores\n' +
+          '- Toda la configuración\n\n' +
+          'Esta operación es IRREVERSIBLE.\n\n' +
+          '¿Estás seguro de que quieres continuar?'
+        );
+
+        if (confirmed) {
+          executeCompleteReset();
+        } else {
+          setColorSequence([]);
+        }
+      } else {
+        // Secuencia incorrecta, resetear
+        setColorSequence([]);
+      }
+    } else if (newSequence.length > expectedSequence.length) {
+      // Secuencia demasiado larga, resetear
+      setColorSequence([]);
+    } else {
+      // Verificar si la secuencia parcial coincide
+      const partialMatches = newSequence.every((val, idx) => val === expectedSequence[idx]);
+      if (!partialMatches) {
+        // Secuencia incorrecta, resetear
+        setColorSequence([]);
+      } else {
+        // Resetear contador después de 3 segundos sin actividad
+        sequenceTimeoutRef.current = setTimeout(() => {
+          setColorSequence([]);
+        }, 3000);
+      }
+    }
+  }, [currentAdmin, colorSequence, colorPalette, executeCompleteReset]);
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (sequenceTimeoutRef.current) {
+        clearTimeout(sequenceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Mostrar formulario de registro si se requiere (no esperar a que termine de cargar si no hay token)
   // Si no hay token, mostrar inmediatamente sin esperar a que termine de cargar
   if (!hasToken()) {
@@ -710,13 +815,6 @@ export function ConfigPage() {
     <div className="config-page">
       <PageHeader title="Configuración" isSaving={isSaving} />
       
-      {/* Indicador visual del easter egg (luz roja discreta) */}
-      {currentAdmin?.isMainAdmin && clickCount >= 3 && !dataLoaded && (
-        <div className="easter-egg-indicator" title="Easter egg activado - Haz un cuarto clic en el título para cargar datos de prueba">
-          <div className="easter-egg-light"></div>
-        </div>
-      )}
-      
       <div>
         <FormCard>
           <FormSection title="Identidad">
@@ -768,21 +866,36 @@ export function ConfigPage() {
               <div className="config-color-preview">
                 <h4>Vista previa de colores generados:</h4>
                 <div className="config-color-swatches">
-                  <div className="config-color-swatch">
+                  <div 
+                    className="config-color-swatch"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleColorSwatchClick('primary')}
+                    title="Principal"
+                  >
                     <div 
                       className="config-color-swatch-color" 
                       style={{ backgroundColor: colorPalette.primary }}
                     />
                     <span>Principal</span>
                   </div>
-                  <div className="config-color-swatch">
+                  <div 
+                    className="config-color-swatch"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleColorSwatchClick('primaryLight')}
+                    title="Claro"
+                  >
                     <div 
                       className="config-color-swatch-color" 
                       style={{ backgroundColor: colorPalette.primaryLight }}
                     />
                     <span>Claro</span>
                   </div>
-                  <div className="config-color-swatch">
+                  <div 
+                    className="config-color-swatch"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleColorSwatchClick('primaryDark')}
+                    title="Oscuro"
+                  >
                     <div 
                       className="config-color-swatch-color" 
                       style={{ backgroundColor: colorPalette.primaryDark }}
