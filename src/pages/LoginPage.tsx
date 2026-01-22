@@ -1,8 +1,9 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, hasToken } from '@/services/auth.service';
 import { useUI } from '@/context/ui.context';
 import { useAuth } from '@/context/auth.context';
+import { useVisitor } from '@/context/visitor.context';
 import { RegisterMainAdminModal } from '@/components/auth/RegisterMainAdminModal';
 import './LoginPage.css';
 
@@ -15,6 +16,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { refreshUser } = useAuth();
+  const { activateVisitorMode, deactivateVisitorMode } = useVisitor();
+  const clickCountRef = useRef(0);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Si ya está autenticado, redirigir
   if (hasToken()) {
@@ -29,6 +33,8 @@ export function LoginPage() {
 
     try {
       await login(username, password);
+      // Desactivar modo visitante al iniciar sesión exitosamente
+      deactivateVisitorMode();
       await refreshUser();
       showToast('Sesión iniciada correctamente', 'success');
       navigate('/home', { replace: true });
@@ -47,15 +53,40 @@ export function LoginPage() {
   };
 
   const handleRegisterSuccess = async () => {
+    // Desactivar modo visitante al registrar admin principal
+    deactivateVisitorMode();
     await refreshUser();
     setShowRegisterModal(false);
-    navigate('/home', { replace: true });
+    // Después del registro, redirigir al onboarding
+    navigate('/onboarding', { replace: true });
+  };
+
+  const handleLoginHeaderClick = () => {
+    // Limpiar timeout anterior si existe
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    // Incrementar contador
+    clickCountRef.current += 1;
+
+    // Si llegamos a 3 clics, activar modo visitante
+    if (clickCountRef.current >= 3) {
+      activateVisitorMode();
+      navigate('/home', { replace: true });
+      clickCountRef.current = 0;
+    } else {
+      // Resetear contador después de 1 segundo sin clics
+      clickTimeoutRef.current = setTimeout(() => {
+        clickCountRef.current = 0;
+      }, 1000);
+    }
   };
 
   return (
     <div className="login-page">
       <div className="login-container">
-        <div className="login-header">
+        <div className="login-header" onClick={handleLoginHeaderClick} style={{ cursor: 'pointer' }}>
           <h1>Growshop</h1>
           <p>Inicia sesión para continuar</p>
         </div>

@@ -1,0 +1,16 @@
+.dispense-number-input {
+  width: 100%;
+}
+
+.dispense-number-input .form-field {
+  margin-bottom: 0;
+}
+
+.dispense-number-input .form-label {
+  display: none;
+}
+
+.dispense-number-input input {
+  height: 32px;
+  box-sizing: border-box;
+}

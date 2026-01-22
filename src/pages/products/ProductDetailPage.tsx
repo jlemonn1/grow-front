@@ -18,10 +18,12 @@ import { ProductImage } from '@/components/common/ProductImage';
 import { ConfirmUnsavedChangesModal } from '@/components/common/ConfirmUnsavedChangesModal';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { useUI } from '@/context/ui.context';
+import { useAuth } from '@/context/auth.context';
 import { useProducts } from '@/context/products.context';
 import { getStockMovements } from '@/services/stock.service';
 import { listCategories } from '@/services/categories.service';
 import { deleteProduct } from '@/services/products.service';
+import { AdminPermission } from '@/types/models';
 import type { Product, StockMovement, Category, UpdateProductRequest } from '@/types/models';
 import type { ValidationError, PageResponse } from '@/types/api';
 import { formatMoney } from '@/utils/money';
@@ -32,6 +34,7 @@ export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useUI();
+  const { hasPermission } = useAuth();
   const { getProductById, updateProduct } = useProducts();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -147,6 +150,9 @@ export function ProductDetailPage() {
       pricePerGram: product.pricePerGram,
       description: product.description || '',
       imageUrl: product.imageUrl,
+      onSale: product.onSale || false,
+      salePricePerGram: product.salePricePerGram,
+      saleDiscountPercent: product.saleDiscountPercent,
     });
     setIsEditing(true);
     setErrors({});
@@ -161,6 +167,9 @@ export function ProductDetailPage() {
       pricePerGram: product.pricePerGram,
       description: product.description || '',
       imageUrl: product.imageUrl,
+      onSale: product.onSale || false,
+      salePricePerGram: product.salePricePerGram,
+      saleDiscountPercent: product.saleDiscountPercent,
     });
     setErrors({});
   };
@@ -176,6 +185,9 @@ export function ProductDetailPage() {
     }
     if (editData.pricePerGram !== undefined && editData.pricePerGram <= 0) {
       newErrors.pricePerGram = 'El precio debe ser mayor a 0';
+    }
+    if (editData.onSale && editData.salePricePerGram !== undefined && editData.salePricePerGram <= 0) {
+      newErrors.salePricePerGram = 'El precio de oferta debe ser mayor a 0';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -196,6 +208,15 @@ export function ProductDetailPage() {
       }
       if (editData.imageUrl !== undefined && editData.imageUrl !== product.imageUrl) {
         updateData.imageUrl = editData.imageUrl;
+      }
+      if (editData.onSale !== (product.onSale || false)) {
+        updateData.onSale = editData.onSale;
+      }
+      if (editData.salePricePerGram !== (product.salePricePerGram || undefined)) {
+        updateData.salePricePerGram = editData.salePricePerGram;
+      }
+      if (editData.saleDiscountPercent !== (product.saleDiscountPercent || undefined)) {
+        updateData.saleDiscountPercent = editData.saleDiscountPercent;
       }
 
       const updatedProduct = await updateProduct(id, updateData);
@@ -276,7 +297,10 @@ export function ProductDetailPage() {
       (editData.categoryId !== undefined && editData.categoryId !== product.category.id) ||
       (editData.pricePerGram !== undefined && editData.pricePerGram !== product.pricePerGram) ||
       (editData.description !== undefined && editData.description !== (product.description || '')) ||
-      (editData.imageUrl !== undefined && editData.imageUrl !== product.imageUrl)
+      (editData.imageUrl !== undefined && editData.imageUrl !== product.imageUrl) ||
+      (editData.onSale !== undefined && editData.onSale !== (product.onSale || false)) ||
+      (editData.salePricePerGram !== undefined && editData.salePricePerGram !== (product.salePricePerGram || undefined)) ||
+      (editData.saleDiscountPercent !== undefined && editData.saleDiscountPercent !== (product.saleDiscountPercent || undefined))
     );
   }, [isEditing, editData, product]);
 
@@ -302,6 +326,9 @@ export function ProductDetailPage() {
     if (!editData.imageUrl || !editData.imageUrl.trim()) {
       newErrors.imageUrl = 'La imagen es obligatoria';
     }
+    if (editData.onSale && editData.salePricePerGram !== undefined && editData.salePricePerGram <= 0) {
+      newErrors.salePricePerGram = 'El precio de oferta debe ser mayor a 0';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -323,6 +350,15 @@ export function ProductDetailPage() {
       if (editData.imageUrl !== undefined && editData.imageUrl !== product.imageUrl) {
         updateData.imageUrl = editData.imageUrl;
       }
+      if (editData.onSale !== undefined && editData.onSale !== (product.onSale || false)) {
+        updateData.onSale = editData.onSale;
+      }
+      if (editData.salePricePerGram !== undefined && editData.salePricePerGram !== (product.salePricePerGram || undefined)) {
+        updateData.salePricePerGram = editData.salePricePerGram;
+      }
+      if (editData.saleDiscountPercent !== undefined && editData.saleDiscountPercent !== (product.saleDiscountPercent || undefined)) {
+        updateData.saleDiscountPercent = editData.saleDiscountPercent;
+      }
 
       const updatedProduct = await updateProduct(id, updateData);
       // Actualizar editData con los valores del producto actualizado
@@ -332,6 +368,9 @@ export function ProductDetailPage() {
         pricePerGram: updatedProduct.pricePerGram,
         description: updatedProduct.description || '',
         imageUrl: updatedProduct.imageUrl,
+        onSale: updatedProduct.onSale || false,
+        salePricePerGram: updatedProduct.salePricePerGram,
+        saleDiscountPercent: updatedProduct.saleDiscountPercent,
       });
       setProduct(updatedProduct);
       showToast('Producto actualizado exitosamente', 'success');
@@ -423,7 +462,7 @@ export function ProductDetailPage() {
         title={product.name}
         onBack={handleBack}
         action={
-          !isEditing
+          !isEditing && hasPermission(AdminPermission.GESTIONAR_PRODUCTOS)
             ? {
                 label: 'Editar',
                 onClick: handleEdit,
@@ -489,6 +528,134 @@ export function ProductDetailPage() {
                       />
                     </div>
                   </div>
+                </FormSection>
+
+                <FormSection
+                  title="Oferta"
+                  description="Marca el producto como en oferta y establece un precio especial (precio fijo o porcentaje)"
+                >
+                  <div className="form-row">
+                    <div className="form-checkbox-container">
+                      <input
+                        type="checkbox"
+                        id="edit-onSale"
+                        checked={editData.onSale || false}
+                        onChange={(e) => {
+                          const onSale = e.target.checked;
+                          setEditData({ 
+                            ...editData, 
+                            onSale,
+                            // Si se desmarca la oferta, limpiar ambos campos
+                            salePricePerGram: onSale ? editData.salePricePerGram : undefined,
+                            saleDiscountPercent: onSale ? editData.saleDiscountPercent : undefined
+                          });
+                        }}
+                        disabled={isSubmitting}
+                        className="form-checkbox"
+                      />
+                      <label htmlFor="edit-onSale" className="form-checkbox-label">
+                        Producto en oferta
+                      </label>
+                    </div>
+                  </div>
+                  {editData.onSale && (
+                    <>
+                      <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                        <Select
+                          id="edit-saleType"
+                          label="Tipo de oferta"
+                          value={
+                            editData.saleDiscountPercent !== undefined && editData.saleDiscountPercent > 0
+                              ? 'percent'
+                              : editData.salePricePerGram !== undefined
+                              ? 'fixed'
+                              : 'percent'
+                          }
+                          onChange={(e) => {
+                            const saleType = e.target.value;
+                            if (saleType === 'percent') {
+                              // Cambiar a porcentaje, limpiar precio fijo
+                              setEditData({ 
+                                ...editData, 
+                                salePricePerGram: undefined,
+                                saleDiscountPercent: editData.saleDiscountPercent || 0
+                              });
+                            } else {
+                              // Cambiar a precio fijo, limpiar porcentaje
+                              setEditData({ 
+                                ...editData, 
+                                salePricePerGram: editData.salePricePerGram || 0,
+                                saleDiscountPercent: undefined
+                              });
+                            }
+                          }}
+                          options={[
+                            { value: 'percent', label: 'Porcentaje de descuento (%)' },
+                            { value: 'fixed', label: 'Precio fijo (€)' },
+                          ]}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      {(editData.saleDiscountPercent !== undefined && editData.saleDiscountPercent > 0) || 
+                       (editData.saleDiscountPercent === undefined && editData.salePricePerGram === undefined) ? (
+                        <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                          <NumberInput
+                            id="edit-saleDiscountPercent"
+                            label="Porcentaje de descuento (%)"
+                            value={editData.saleDiscountPercent !== undefined ? editData.saleDiscountPercent : (product?.saleDiscountPercent || 0)}
+                            onChange={(value) => {
+                              const percent = value;
+                              setEditData({ 
+                                ...editData, 
+                                saleDiscountPercent: percent > 0 ? percent : undefined,
+                                salePricePerGram: undefined // Limpiar precio fijo cuando se usa porcentaje
+                              });
+                            }}
+                            error={errors.saleDiscountPercent}
+                            min={0}
+                            max={100}
+                            step={1}
+                            disabled={isSubmitting}
+                            placeholder="Ej: 20"
+                          />
+                          {editData.saleDiscountPercent !== undefined && editData.saleDiscountPercent > 0 && editData.pricePerGram && (
+                            <div style={{ 
+                              padding: 'var(--spacing-sm)', 
+                              background: 'var(--bg-tertiary)', 
+                              borderRadius: 'var(--border-radius-sm)',
+                              fontSize: 'var(--font-size-sm)',
+                              color: 'var(--text-secondary)'
+                            }}>
+                              Precio calculado: {formatMoney(editData.pricePerGram * (1 - editData.saleDiscountPercent / 100))}/g
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                          <div className="form-field-with-icon">
+                            <HiOutlineCurrencyEuro className="form-field-icon" />
+                            <NumberInput
+                              id="edit-salePrice"
+                              label="Precio de oferta por gramo (€)"
+                              value={editData.salePricePerGram !== undefined ? editData.salePricePerGram : (product?.salePricePerGram || 0)}
+                              onChange={(value) => {
+                                setEditData({ 
+                                  ...editData, 
+                                  salePricePerGram: value > 0 ? value : undefined,
+                                  saleDiscountPercent: undefined // Limpiar porcentaje cuando se usa precio fijo
+                                });
+                              }}
+                              error={errors.salePricePerGram}
+                              min={0}
+                              step={0.01}
+                              disabled={isSubmitting}
+                              placeholder="Precio especial en oferta"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </FormSection>
 
                 <FormSection
@@ -585,15 +752,21 @@ export function ProductDetailPage() {
                 </FormSection>
 
                 <div className="product-actions">
-                  <Button variant="primary" onClick={() => setShowRechargeModal(true)}>
-                    Recargar Stock
-                  </Button>
-                  <Button variant="secondary" onClick={handleEdit}>
-                    Editar
-                  </Button>
-                  <Button variant="danger" onClick={handleDelete}>
-                    Eliminar
-                  </Button>
+                  {hasPermission(AdminPermission.GESTIONAR_STOCK) && (
+                    <Button variant="primary" onClick={() => setShowRechargeModal(true)}>
+                      Recargar Stock
+                    </Button>
+                  )}
+                  {hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) && (
+                    <>
+                      <Button variant="secondary" onClick={handleEdit}>
+                        Editar
+                      </Button>
+                      <Button variant="danger" onClick={handleDelete}>
+                        Eliminar
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </FormCard>

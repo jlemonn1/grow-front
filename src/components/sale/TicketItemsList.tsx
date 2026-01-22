@@ -7,6 +7,7 @@ import './TicketItemsList.css';
 interface TicketItemsListProps {
   items: TicketItem[];
   onUpdate: (index: number, grams: number) => void;
+  onUpdateDiscount: (index: number, discount: number | undefined, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | undefined) => void;
   onRemove: (index: number) => void;
   onValidate: (index: number) => void;
   getProductStock: (productId: string, excludeItemIndex?: number) => number;
@@ -15,6 +16,7 @@ interface TicketItemsListProps {
 export function TicketItemsList({
   items,
   onUpdate,
+  onUpdateDiscount,
   onRemove,
   onValidate,
   getProductStock,
@@ -47,6 +49,7 @@ export function TicketItemsList({
             item={item}
             index={index}
             onUpdate={onUpdate}
+            onUpdateDiscount={onUpdateDiscount}
             onRemove={onRemove}
             onValidate={handleValidate}
             availableStock={getProductStock(item.productId, index)}

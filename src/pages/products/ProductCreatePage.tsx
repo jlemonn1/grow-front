@@ -18,6 +18,7 @@ import { useProducts } from '@/context/products.context';
 import { listCategories, createCategory } from '@/services/categories.service';
 import type { Category } from '@/types/models';
 import type { ValidationError, ApiError } from '@/types/api';
+import { formatMoney } from '@/utils/money';
 import './ProductCreatePage.css';
 
 interface FormData {
@@ -27,6 +28,9 @@ interface FormData {
   description: string;
   imageUrl: string;
   initialStockGrams: number;
+  onSale: boolean;
+  salePricePerGram?: number;
+  saleDiscountPercent?: number;
 }
 
 interface FormErrors {
@@ -36,6 +40,8 @@ interface FormErrors {
   description?: string;
   imageUrl?: string;
   initialStockGrams?: string;
+  salePricePerGram?: string;
+  saleDiscountPercent?: string;
 }
 
 export function ProductCreatePage() {
@@ -63,6 +69,8 @@ export function ProductCreatePage() {
     description: '',
     imageUrl: '',
     initialStockGrams: 0,
+    onSale: false,
+    salePricePerGram: undefined,
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -353,6 +361,9 @@ export function ProductCreatePage() {
         description: formData.description.trim() || undefined,
         imageUrl: formData.imageUrl,
         initialStockGrams: formData.initialStockGrams,
+        onSale: formData.onSale || undefined,
+        salePricePerGram: formData.onSale && formData.salePricePerGram ? formData.salePricePerGram : undefined,
+        saleDiscountPercent: formData.onSale && formData.saleDiscountPercent ? formData.saleDiscountPercent : undefined,
       });
 
       showToast('Producto creado exitosamente', 'success');
@@ -492,6 +503,136 @@ export function ProductCreatePage() {
                   />
                 </div>
               </div>
+            </FormSection>
+
+            <FormSection
+              title="Oferta"
+              description="Marca el producto como en oferta y establece un precio especial (precio fijo o porcentaje)"
+            >
+              <div className="form-row">
+                <div className="form-checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="onSale"
+                    checked={formData.onSale}
+                    onChange={(e) => {
+                      const onSale = e.target.checked;
+                      setFormData({ 
+                        ...formData, 
+                        onSale,
+                        // Si se desmarca la oferta, limpiar ambos campos
+                        salePricePerGram: onSale ? formData.salePricePerGram : undefined,
+                        saleDiscountPercent: onSale ? formData.saleDiscountPercent : undefined
+                      });
+                    }}
+                    disabled={isSubmitting}
+                    className="form-checkbox"
+                  />
+                  <label htmlFor="onSale" className="form-checkbox-label">
+                    Producto en oferta
+                  </label>
+                </div>
+              </div>
+              {formData.onSale && (
+                <>
+                  <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                    <Select
+                      id="saleType"
+                      label="Tipo de oferta"
+                      value={
+                        formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0
+                          ? 'percent'
+                          : formData.salePricePerGram !== undefined
+                          ? 'fixed'
+                          : 'percent'
+                      }
+                      onChange={(e) => {
+                        const saleType = e.target.value;
+                        if (saleType === 'percent') {
+                          // Cambiar a porcentaje, limpiar precio fijo
+                          setFormData({ 
+                            ...formData, 
+                            salePricePerGram: undefined,
+                            saleDiscountPercent: formData.saleDiscountPercent || 0
+                          });
+                        } else {
+                          // Cambiar a precio fijo, limpiar porcentaje
+                          setFormData({ 
+                            ...formData, 
+                            salePricePerGram: formData.salePricePerGram || 0,
+                            saleDiscountPercent: undefined
+                          });
+                        }
+                      }}
+                      options={[
+                        { value: 'percent', label: 'Porcentaje de descuento (%)' },
+                        { value: 'fixed', label: 'Precio fijo (€)' },
+                      ]}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  {(formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0) || 
+                   (formData.saleDiscountPercent === undefined && formData.salePricePerGram === undefined) ? (
+                    <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                      <NumberInput
+                        id="saleDiscountPercent"
+                        label="Porcentaje de descuento (%)"
+                        value={formData.saleDiscountPercent || 0}
+                        onChange={(value) => {
+                          const percent = value;
+                          setFormData({ 
+                            ...formData, 
+                            saleDiscountPercent: percent > 0 ? percent : undefined,
+                            salePricePerGram: undefined // Limpiar precio fijo cuando se usa porcentaje
+                          });
+                        }}
+                        onBlur={() => handleBlur('saleDiscountPercent')}
+                        error={errors.saleDiscountPercent}
+                        min={0}
+                        max={100}
+                        step={1}
+                        disabled={isSubmitting}
+                        placeholder="Ej: 20"
+                      />
+                      {formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0 && formData.pricePerGram > 0 && (
+                        <div style={{ 
+                          padding: 'var(--spacing-sm)', 
+                          background: 'var(--bg-tertiary)', 
+                          borderRadius: 'var(--border-radius-sm)',
+                          fontSize: 'var(--font-size-sm)',
+                          color: 'var(--text-secondary)'
+                        }}>
+                          Precio calculado: {formatMoney(formData.pricePerGram * (1 - formData.saleDiscountPercent / 100))}/g
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
+                      <div className="form-field-with-icon">
+                        <HiOutlineCurrencyEuro className="form-field-icon" />
+                        <NumberInput
+                          id="salePricePerGram"
+                          label="Precio de oferta por gramo (€)"
+                          value={formData.salePricePerGram || 0}
+                          onChange={(value) => {
+                            setFormData({ 
+                              ...formData, 
+                              salePricePerGram: value > 0 ? value : undefined,
+                              saleDiscountPercent: undefined // Limpiar porcentaje cuando se usa precio fijo
+                            });
+                          }}
+                          onBlur={() => handleBlur('salePricePerGram')}
+                          error={errors.salePricePerGram}
+                          min={0}
+                          step={0.01}
+                          disabled={isSubmitting}
+                          placeholder="Precio especial en oferta"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </FormSection>
 
             <FormSection

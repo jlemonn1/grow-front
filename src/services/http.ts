@@ -1,9 +1,8 @@
 import type { ApiError, ValidationError } from '@/types/api';
+import { getApiBaseUrl } from '@/utils/apiUrl';
 
 // Obtener la URL base de la API desde variables de entorno
-// En desarrollo: VITE_API_URL o por defecto localhost:8080
-// En producción: se debe configurar en Vercel como variable de entorno
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const BASE_URL = getApiBaseUrl();
 
 /**
  * Obtiene el token JWT del localStorage
@@ -13,16 +12,35 @@ function getToken(): string | null {
 }
 
 /**
+ * Verifica si está en modo visitante
+ */
+function isVisitorMode(): boolean {
+  return localStorage.getItem('growshop_visitor_mode') === 'true';
+}
+
+/**
+ * Verifica si el endpoint es público
+ */
+function isPublicEndpoint(endpoint: string): boolean {
+  return endpoint.startsWith('/public/');
+}
+
+/**
  * Construye los headers para las requests
  */
-function getHeaders(): HeadersInit {
+function getHeaders(endpoint?: string): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  const token = getToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // No incluir token si es endpoint público o si está en modo visitante
+  const shouldIncludeToken = !isPublicEndpoint(endpoint || '') && !isVisitorMode();
+  
+  if (shouldIncludeToken) {
+    const token = getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
   }
 
   return headers;
@@ -153,13 +171,15 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Si el endpoint ya es una URL completa, usarla tal cual
+  // Si no, construirla con BASE_URL
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
 
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
-        ...getHeaders(),
+        ...getHeaders(endpoint),
         ...options.headers,
       },
     });

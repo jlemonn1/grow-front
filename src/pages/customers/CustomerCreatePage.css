@@ -55,6 +55,21 @@
   padding-top: var(--spacing-sm);
 }
 
+.form-field-with-icon .select-wrapper {
+  position: relative;
+}
+
+.form-field-with-icon .select-wrapper .select {
+  padding-left: calc(var(--spacing-md) + 28px);
+}
+
+/* Ajustar posición del icono cuando está seguido de un Select */
+/* El icono debe estar alineado con el elemento select, no con el label */
+/* Cálculo: label height (14px) + gap (4px) + select padding-top (8px) + mitad del texto del select (8px) = 34px */
+.form-field-with-select > .form-field-icon:first-child {
+  top: 34px;
+}
+
 .customer-create-actions {
   display: flex;
   gap: var(--spacing-md);

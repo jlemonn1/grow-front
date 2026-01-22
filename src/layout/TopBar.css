@@ -110,9 +110,17 @@
   border-radius: var(--border-radius-sm);
 }
 
-.top-bar-logo-emoji {
-  font-size: 24px;
-  line-height: 1;
+.top-bar-logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 4px var(--neon-glow-primary));
+}
+
+.top-bar-logo-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .top-bar-logo-text {
@@ -170,6 +178,15 @@
   font-size: 16px;
   line-height: 1;
   filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd700;
+}
+
+.top-bar-admin-badge svg {
+  width: 16px;
+  height: 16px;
 }
 
 .top-bar-logout {

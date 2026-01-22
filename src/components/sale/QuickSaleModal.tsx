@@ -2,17 +2,21 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { HiX, HiOutlinePlus } from 'react-icons/hi';
 import { CustomerPicker } from './CustomerPicker';
 import { ProductPicker } from './ProductPicker';
+import { ProductDispenseInput } from './ProductDispenseInput';
 import { CashBillButtons } from './CashBillButtons';
+import { DraftRecoveryModal } from './DraftRecoveryModal';
 import { ProductImage } from '@/components/common/ProductImage';
 import { Button } from '@/components/common/Button';
 import { NumberInput } from '@/components/forms/NumberInput';
 import { useTicket } from '@/hooks/useTicket';
+import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
-import { createSale } from '@/services/sales.service';
+import { createSale, getSaleDraft, deleteSaleDraft } from '@/services/sales.service';
+import { customersService } from '@/services/customers.service';
 import { getTopProductsByMovements, type TopProduct } from '@/services/products.service';
 import { formatMoney } from '@/utils/money';
-import type { Product } from '@/types/models';
+import type { Product, SaleDraft } from '@/types/models';
 import './QuickSaleModal.css';
 
 interface QuickSaleModalProps {
@@ -22,8 +26,9 @@ interface QuickSaleModalProps {
 
 export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const { showToast, setGlobalLoading } = useUI();
-  const { products, getProductById, updateProductStock } = useProducts();
+  const { products, getProductById, updateProductStock, refreshProduct } = useProducts();
   const ticket = useTicket();
+  const ticketContext = useTicketContext();
   const {
     customer,
     items,
@@ -37,6 +42,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     reset,
     getProductStock,
     addProductToTicket,
+    validateAllItems,
   } = ticket;
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -46,7 +52,112 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [_loadingTopProducts, setLoadingTopProducts] = useState(false);
   const [showAddMore, setShowAddMore] = useState(false);
+  const [draft, setDraft] = useState<SaleDraft | null>(null);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [shouldValidateAfterLoad, setShouldValidateAfterLoad] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Validar items cuando se cargan productos después de recuperar borrador
+  useEffect(() => {
+    if (shouldValidateAfterLoad && items.length > 0 && products.length > 0) {
+      // Verificar que todos los productos del borrador estén en el contexto
+      const productIds = items.map(item => item.productId);
+      const allProductsLoaded = productIds.every(id => 
+        products.some(p => p.id === id)
+      );
+      
+      if (allProductsLoaded) {
+        // Esperar un frame más para asegurar que todo esté sincronizado
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            validateAllItems();
+            setShouldValidateAfterLoad(false);
+          }, 100);
+        });
+      }
+    }
+  }, [shouldValidateAfterLoad, items, products, validateAllItems]);
+
+  // Cargar borrador al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      const loadDraft = async () => {
+        try {
+          const savedDraft = await getSaleDraft();
+          if (savedDraft) {
+            setDraft(savedDraft);
+            setShowDraftModal(true);
+          }
+        } catch (error) {
+          console.error('Error al cargar borrador:', error);
+        }
+      };
+      
+      loadDraft();
+    }
+  }, [isOpen]);
+
+  // Manejar recuperación de borrador
+  const handleRecoverDraft = useCallback(async () => {
+    if (!draft) return;
+
+    try {
+      ticketContext.setIsLoadingDraft(true);
+      
+      // Cargar cliente PRIMERO si existe
+      if (draft.customerId) {
+        try {
+          const customerData = await customersService.getById(draft.customerId);
+          ticketContext.setCustomer(customerData);
+        } catch (error) {
+          console.error('Error al cargar cliente del borrador:', error);
+        }
+      } else {
+        ticketContext.setCustomer(null);
+      }
+
+      // Pre-cargar todos los productos del borrador para asegurar que estén en el contexto
+      const productIds = draft.items.map(item => item.productId);
+      
+      // Refrescar productos ANTES de cargar el borrador para tener stock actualizado
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+
+      // Esperar a que React procese la actualización de productos
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Cargar items del borrador
+      await ticketContext.loadDraft(draft, getProductById);
+      
+      // Refrescar productos después de cargar para asegurar stock actualizado
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+      
+      // Activar flag para que el useEffect valide cuando los productos estén listos
+      setShouldValidateAfterLoad(true);
+
+      // Eliminar borrador del backend
+      await deleteSaleDraft();
+      
+      setShowDraftModal(false);
+      setDraft(null);
+      showToast('Borrador recuperado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al recuperar borrador:', error);
+      showToast('Error al recuperar borrador', 'error');
+    } finally {
+      ticketContext.setIsLoadingDraft(false);
+    }
+  }, [draft, ticketContext, getProductById, validateAllItems, showToast]);
+
+  // Manejar descartar borrador
+  const handleDiscardDraft = useCallback(async () => {
+    try {
+      await deleteSaleDraft();
+      setShowDraftModal(false);
+      setDraft(null);
+    } catch (error) {
+      console.error('Error al eliminar borrador:', error);
+    }
+  }, []);
 
   // Cargar top productos cuando se abre el modal
   useEffect(() => {
@@ -448,6 +559,13 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
 
       await createSale(request);
 
+      // Eliminar borrador después de completar venta exitosamente
+      try {
+        await deleteSaleDraft();
+      } catch (error) {
+        console.error('Error al eliminar borrador después de venta:', error);
+      }
+
       // Actualizar stock optimista
       items.forEach(item => {
         const currentStock = getProductStock(item.productId);
@@ -556,21 +674,13 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
                     />
                     <div>
                       <div className="quick-sale-product-name">{selectedProduct.name}</div>
-                      <div className="quick-sale-product-stock">
-                        Stock: {selectedProductStock.toFixed(2)}g
-                      </div>
                     </div>
                   </div>
-                  <div className="quick-sale-grams-input">
-                    <NumberInput
-                      id="gramsToAdd"
-                      label="Gramos"
-                      value={gramsToAdd}
-                      onChange={setGramsToAdd}
-                      min={0.01}
-                      step={0.01}
-                      placeholder="0.00"
-                      autoFocus
+                  <div className="quick-sale-dispense-input">
+                    <ProductDispenseInput
+                      product={selectedProduct}
+                      availableStock={selectedProductStock}
+                      onGramsChange={setGramsToAdd}
                     />
                   </div>
                   <div className="quick-sale-add-actions">
@@ -689,6 +799,13 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
           )}
         </div>
       </div>
+
+      <DraftRecoveryModal
+        isOpen={showDraftModal}
+        draft={draft}
+        onRecover={handleRecoverDraft}
+        onDiscard={handleDiscardDraft}
+      />
     </div>
   );
 }

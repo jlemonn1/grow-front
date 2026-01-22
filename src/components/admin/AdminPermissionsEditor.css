@@ -1,0 +1,234 @@
+.admin-permissions-editor {
+  padding: var(--spacing-lg) 0;
+  width: 100%;
+}
+
+.admin-permissions-editor-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-2xl);
+}
+
+.admin-permissions-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  color: var(--color-warning);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.admin-permissions-warning-icon {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.8));
+}
+
+.admin-permissions-warning-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.admin-permissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.admin-permission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-base);
+  gap: var(--spacing-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-permission-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background var(--transition-base);
+}
+
+.admin-permission-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px var(--neon-glow-primary),
+              0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.admin-permission-item:hover::before {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.admin-permission-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.admin-permission-label-text {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.admin-permission-badge-locked {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--spacing-xs);
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-sm);
+  width: fit-content;
+}
+
+.admin-permission-badge-locked-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+}
+
+.admin-permission-badge-locked-icon svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Toggle Button Horizontal */
+.admin-permission-toggle {
+  position: relative;
+  width: 56px;
+  height: 32px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  padding: 0;
+  flex-shrink: 0;
+  outline: none;
+  overflow: hidden;
+}
+
+.admin-permission-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.admin-permission-toggle:hover:not(.disabled) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.admin-permission-toggle.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px var(--neon-glow-primary), 
+              0 0 24px var(--neon-glow-secondary);
+}
+
+.admin-permission-toggle.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+.admin-permission-toggle.disabled:hover {
+  border-color: var(--border-color);
+  box-shadow: none;
+  transform: none;
+}
+
+.admin-permission-toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: var(--text-inverse);
+  border-radius: 50%;
+  transition: transform var(--transition-base), 
+              box-shadow var(--transition-base);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-permission-toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.admin-permission-toggle.active .admin-permission-toggle-slider::after {
+  opacity: 1;
+  background: var(--color-primary);
+}
+
+.admin-permission-toggle.active .admin-permission-toggle-slider {
+  transform: translateX(24px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3),
+              0 0 8px rgba(59, 212, 32, 0.4);
+}
+
+.admin-permission-toggle.disabled .admin-permission-toggle-slider {
+  background: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* Animación suave al activar */
+@keyframes togglePulse {
+  0%, 100% {
+    box-shadow: 0 0 12px var(--neon-glow-primary), 
+                0 0 24px var(--neon-glow-secondary);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--neon-glow-primary), 
+                0 0 32px var(--neon-glow-secondary);
+  }
+}
+
+.admin-permission-toggle.active:not(.disabled) {
+  animation: togglePulse 2s ease-in-out infinite;
+}
+
+.admin-permissions-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}

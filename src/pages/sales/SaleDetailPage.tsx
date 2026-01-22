@@ -156,6 +156,17 @@ export function SaleDetailPage() {
                 {getStatusLabel(sale.status)}
               </span>
             </div>
+
+            {(sale.createdByUsername || sale.createdBy?.username) && (
+              <div className="sale-detail-info-item">
+                <span className="sale-detail-info-label">
+                  Realizado por
+                </span>
+                <span className="sale-detail-info-value">
+                  {sale.createdByUsername || sale.createdBy?.username}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

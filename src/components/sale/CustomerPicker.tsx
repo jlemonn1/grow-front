@@ -1,5 +1,8 @@
 import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
+import { HiQrCode } from 'react-icons/hi2';
+import { HiSearch, HiPhone, HiKey } from 'react-icons/hi';
 import { Input } from '@/components/forms/Input';
+import { QRScannerModal } from '@/components/common/QRScannerModal';
 import { customersService } from '@/services/customers.service';
 import type { Customer } from '@/types/models';
 import './CustomerPicker.css';
@@ -27,6 +30,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchType, setSearchType] = useState<'name' | 'phone' | 'pin' | 'any' | null>(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   // Limpiar estados internos cuando selectedCustomer cambia a null
   useEffect(() => {
@@ -129,6 +133,11 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     setShowResults(false);
   }, [onSelect]);
 
+  const handleQRScan = useCallback((customer: Customer) => {
+    handleSelect(customer);
+    setShowQRScanner(false);
+  }, [handleSelect]);
+
   return (
     <div className="customer-picker" role="combobox" aria-expanded={showResults} aria-haspopup="listbox">
       <div className="customer-picker-input-wrapper">
@@ -172,12 +181,41 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
         )}
         {searchType && searchQuery.length >= 3 && (
           <div className="customer-picker-search-type">
-            {searchType === 'name' && '🔍 Buscando por nombre'}
-            {searchType === 'phone' && '📞 Buscando por teléfono'}
-            {searchType === 'pin' && '🔑 Buscando por PIN'}
-            {searchType === 'any' && '🔍 Buscando en todos los campos'}
+            {searchType === 'name' && (
+              <>
+                <HiSearch className="customer-picker-search-type-icon" />
+                Buscando por nombre
+              </>
+            )}
+            {searchType === 'phone' && (
+              <>
+                <HiPhone className="customer-picker-search-type-icon" />
+                Buscando por teléfono
+              </>
+            )}
+            {searchType === 'pin' && (
+              <>
+                <HiKey className="customer-picker-search-type-icon" />
+                Buscando por PIN
+              </>
+            )}
+            {searchType === 'any' && (
+              <>
+                <HiSearch className="customer-picker-search-type-icon" />
+                Buscando en todos los campos
+              </>
+            )}
           </div>
         )}
+        <button 
+          type="button"
+          className="customer-picker-qr-button"
+          onClick={() => setShowQRScanner(true)}
+          aria-label="Escanear código QR"
+          title="Escanear código QR"
+        >
+          <HiQrCode />
+        </button>
         {selectedCustomer && (
           <button 
             type="button"
@@ -232,7 +270,10 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
                   </div>
                   <div className="customer-picker-item-details">
                     {customer.phone && (
-                      <div className="customer-picker-item-phone">📞 {customer.phone}</div>
+                      <div className="customer-picker-item-phone">
+                        <HiPhone className="customer-picker-item-phone-icon" />
+                        {customer.phone}
+                      </div>
                     )}
                   </div>
                 </li>
@@ -246,6 +287,14 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
         <div className="customer-picker-selected">
           Cliente seleccionado: <strong>{selectedCustomer.displayName}</strong>
         </div>
+      )}
+
+      {showQRScanner && (
+        <QRScannerModal
+          isOpen={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
+          onCustomerFound={handleQRScan}
+        />
       )}
     </div>
   );

@@ -9,21 +9,79 @@ import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { Button } from '@/components/common/Button';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useUI } from '@/context/ui.context';
+import { useVisitor } from '@/context/visitor.context';
+import { useAuth } from '@/context/auth.context';
+import { AdminPermission } from '@/types/models';
 import { customersService } from '@/services/customers.service';
 import type { Customer } from '@/types/models';
+import type { PageResponse } from '@/types/api';
 import { formatDateTime } from '@/utils/dates';
 import './CustomersPage.css';
 
 export function CustomersPage() {
   const navigate = useNavigate();
-  const { customers, loading, error, pagination, loadCustomers } = useCustomers();
   const { showToast } = useUI();
+  const { isVisitorMode } = useVisitor();
+  const { hasPermission } = useAuth();
+  
+  // Siempre llamar al hook (requisito de React)
+  const customersContext = useCustomers();
+  
+  // Usar valores del contexto solo si no estamos en modo visitante
+  const contextCustomers = isVisitorMode ? [] : customersContext.customers;
+  const contextLoading = isVisitorMode ? false : customersContext.loading;
+  const contextError = isVisitorMode ? null : customersContext.error;
+  const contextPagination = isVisitorMode ? { page: 0, size: 25, total: 0, totalPages: 0 } : customersContext.pagination;
+  const loadCustomers = isVisitorMode ? (() => Promise.resolve()) : customersContext.loadCustomers;
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; customer: Customer | null }>({
     isOpen: false,
     customer: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Estado para modo visitante
+  const [visitorCustomers, setVisitorCustomers] = useState<Customer[]>([]);
+  const [visitorLoading, setVisitorLoading] = useState(false);
+  const [visitorError, setVisitorError] = useState<string | null>(null);
+  const [visitorPagination, setVisitorPagination] = useState({
+    page: 0,
+    size: 25,
+    total: 0,
+    totalPages: 0,
+  });
+
+  // Usar datos según el modo
+  const customers = isVisitorMode ? visitorCustomers : contextCustomers;
+  const loading = isVisitorMode ? visitorLoading : contextLoading;
+  const error = isVisitorMode ? visitorError : contextError;
+  const pagination = isVisitorMode ? visitorPagination : contextPagination;
+
+  // Cargar clientes (públicos o normales según el modo)
+  const loadCustomersData = useCallback(async (params?: { q?: string; page?: number; size?: number }) => {
+    if (isVisitorMode) {
+      setVisitorLoading(true);
+      setVisitorError(null);
+      try {
+        const response: PageResponse<Customer> = await customersService.searchPublic(params);
+        setVisitorCustomers(response.content);
+        setVisitorPagination({
+          page: response.number,
+          size: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages,
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Error al cargar clientes';
+        setVisitorError(errorMessage);
+        setVisitorCustomers([]);
+      } finally {
+        setVisitorLoading(false);
+      }
+    } else {
+      loadCustomers(params);
+    }
+  }, [isVisitorMode, loadCustomers]);
 
   // Detectar tipo de búsqueda
   const getSearchType = (query: string): 'name' | 'phone' | 'pin' | 'any' => {
@@ -47,9 +105,9 @@ export function CustomersPage() {
 
   // Cargar clientes al montar
   useEffect(() => {
-    loadCustomers({ page: 0, size: 25 });
+    loadCustomersData({ page: 0, size: 25 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isVisitorMode]);
 
   // Debounce para búsqueda - solo buscar si hay 3+ caracteres
   useEffect(() => {
@@ -59,7 +117,7 @@ export function CustomersPage() {
     }
 
     const timer = setTimeout(() => {
-      loadCustomers({ q: searchQuery || undefined, page: 0, size: 25 });
+      loadCustomersData({ q: searchQuery || undefined, page: 0, size: 25 });
     }, 300);
 
     return () => clearTimeout(timer);
@@ -67,12 +125,16 @@ export function CustomersPage() {
   }, [searchQuery]);
 
   const handlePageChange = useCallback((page: number) => {
-    loadCustomers({ q: searchQuery || undefined, page, size: 25 });
-  }, [searchQuery, loadCustomers]);
+    loadCustomersData({ q: searchQuery || undefined, page, size: 25 });
+  }, [searchQuery, loadCustomersData]);
 
   const handleRowClick = useCallback((customer: Customer) => {
+    // En modo visitante, no permitir navegar a detalles
+    if (isVisitorMode) {
+      return;
+    }
     navigate(`/customers/${customer.id}`);
-  }, [navigate]);
+  }, [navigate, isVisitorMode]);
 
   const handleDeleteClick = useCallback((e: React.MouseEvent, customer: Customer) => {
     e.stopPropagation();
@@ -88,7 +150,7 @@ export function CustomersPage() {
       showToast('Cliente eliminado exitosamente', 'success');
       setDeleteModal({ isOpen: false, customer: null });
       // Recargar clientes
-      loadCustomers({ q: searchQuery || undefined, page: 0, size: 25 });
+      loadCustomersData({ q: searchQuery || undefined, page: 0, size: 25 });
     } catch (err) {
       showToast('Error al eliminar cliente', 'error');
     } finally {
@@ -127,7 +189,7 @@ export function CustomersPage() {
       accessor: 'createdAt',
       cell: (value) => value ? formatDateTime(value) : '-',
     },
-    {
+    ...(isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? [] : [{
       header: 'Acciones',
       accessor: 'id',
       cell: (_value, row) => (
@@ -139,17 +201,17 @@ export function CustomersPage() {
           Eliminar
         </Button>
       ),
-    },
+    }]),
   ];
 
   return (
     <>
       <PageHeader
         title="Clientes"
-        action={{
+        action={!isVisitorMode && hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? {
           label: '+ Nuevo cliente',
           onClick: () => navigate('/customers/new'),
-        }}
+        } : undefined}
       />
       
       <div className="customers-page-container" style={{ marginTop: 'var(--spacing-lg)' }}>
@@ -187,10 +249,10 @@ export function CustomersPage() {
           loading={loading}
           pagination={pagination}
           onPageChange={handlePageChange}
-          onRowClick={handleRowClick}
-          onDelete={(customer) => {
+          onRowClick={isVisitorMode ? undefined : handleRowClick}
+          onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((customer) => {
             setDeleteModal({ isOpen: true, customer });
-          }}
+          })}
           emptyMessage="No hay clientes disponibles"
           renderCard={(customer, isExpanded, onToggleExpand) => (
             <CustomerCard
@@ -198,10 +260,10 @@ export function CustomersPage() {
               customer={customer}
               isExpanded={isExpanded}
               onToggleExpand={onToggleExpand}
-              onClick={handleRowClick}
-              onDelete={(c) => {
+              onClick={isVisitorMode ? undefined : handleRowClick}
+              onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((c) => {
                 setDeleteModal({ isOpen: true, customer: c });
-              }}
+              })}
             />
           )}
         />

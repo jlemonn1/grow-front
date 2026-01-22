@@ -1,3 +1,5 @@
+import { buildApiUrl } from '@/utils/apiUrl';
+
 export interface ImageUploadResponse {
   filename: string;
   url: string;
@@ -13,7 +15,7 @@ export async function uploadImage(file: File): Promise<ImageUploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('http://localhost:8080/api/v1/images/upload', {
+  const response = await fetch(buildApiUrl('/images/upload'), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,

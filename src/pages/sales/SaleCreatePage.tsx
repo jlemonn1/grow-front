@@ -7,22 +7,26 @@ import { ProductPicker } from '@/components/sale/ProductPicker';
 import { TicketItemsList } from '@/components/sale/TicketItemsList';
 import { TicketSummary } from '@/components/sale/TicketSummary';
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
+import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
+import { ProductDispenseInput } from '@/components/sale/ProductDispenseInput';
 import { Button } from '@/components/common/Button';
-import { NumberInput } from '@/components/forms/NumberInput';
 import { useTicket } from '@/hooks/useTicket';
+import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
-import { createSale } from '@/services/sales.service';
+import { createSale, getSaleDraft, deleteSaleDraft } from '@/services/sales.service';
+import { customersService } from '@/services/customers.service';
 import { login } from '@/services/auth.service';
 import type { ValidationError, ApiError } from '@/types/api';
-import type { CreateSaleRequest, Product, Sale } from '@/types/models';
+import type { CreateSaleRequest, Product, Sale, SaleDraft } from '@/types/models';
 import './SaleCreatePage.css';
 
 export function SaleCreatePage() {
   const navigate = useNavigate();
   const { showToast, setGlobalLoading } = useUI();
-  const { products, updateProductStock, getProductById } = useProducts();
+  const { products, updateProductStock, getProductById, refreshProduct } = useProducts();
   const ticket = useTicket();
+  const ticketContext = useTicketContext();
   const {
     customer,
     items,
@@ -37,6 +41,7 @@ export function SaleCreatePage() {
     getProductStock,
     addProductToTicket,
     updateItemGrams,
+    updateItemDiscount,
     validateItemWithStock,
     refreshProductAndValidate,
     findProductIdByName,
@@ -48,12 +53,116 @@ export function SaleCreatePage() {
   const [cashGivenError, setCashGivenError] = useState<string | undefined>();
   const [successSale, setSuccessSale] = useState<Sale | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [draft, setDraft] = useState<SaleDraft | null>(null);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [shouldValidateAfterLoad, setShouldValidateAfterLoad] = useState(false);
   
   // Refs para atajos de teclado
   const gramsInputRef = useRef<HTMLInputElement>(null);
+  const eurosInputRef = useRef<HTMLInputElement>(null);
   const productSearchRef = useRef<{ focus: () => void }>(null);
   const customerSearchRef = useRef<{ focus: () => void }>(null);
   const cashGivenInputRef = useRef<HTMLInputElement>(null);
+
+  // Validar items cuando se cargan productos después de recuperar borrador
+  useEffect(() => {
+    if (shouldValidateAfterLoad && items.length > 0 && products.length > 0) {
+      // Verificar que todos los productos del borrador estén en el contexto
+      const productIds = items.map(item => item.productId);
+      const allProductsLoaded = productIds.every(id => 
+        products.some(p => p.id === id)
+      );
+      
+      if (allProductsLoaded) {
+        // Esperar un frame más para asegurar que todo esté sincronizado
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            ticket.validateAllItems();
+            setShouldValidateAfterLoad(false);
+          }, 100);
+        });
+      }
+    }
+  }, [shouldValidateAfterLoad, items, products, ticket]);
+
+  // Cargar borrador al montar
+  useEffect(() => {
+    const loadDraft = async () => {
+      try {
+        const savedDraft = await getSaleDraft();
+        if (savedDraft) {
+          setDraft(savedDraft);
+          setShowDraftModal(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar borrador:', error);
+      }
+    };
+    
+    loadDraft();
+  }, []);
+
+  // Manejar recuperación de borrador
+  const handleRecoverDraft = useCallback(async () => {
+    if (!draft) return;
+
+    try {
+      ticketContext.setIsLoadingDraft(true);
+      
+      // Cargar cliente PRIMERO si existe
+      if (draft.customerId) {
+        try {
+          const customerData = await customersService.getById(draft.customerId);
+          ticketContext.setCustomer(customerData);
+        } catch (error) {
+          console.error('Error al cargar cliente del borrador:', error);
+        }
+      } else {
+        ticketContext.setCustomer(null);
+      }
+
+      // Pre-cargar todos los productos del borrador para asegurar que estén en el contexto
+      const productIds = draft.items.map(item => item.productId);
+      
+      // Refrescar productos ANTES de cargar el borrador para tener stock actualizado
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+
+      // Esperar a que React procese la actualización de productos
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Cargar items del borrador
+      await ticketContext.loadDraft(draft, getProductById);
+      
+      // Refrescar productos después de cargar para asegurar stock actualizado
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+      
+      // Activar flag para que el useEffect valide cuando los productos estén listos
+      setShouldValidateAfterLoad(true);
+
+      // Eliminar borrador del backend
+      await deleteSaleDraft();
+      
+      setShowDraftModal(false);
+      setDraft(null);
+      showToast('Borrador recuperado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al recuperar borrador:', error);
+      showToast('Error al recuperar borrador', 'error');
+    } finally {
+      ticketContext.setIsLoadingDraft(false);
+    }
+  }, [draft, ticketContext, getProductById, ticket, showToast]);
+
+  // Manejar descartar borrador
+  const handleDiscardDraft = useCallback(async () => {
+    try {
+      await deleteSaleDraft();
+      setShowDraftModal(false);
+      setDraft(null);
+    } catch (error) {
+      console.error('Error al eliminar borrador:', error);
+    }
+  }, []);
 
   // Calcular stock disponible para el producto seleccionado
   const getAvailableStockForSelected = useCallback((product: Product | null): number => {
@@ -147,11 +256,20 @@ export function SaleCreatePage() {
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
+          discount: item.discount,
+          discountType: item.discountType,
         })),
       };
 
       // Crear venta
       const sale = await createSale(request);
+
+      // Eliminar borrador después de completar venta exitosamente
+      try {
+        await deleteSaleDraft();
+      } catch (error) {
+        console.error('Error al eliminar borrador después de venta:', error);
+      }
 
       // Actualizar stock optimista para cada producto
       items.forEach(item => {
@@ -376,26 +494,20 @@ export function SaleCreatePage() {
             />
             {selectedProduct && (
               <div className="sale-create-product-form">
-                <div className="sale-create-grams-input">
+                <div className="sale-create-dispense-input">
                   <div onKeyDown={(e) => {
                     if (e.key === 'Enter' && gramsToAdd > 0) {
                       e.preventDefault();
                       handleAddProduct();
                     }
                   }}>
-                    <NumberInput
-                      ref={gramsInputRef}
-                      id="gramsToAdd"
-                      label="Gramos"
-                      value={gramsToAdd}
-                      onChange={setGramsToAdd}
-                      min={0.01}
-                      step={0.01}
-                      placeholder="0.00"
+                    <ProductDispenseInput
+                      product={selectedProduct}
+                      availableStock={getAvailableStockForSelected(selectedProduct)}
+                      onGramsChange={setGramsToAdd}
+                      gramsInputRef={gramsInputRef}
+                      eurosInputRef={eurosInputRef}
                     />
-                  </div>
-                  <div className="sale-create-stock-info">
-                    Stock disponible: <strong>{getAvailableStockForSelected(selectedProduct).toFixed(2)}g</strong>
                   </div>
                 </div>
                 <Button
@@ -420,6 +532,7 @@ export function SaleCreatePage() {
             <TicketItemsList
               items={items}
               onUpdate={updateItemGrams}
+              onUpdateDiscount={updateItemDiscount}
               onRemove={removeItem}
               onValidate={validateItemWithStock}
               getProductStock={getProductStock}
@@ -455,6 +568,13 @@ export function SaleCreatePage() {
           setShowSuccessModal(false);
           setSuccessSale(null);
         }}
+      />
+
+      <DraftRecoveryModal
+        isOpen={showDraftModal}
+        draft={draft}
+        onRecover={handleRecoverDraft}
+        onDiscard={handleDiscardDraft}
       />
     </>
   );

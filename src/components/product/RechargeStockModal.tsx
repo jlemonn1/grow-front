@@ -4,8 +4,10 @@ import { Button } from '@/components/common/Button';
 import { NumberInput } from '@/components/forms/NumberInput';
 import { Input } from '@/components/forms/Input';
 import { useUI } from '@/context/ui.context';
+import { useAuth } from '@/context/auth.context';
 import { useProducts } from '@/context/products.context';
 import { rechargeStock } from '@/services/stock.service';
+import { AdminPermission } from '@/types/models';
 import type { ValidationError } from '@/types/api';
 import './RechargeStockModal.css';
 
@@ -25,6 +27,7 @@ export function RechargeStockModal({
   onSuccess,
 }: RechargeStockModalProps) {
   const { showToast } = useUI();
+  const { hasPermission } = useAuth();
   const { updateProductStock } = useProducts();
   
   const [grams, setGrams] = useState<number>(0);
@@ -32,8 +35,18 @@ export function RechargeStockModal({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Verificar permiso antes de permitir recargar
+  const canRecharge = hasPermission(AdminPermission.GESTIONAR_STOCK);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Verificar permiso
+    if (!canRecharge) {
+      setError('No tienes permiso para gestionar stock');
+      showToast('No tienes permiso para gestionar stock', 'error');
+      return;
+    }
 
     // Validación
     if (grams <= 0) {
@@ -93,6 +106,27 @@ export function RechargeStockModal({
   const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setNote(e.target.value);
   }, []);
+
+  if (!canRecharge) {
+    return (
+      <Modal isOpen={isOpen} onClose={handleClose} title={`Recargar stock - ${productName}`}>
+        <div className="recharge-stock-form">
+          <div className="recharge-stock-error" style={{ textAlign: 'center', padding: 'var(--spacing-lg)' }}>
+            No tienes permiso para gestionar stock. Se requiere el permiso GESTIONAR_STOCK.
+          </div>
+          <div className="recharge-stock-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+            >
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={`Recargar stock - ${productName}`}>

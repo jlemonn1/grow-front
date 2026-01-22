@@ -1,5 +1,5 @@
-import { get, post, del } from './http';
-import type { Admin } from '@/types/models';
+import { get, post, del, patch } from './http';
+import type { Admin, UpdateAdminPermissionsRequest } from '@/types/models';
 
 export interface CreateAdminRequest {
   username: string;
@@ -32,4 +32,22 @@ export async function createAdmin(username: string, password: string): Promise<A
  */
 export async function deleteAdmin(id: string): Promise<void> {
   return del(`/admins/${id}`);
+}
+
+/**
+ * Obtiene los permisos de un administrador (solo admin principal)
+ */
+export async function getAdminPermissions(id: string): Promise<Record<string, boolean>> {
+  return get<Record<string, boolean>>(`/admins/${id}/permissions`);
+}
+
+/**
+ * Actualiza los permisos de un administrador (solo admin principal)
+ */
+export async function updateAdminPermissions(
+  id: string,
+  permissions: Record<string, boolean>
+): Promise<Admin> {
+  const request: UpdateAdminPermissionsRequest = { permissions };
+  return patch<Admin>(`/admins/${id}/permissions`, request);
 }

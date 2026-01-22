@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { HiExclamationTriangle } from 'react-icons/hi2';
 import { Button } from '@/components/common/Button';
 import { NumberInput } from '@/components/forms/NumberInput';
 import { CashBillButtons } from './CashBillButtons';
@@ -85,7 +86,8 @@ function TicketSummaryComponent({
           <>
             {hasInvalidItems && (
               <div className="ticket-summary-error">
-                ⚠️ Hay productos con errores de validación. Revisa las líneas del ticket.
+                <HiExclamationTriangle className="ticket-summary-error-icon" />
+                Hay productos con errores de validación. Revisa las líneas del ticket.
               </div>
             )}
 
@@ -125,7 +127,8 @@ function TicketSummaryComponent({
 
                 {cashInsufficient && (
                   <div className="ticket-summary-error">
-                    ⚠️ El efectivo debe ser mayor o igual al total
+                    <HiExclamationTriangle className="ticket-summary-error-icon" />
+                    El efectivo debe ser mayor o igual al total
                   </div>
                 )}
               </>

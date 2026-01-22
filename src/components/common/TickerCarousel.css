@@ -1,0 +1,66 @@
+.ticker-carousel {
+  height: 7vh;
+  min-height: 48px;
+  max-height: 64px;
+  background: linear-gradient(90deg, 
+    rgba(20, 20, 30, 0.95) 0%, 
+    rgba(30, 30, 40, 0.95) 100%);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  overflow: hidden;
+  position: relative;
+  z-index: 9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.ticker-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.ticker-separator {
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0.5rem;
+  font-weight: normal;
+}
+
+.ticker-orange {
+  color: #ff9800;
+  text-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+}
+
+.ticker-red {
+  color: #f44336;
+  text-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+}
+
+.ticker-green {
+  color: #4caf50;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+@media (max-width: 768px) {
+  .ticker-carousel {
+    height: 6vh;
+    min-height: 40px;
+  }
+  
+  .ticker-item {
+    font-size: 0.75rem;
+    padding: 0 1.5rem;
+  }
+}

@@ -5,7 +5,7 @@ import './TopProductCard.css';
 interface TopProductCardProps {
   product: ProductStats | null;
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   highlight: 'grams' | 'revenue';
   loading?: boolean;
 }

@@ -17,6 +17,20 @@
   text-align: center;
   text-shadow: 0 0 8px var(--neon-glow-primary);
   transition: text-shadow var(--transition-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.top-customers-card-title-icon {
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 4px var(--neon-glow-primary));
+}
+
+.top-customers-card-title-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .top-customers-list {
@@ -83,6 +97,18 @@
   flex-shrink: 0;
   filter: drop-shadow(0 0 6px var(--neon-glow-primary));
   transition: filter var(--transition-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-customer-rank-icon {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.top-customer-rank-icon svg {
+  width: 2rem;
+  height: 2rem;
 }
 
 .top-customer-item:hover .top-customer-rank {
@@ -111,6 +137,20 @@
 .top-customer-stat {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.top-customer-stat-icon {
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 2px var(--neon-glow-primary));
+  flex-shrink: 0;
+}
+
+.top-customer-stat-icon svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .top-customers-card.loading,

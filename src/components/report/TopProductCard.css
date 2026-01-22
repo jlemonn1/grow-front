@@ -46,6 +46,15 @@
   flex-shrink: 0;
   filter: drop-shadow(0 0 8px var(--neon-glow-primary));
   transition: filter var(--transition-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-primary);
+}
+
+.top-product-card-icon svg {
+  width: 3rem;
+  height: 3rem;
 }
 
 .top-product-card:hover .top-product-card-icon {
@@ -122,5 +131,10 @@
 
   .top-product-card-icon {
     font-size: 2.5rem;
+  }
+  
+  .top-product-card-icon svg {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 }

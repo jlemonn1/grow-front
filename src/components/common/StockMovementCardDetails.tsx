@@ -72,6 +72,15 @@ export function StockMovementCardDetails({ movement }: StockMovementCardDetailsP
           <span className="stock-movement-card-detail-value">{movement.saleId}</span>
         </div>
       )}
+
+      {(movement.createdByUsername || movement.createdBy?.username) && (
+        <div className="stock-movement-card-detail-section">
+          <span className="stock-movement-card-detail-label">Realizado por:</span>
+          <span className="stock-movement-card-detail-value">
+            {movement.createdByUsername || movement.createdBy?.username}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

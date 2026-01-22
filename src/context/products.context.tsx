@@ -122,10 +122,15 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
   const refreshProduct = useCallback(async (id: string): Promise<void> => {
     try {
       const product = await getProductByIdService(id);
-      // Actualizar en cache
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? product : p))
-      );
+      // Actualizar en cache o agregar si no existe
+      setProducts((prev) => {
+        const exists = prev.some((p) => p.id === id);
+        if (exists) {
+          return prev.map((p) => (p.id === id ? product : p));
+        } else {
+          return [...prev, product];
+        }
+      });
     } catch (err) {
       // Si no existe, remover del cache
       setProducts((prev) => prev.filter((p) => p.id !== id));

@@ -1,0 +1,185 @@
+.global-search-input-container {
+  width: 100%;
+  margin-bottom: var(--spacing-xl);
+  position: relative;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    var(--neon-primary),
+    var(--border-led-color),
+    var(--neon-primary),
+    var(--color-info),
+    var(--neon-primary)
+  );
+  background-size: 400% 400%;
+  border-radius: calc(var(--border-radius) + 2px);
+  animation: lavaFlow 8s ease-in-out infinite, lavaGlow 3s ease-in-out infinite;
+  opacity: 0.7;
+  transition: opacity var(--transition-base);
+  filter: blur(0.5px);
+}
+
+/* Solo mostrar el efecto cuando no está en hover o focus */
+.global-search-input-container:not(:has(input:focus)):not(:has(input:hover)) {
+  animation: lavaFlow 8s ease-in-out infinite, lavaGlow 3s ease-in-out infinite;
+}
+
+.global-search-input-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    var(--bg-primary) 0%,
+    var(--bg-secondary) 100%
+  );
+  border-radius: var(--border-radius);
+  z-index: 0;
+  margin: 2px;
+}
+
+.global-search-input {
+  width: 100%;
+  cursor: pointer;
+}
+
+.global-search-input-container :global(.form-input) {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-lg);
+  border: var(--border-led-width) solid var(--border-color);
+  background: linear-gradient(
+    135deg,
+    var(--bg-primary) 0%,
+    var(--bg-secondary) 100%
+  );
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  position: relative;
+  box-shadow: var(--shadow-neon-sm);
+  z-index: 1;
+  filter: none !important;
+  backdrop-filter: none !important;
+  color: var(--text-primary);
+}
+
+/* Asegurar que el texto y placeholder no tengan blur */
+.global-search-input-container :global(.form-input),
+.global-search-input-container :global(.form-input)::placeholder {
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Intensificar el efecto cuando se hace hover */
+.global-search-input-container:hover {
+  opacity: 0.85;
+  animation: lavaFlow 4s ease-in-out infinite, lavaGlow 1.5s ease-in-out infinite;
+  filter: blur(0.8px);
+}
+
+.global-search-input-container :global(.form-input):hover {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-md);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
+  transform: translateY(-2px);
+}
+
+/* Efecto LED en el borde superior al hover */
+.global-search-input-container :global(.form-input):hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+  animation: ledScan 2s ease-in-out infinite;
+}
+
+.global-search-input-container :global(.form-input):focus {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-md);
+  transform: translateY(-2px);
+}
+
+/* Reducir el efecto cuando está en focus (se abre el modal) */
+.global-search-input-container:has(input:focus) {
+  opacity: 0.4;
+  animation: none;
+}
+
+@keyframes lavaFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes lavaGlow {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(0.5px);
+  }
+  50% {
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+}
+
+@keyframes ledScan {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Efecto de pulso en el placeholder */
+.global-search-input-container :global(.form-input)::placeholder {
+  color: var(--text-primary);
+  opacity: 0.8;
+  transition: opacity var(--transition-base);
+  filter: none !important;
+  text-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .global-search-input-container :global(.form-input)::placeholder {
+    animation: placeholderGlow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes placeholderGlow {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}

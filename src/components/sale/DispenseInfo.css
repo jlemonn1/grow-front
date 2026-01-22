@@ -1,0 +1,65 @@
+.dispense-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.dispense-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dispense-info-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.dispense-info-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* Desktop: ≥1280px */
+@media (min-width: 1280px) {
+  .dispense-info {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Tablet Large: 1024px - 1279px */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .dispense-info {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Tablet: 768px - 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dispense-info {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Mobile Large: 480px - 767px */
+@media (min-width: 480px) and (max-width: 767px) {
+  .dispense-info {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Mobile Small: <480px */
+@media (max-width: 479px) {
+  .dispense-info {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}

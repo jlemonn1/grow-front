@@ -1,0 +1,119 @@
+.hourly-products-table {
+  width: 100%;
+}
+
+.hourly-products-hour-section {
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.hourly-products-hour-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--bg-primary);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+  text-align: left;
+}
+
+.hourly-products-hour-header:hover {
+  background: var(--bg-secondary);
+}
+
+.hourly-products-hour-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+}
+
+.hourly-products-hour-count {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-left: var(--spacing-md);
+}
+
+.hourly-products-hour-toggle {
+  color: var(--neon-primary);
+  font-size: var(--font-size-sm);
+  margin-left: auto;
+}
+
+.hourly-products-list {
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+}
+
+.hourly-products-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.hourly-products-item:hover {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+.hourly-products-item-rank {
+  font-weight: 700;
+  color: var(--neon-primary);
+  margin-right: var(--spacing-md);
+  min-width: 30px;
+  text-align: center;
+}
+
+.hourly-products-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.hourly-products-item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+}
+
+.hourly-products-item-stats {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.hourly-products-item-grams {
+  color: var(--neon-primary);
+}
+
+.hourly-products-item-revenue {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .hourly-products-hour-header {
+    padding: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .hourly-products-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hourly-products-item-rank {
+    margin-bottom: var(--spacing-xs);
+  }
+}

@@ -1,6 +1,6 @@
-import { get, post } from './http';
+import { get, post, del } from './http';
 import type { PageResponse } from '@/types/api';
-import type { Sale, CreateSaleRequest } from '@/types/models';
+import type { Sale, CreateSaleRequest, SaleDraft, SaveSaleDraftRequest } from '@/types/models';
 
 export interface ListSalesParams {
   customerId?: string;
@@ -52,4 +52,35 @@ export async function getSaleById(id: string): Promise<Sale> {
  */
 export async function createSale(request: CreateSaleRequest): Promise<Sale> {
   return post<Sale>('/sales', request);
+}
+
+/**
+ * Guarda o actualiza el borrador de venta del admin actual
+ */
+export async function saveSaleDraft(draft: SaveSaleDraftRequest): Promise<void> {
+  await post<void>('/sales/draft', draft);
+}
+
+/**
+ * Obtiene el borrador de venta del admin actual
+ */
+export async function getSaleDraft(): Promise<SaleDraft | null> {
+  try {
+    return await get<SaleDraft>('/sales/draft');
+  } catch (error: any) {
+    // Si es 404, no hay borrador (esto es normal, no es un error)
+    if (error?.status === 404) {
+      return null;
+    }
+    // Solo loggear otros errores
+    console.error('Error al obtener borrador:', error);
+    throw error;
+  }
+}
+
+/**
+ * Elimina el borrador de venta del admin actual
+ */
+export async function deleteSaleDraft(): Promise<void> {
+  await del<void>('/sales/draft');
 }

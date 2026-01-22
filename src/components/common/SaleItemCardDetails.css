@@ -52,6 +52,17 @@
   font-family: monospace;
 }
 
+.sale-item-card-detail-discount {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.sale-item-card-detail-total {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

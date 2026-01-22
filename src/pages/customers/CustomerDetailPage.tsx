@@ -10,9 +10,12 @@ import { Tabs, type Tab } from '@/components/common/Tabs';
 import { CustomerSummaryTable } from '@/components/customer/CustomerSummaryTable';
 import { RenewSubscriptionModal } from '@/components/customer/RenewSubscriptionModal';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
+import { QRCodeModal } from '@/components/common/QRCodeModal';
 import { Button } from '@/components/common/Button';
 import { useUI } from '@/context/ui.context';
+import { useAuth } from '@/context/auth.context';
 import { customersService } from '@/services/customers.service';
+import { AdminPermission } from '@/types/models';
 import type { Customer, CustomerSale, CustomerSummary } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
@@ -22,6 +25,7 @@ export function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useUI();
+  const { hasPermission } = useAuth();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [sales, setSales] = useState<CustomerSale[]>([]);
@@ -33,6 +37,7 @@ export function CustomerDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [salesPagination, setSalesPagination] = useState({
     page: 0,
     size: 25,
@@ -232,9 +237,18 @@ export function CustomerDetailPage() {
               </div>
             )}
             {customer.pin && (
-              <div className="customer-info-item">
-                <span className="customer-info-label">PIN:</span>
-                <span className="customer-info-value">{customer.pin}</span>
+              <div className="customer-info-item customer-info-item-with-action">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <span className="customer-info-label">PIN:</span>
+                  <span className="customer-info-value">{customer.pin}</span>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowQRModal(true)}
+                  style={{ marginLeft: 'auto' }}
+                >
+                  Generar QR
+                </Button>
               </div>
             )}
             {customer.createdAt && (
@@ -275,17 +289,21 @@ export function CustomerDetailPage() {
                 </span>
               </div>
             </div>
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
-              <Button variant="primary" onClick={handleRenewSubscription}>
-                Renovar suscripción
+            {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
+              <div style={{ marginTop: 'var(--spacing-md)' }}>
+                <Button variant="primary" onClick={handleRenewSubscription}>
+                  Renovar suscripción
+                </Button>
+              </div>
+            )}
+          </div>
+          {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
+            <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-md)' }}>
+              <Button variant="danger" onClick={handleDelete}>
+                Eliminar cliente
               </Button>
             </div>
-          </div>
-          <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-md)' }}>
-            <Button variant="danger" onClick={handleDelete}>
-              Eliminar cliente
-            </Button>
-          </div>
+          )}
         </div>
       ) : null,
     },
@@ -391,6 +409,14 @@ export function CustomerDetailPage() {
           onClose={() => setShowRenewModal(false)}
           customer={customer}
           onRenewed={handleSubscriptionRenewed}
+        />
+      )}
+
+      {showQRModal && customer && (
+        <QRCodeModal
+          isOpen={showQRModal}
+          onClose={() => setShowQRModal(false)}
+          customer={customer}
         />
       )}
     </>

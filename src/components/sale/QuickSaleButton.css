@@ -1,78 +1,117 @@
-.quick-sale-button {
+/* Wrapper para aislar el botón del layout */
+.quick-sale-button-wrapper {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
+  z-index: 9999;
+  margin: 0;
+  padding: 0;
+  /* Aislar completamente del layout - pero permitir que la sombra se muestre */
+  contain: layout style;
+  /* Crear un nuevo contexto de apilamiento */
+  isolation: isolate;
+  /* Asegurar que no interfiera con otros elementos */
+  pointer-events: none;
+  /* Permitir que la sombra se muestre completamente */
+  overflow: visible;
+  /* Asegurar dimensiones exactas */
+  box-sizing: border-box;
+}
+
+.quick-sale-button {
+  position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--neon-primary) 0%, var(--border-led-color) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: var(--text-inverse);
-  border: var(--border-led-width) solid var(--border-led-color);
+  border: 2px solid var(--color-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-neon-lg), 0 4px 16px rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  transition: all var(--transition-base), box-shadow var(--transition-glow);
-  overflow: hidden;
-  animation: buttonPulse 3s ease-in-out infinite;
+  overflow: visible;
+  /* Permitir eventos de puntero solo en el botón */
+  pointer-events: auto;
+  /* Asegurar que el botón no afecte el scroll o layout de otros elementos */
+  touch-action: manipulation;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Eliminar box-shadow para usar sombras radiales */
+  box-shadow: none;
+  transition: all var(--transition-base);
+  animation: subtlePulse 3s ease-in-out infinite;
 }
 
+/* Sombra radial usando pseudo-elemento */
 .quick-sale-button::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.2) 0%,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.6) 0%,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.4) 30%,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.2) 50%,
     transparent 70%
   );
-  animation: buttonRotate 4s linear infinite;
+  z-index: -1;
+  filter: blur(12px);
+  animation: radialGlowPulse 3s ease-in-out infinite;
   pointer-events: none;
-  opacity: 0.3;
+  will-change: opacity, transform;
+  /* Forzar forma circular perfecta */
+  aspect-ratio: 1;
 }
 
+/* Glow sutil alrededor del botón */
 .quick-sale-button::after {
   content: '';
   position: absolute;
-  inset: -2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 86px;
+  height: 86px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--neon-primary), var(--border-led-color));
+  background: radial-gradient(
+    circle,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 50%,
+    transparent 100%
+  );
   z-index: -1;
-  opacity: 0.5;
+  opacity: 0.4;
   filter: blur(8px);
-  animation: buttonGlow 2s ease-in-out infinite;
+  animation: glowPulse 2s ease-in-out infinite;
+  pointer-events: none;
+  will-change: opacity;
+  /* Forzar forma circular perfecta */
+  aspect-ratio: 1;
 }
 
-@keyframes buttonPulse {
+/* Animación sutil de pulso */
+@keyframes subtlePulse {
   0%, 100% {
-    box-shadow: var(--shadow-neon-lg), 0 4px 16px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
   }
   50% {
-    box-shadow: 
-      0 0 24px var(--neon-glow-primary), 
-      0 0 48px var(--neon-glow-secondary), 
-      0 0 64px var(--neon-glow-primary),
-      0 4px 16px rgba(0, 0, 0, 0.3);
+    transform: scale(1.02);
   }
 }
 
-@keyframes buttonRotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes buttonGlow {
+/* Animación del glow radial */
+@keyframes radialGlowPulse {
   0%, 100% {
-    opacity: 0.5;
+    opacity: 0.6;
     transform: scale(1);
   }
   50% {
@@ -81,69 +120,204 @@
   }
 }
 
+/* Animación del glow */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Efecto hover */
 .quick-sale-button:hover {
   transform: scale(1.1);
-  box-shadow: 
-    0 0 32px var(--neon-glow-primary), 
-    0 0 64px var(--neon-glow-secondary), 
-    0 0 96px var(--neon-glow-primary),
-    0 8px 24px rgba(0, 0, 0, 0.4);
-  background: linear-gradient(135deg, var(--border-led-color) 0%, var(--neon-primary) 100%);
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+}
+
+.quick-sale-button:hover::before {
+  opacity: 0.9;
+  filter: blur(16px);
+  transform: scale(1.15);
 }
 
 .quick-sale-button:hover::after {
-  opacity: 0.8;
+  opacity: 0.7;
   filter: blur(12px);
 }
 
+/* Efecto active */
 .quick-sale-button:active {
   transform: scale(1.05);
-  box-shadow: 
-    0 0 16px var(--neon-glow-primary), 
-    0 0 32px var(--neon-glow-secondary),
-    0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.quick-sale-button:active::before {
+  opacity: 0.5;
+  filter: blur(10px);
+  transform: scale(1.05);
+}
+
+/* Contenedor SVG para la animación láser */
+.quick-sale-button-laser {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 50%;
+  overflow: visible;
+}
+
+/* Círculo del borde para la animación láser */
+.quick-sale-button-laser-circle {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-dasharray: 238.76;
+  stroke-dashoffset: 238.76;
+  animation: laserCircle 3s linear infinite;
+  filter: drop-shadow(0 0 4px var(--color-primary)) drop-shadow(0 0 8px var(--color-primary));
+  opacity: 0.6;
+}
+
+/* Punto láser brillante en el círculo */
+.quick-sale-button-laser-dot {
+  transform-origin: 40px 40px;
+  animation: laserCircleDot 3s linear infinite;
+}
+
+/* Animación del láser recorriendo el círculo */
+@keyframes laserCircle {
+  0% {
+    stroke-dashoffset: 238.76;
+    opacity: 0.4;
+  }
+  5% {
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.4;
+  }
+}
+
+/* Animación del punto láser en el círculo */
+@keyframes laserCircleDot {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Icono del botón */
 .quick-sale-button-icon {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+  z-index: 3;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   transition: filter var(--transition-glow), transform var(--transition-fast);
+  pointer-events: none;
+}
+
+/* Contenedor SVG para el láser del icono */
+.quick-sale-button-icon-wrapper {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SVG del icono con animación láser */
+.quick-sale-button-icon-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Path del icono para la animación láser */
+.quick-sale-button-icon-path {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 1.5;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  animation: laserIcon 4s linear infinite;
+  filter: drop-shadow(0 0 3px var(--color-primary)) drop-shadow(0 0 6px var(--color-primary));
+  opacity: 0.8;
+}
+
+/* Animación del láser recorriendo el icono */
+@keyframes laserIcon {
+  0% {
+    stroke-dashoffset: 120;
+    opacity: 0.3;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
 }
 
 .quick-sale-button:hover .quick-sale-button-icon {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 16px var(--neon-glow-primary));
-  transform: rotate(5deg);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+  transform: scale(1.1);
 }
 
+.quick-sale-button:hover .quick-sale-button-laser-circle,
+.quick-sale-button:hover .quick-sale-button-icon-path {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px var(--color-primary)) drop-shadow(0 0 12px var(--color-primary)) drop-shadow(0 0 18px var(--color-primary));
+}
+
+/* Media queries para móvil */
 @media (max-width: 768px) {
-  .quick-sale-button {
-    width: 56px;
-    height: 56px;
+  .quick-sale-button-wrapper {
+    width: 72px;
+    height: 72px;
     bottom: 16px;
     right: 16px;
   }
 
   .quick-sale-button-icon {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
   }
 }
 
+/* Respecto por preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
-  .quick-sale-button {
-    animation: none;
-  }
-  
-  .quick-sale-button::before {
-    animation: none;
-    opacity: 0;
-  }
-  
+  .quick-sale-button,
   .quick-sale-button::after {
     animation: none;
-    opacity: 0.5;
   }
 }

@@ -55,8 +55,45 @@
   font-size: var(--font-size-lg);
 }
 
+.monthly-dashboard-hourly {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 2px solid var(--border-color);
+}
+
+.monthly-dashboard-section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.monthly-dashboard-peak-hours {
+  width: 100%;
+}
+
+.monthly-dashboard-hourly-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+.monthly-dashboard-hourly-products {
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   .monthly-dashboard-products {
+    grid-template-columns: 1fr;
+  }
+
+  .monthly-dashboard-hourly-charts {
     grid-template-columns: 1fr;
   }
 
@@ -68,4 +105,14 @@
   .monthly-dashboard-header button {
     width: 100%;
   }
+}
+
+.monthly-dashboard-pdf-icon {
+  flex-shrink: 0;
+  margin-right: var(--spacing-xs);
+}
+
+.monthly-dashboard-pdf-icon svg {
+  width: 1rem;
+  height: 1rem;
 }

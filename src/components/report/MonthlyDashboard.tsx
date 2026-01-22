@@ -1,13 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import { HiCube, HiCurrencyEuro, HiDocumentText } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { MonthSelector } from './MonthSelector';
 import { FumonCard } from './FumonCard';
 import { TopProductCard } from './TopProductCard';
 import { TopCustomersCard } from './TopCustomersCard';
-import { getMonthlyDashboard, downloadAccountBookPdf } from '@/services/reports.service';
+import { HourlySalesChart } from './HourlySalesChart';
+import { HourlyStockChart } from './HourlyStockChart';
+import { HourlyProductsTable } from './HourlyProductsTable';
+import { PeakHoursCard } from './PeakHoursCard';
+import { getMonthlyDashboard, downloadAccountBookPdf, getHourlySales, getHourlyStockMovements, getTopProductsByHour } from '@/services/reports.service';
 import { useUI } from '@/context/ui.context';
-import type { MonthlyDashboardResponse } from '@/types/models';
+import type { MonthlyDashboardResponse, HourlySalesResponse, HourlyStockResponse, HourlyProductStatsResponse } from '@/types/models';
 import './MonthlyDashboard.css';
 
 export function MonthlyDashboard() {
@@ -18,16 +23,39 @@ export function MonthlyDashboard() {
   const [dashboard, setDashboard] = useState<MonthlyDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [hourlySales, setHourlySales] = useState<HourlySalesResponse | null>(null);
+  const [hourlyStock, setHourlyStock] = useState<HourlyStockResponse | null>(null);
+  const [hourlyProducts, setHourlyProducts] = useState<HourlyProductStatsResponse | null>(null);
+  const [loadingHourly, setLoadingHourly] = useState(true);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
+    setLoadingHourly(true);
     try {
       const data = await getMonthlyDashboard(year, month);
       setDashboard(data);
+
+      // Calcular rango de fechas para el mes seleccionado
+      const from = new Date(year, month - 1, 1);
+      const to = new Date(year, month, 0, 23, 59, 59);
+      const fromISO = from.toISOString();
+      const toISO = to.toISOString();
+
+      // Cargar estadísticas por hora
+      const [salesData, stockData, productsData] = await Promise.all([
+        getHourlySales(fromISO, toISO),
+        getHourlyStockMovements(fromISO, toISO),
+        getTopProductsByHour(fromISO, toISO),
+      ]);
+
+      setHourlySales(salesData);
+      setHourlyStock(stockData);
+      setHourlyProducts(productsData);
     } catch (err: any) {
       showToast(err.message || 'Error al cargar dashboard', 'error');
     } finally {
       setLoading(false);
+      setLoadingHourly(false);
     }
   }, [year, month, showToast]);
 
@@ -86,8 +114,9 @@ export function MonthlyDashboard() {
             onClick={handleDownloadPdf}
             loading={generatingPdf}
             disabled={loading}
+            icon={<HiDocumentText />}
           >
-            📄 Generar Libro de Cuentas PDF
+            Generar Libro de Cuentas PDF
           </Button>
         </div>
 
@@ -107,14 +136,14 @@ export function MonthlyDashboard() {
               <TopProductCard
                 product={dashboard?.topProduct || null}
                 title="Producto Más Popular"
-                icon="📦"
+                icon={<HiCube />}
                 highlight="grams"
                 loading={false}
               />
               <TopProductCard
                 product={dashboard?.mostProfitableProduct || null}
                 title="Producto Más Rentable"
-                icon="💰"
+                icon={<HiCurrencyEuro />}
                 highlight="revenue"
                 loading={false}
               />
@@ -126,6 +155,27 @@ export function MonthlyDashboard() {
                 customers={dashboard?.topCustomers || []}
                 loading={false}
               />
+            </div>
+
+            {/* Estadísticas por Hora */}
+            <div className="monthly-dashboard-hourly">
+              <h2 className="monthly-dashboard-section-title">Estadísticas por Hora</h2>
+              
+              {/* Horas Pico */}
+              <div className="monthly-dashboard-peak-hours">
+                <PeakHoursCard data={hourlySales} loading={loadingHourly} />
+              </div>
+
+              {/* Gráficos de Ventas y Stock por Hora */}
+              <div className="monthly-dashboard-hourly-charts">
+                <HourlySalesChart data={hourlySales} loading={loadingHourly} />
+                <HourlyStockChart data={hourlyStock} loading={loadingHourly} />
+              </div>
+
+              {/* Productos por Hora */}
+              <div className="monthly-dashboard-hourly-products">
+                <HourlyProductsTable data={hourlyProducts} loading={loadingHourly} />
+              </div>
             </div>
           </>
         )}

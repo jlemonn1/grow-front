@@ -158,23 +158,31 @@
 .home-card-icon {
   font-size: 3rem;
   line-height: 1;
-  display: block;
-  text-shadow: 0 0 8px var(--neon-glow-primary);
-  transition: text-shadow var(--transition-glow), transform var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 8px var(--neon-glow-primary));
+  transition: filter var(--transition-glow), transform var(--transition-base);
   animation: iconGlowPulse 3s ease-in-out infinite;
 }
 
+.home-card-icon svg {
+  width: 3rem;
+  height: 3rem;
+}
+
 .home-card:hover .home-card-icon {
-  text-shadow: 0 0 16px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+  filter: drop-shadow(0 0 16px var(--neon-glow-primary)) drop-shadow(0 0 24px var(--neon-glow-secondary));
   transform: scale(1.1);
 }
 
 @keyframes iconGlowPulse {
   0%, 100% {
-    text-shadow: 0 0 8px var(--neon-glow-primary);
+    filter: drop-shadow(0 0 8px var(--neon-glow-primary));
   }
   50% {
-    text-shadow: 0 0 12px var(--neon-glow-primary), 0 0 16px var(--neon-glow-secondary);
+    filter: drop-shadow(0 0 12px var(--neon-glow-primary)) drop-shadow(0 0 16px var(--neon-glow-secondary));
   }
 }
 
@@ -242,6 +250,11 @@
     font-size: 2.5rem;
   }
   
+  .home-card-icon svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
   .home-card-title {
     font-size: 1.25rem;
   }
@@ -279,6 +292,11 @@
   
   .home-card-icon {
     font-size: 2.25rem;
+  }
+  
+  .home-card-icon svg {
+    width: 2.25rem;
+    height: 2.25rem;
   }
   
   .home-card-title {

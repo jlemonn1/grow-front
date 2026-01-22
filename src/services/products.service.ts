@@ -84,3 +84,30 @@ export interface TopProduct {
 export async function getTopProductsByMovements(limit: number = 10): Promise<TopProduct[]> {
   return get<TopProduct[]>(`/products/top-by-movements?limit=${limit}`);
 }
+
+/**
+ * Lista productos públicamente (sin autenticación, modo visitante)
+ */
+export async function listProductsPublic(
+  params?: ListProductsParams
+): Promise<PageResponse<Product>> {
+  const queryParams = new URLSearchParams();
+
+  if (params?.q) {
+    queryParams.append('q', params.q);
+  }
+  if (params?.categoryId) {
+    queryParams.append('categoryId', params.categoryId);
+  }
+  if (params?.page !== undefined) {
+    queryParams.append('page', params.page.toString());
+  }
+  if (params?.size !== undefined) {
+    queryParams.append('size', params.size.toString());
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/public/products${queryString ? `?${queryString}` : ''}`;
+
+  return get<PageResponse<Product>>(endpoint);
+}

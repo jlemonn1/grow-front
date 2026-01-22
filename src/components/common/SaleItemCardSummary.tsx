@@ -26,9 +26,20 @@ export function SaleItemCardSummary({ item, isExpanded, onToggleExpand }: SaleIt
           <h3 className="sale-item-card-product-name" title={item.productName}>
             {item.productName}
           </h3>
-          <span className="sale-item-card-subtotal">
-            {formatMoney(item.lineTotal)}
-          </span>
+          <div className="sale-item-card-subtotal">
+            {item.subtotalBeforeDiscount && item.subtotalBeforeDiscount !== item.lineTotal ? (
+              <>
+                <span className="sale-item-card-subtotal-original">
+                  {formatMoney(item.subtotalBeforeDiscount)}
+                </span>
+                <span className="sale-item-card-subtotal-final">
+                  {formatMoney(item.lineTotal)}
+                </span>
+              </>
+            ) : (
+              <span>{formatMoney(item.lineTotal)}</span>
+            )}
+          </div>
         </div>
         <div className="sale-item-card-stats">
           <div className="sale-item-card-stat">

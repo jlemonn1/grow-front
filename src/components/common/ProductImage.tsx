@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { HiCube } from 'react-icons/hi';
+import { buildResourceUrl } from '@/utils/apiUrl';
 import './ProductImage.css';
 
 interface ProductImageProps {
@@ -27,14 +29,12 @@ export function ProductImage({
   };
 
   // Construir URL completa si es relativa
-  const fullImageUrl = imageUrl.startsWith('http') 
-    ? imageUrl 
-    : `http://localhost:8080${imageUrl}`;
+  const fullImageUrl = buildResourceUrl(imageUrl);
 
   if (imageError) {
     return (
       <div className={`product-image product-image-${size} product-image-placeholder ${className}`}>
-        <span className="product-image-placeholder-icon">📦</span>
+        <span className="product-image-placeholder-icon"><HiCube /></span>
       </div>
     );
   }

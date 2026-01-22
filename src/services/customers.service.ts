@@ -139,4 +139,26 @@ export const customersService = {
   async renewSubscription(customerId: string, data: RenewSubscriptionRequest): Promise<Customer> {
     return post<Customer>(`/customers/${customerId}/subscription/renew`, data);
   },
+
+  /**
+   * Busca clientes públicamente (sin autenticación, modo visitante)
+   */
+  async searchPublic(params?: ListCustomersParams): Promise<PageResponse<Customer>> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.q) {
+      queryParams.append('q', params.q);
+    }
+    if (params?.page !== undefined) {
+      queryParams.append('page', params.page.toString());
+    }
+    if (params?.size !== undefined) {
+      queryParams.append('size', params.size.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = `/public/customers${queryString ? `?${queryString}` : ''}`;
+
+    return get<PageResponse<Customer>>(endpoint);
+  },
 };

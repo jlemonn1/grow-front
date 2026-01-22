@@ -7,6 +7,7 @@ interface ConfigContextValue {
   loading: boolean;
   error: string | null;
   themeMode: 'light' | 'dark';
+  needsOnboarding: boolean;
   updateConfiguration: (data: UpdateGrowConfigurationRequest) => Promise<void>;
   refreshConfiguration: () => Promise<void>;
   applyColorTheme: () => void;
@@ -151,11 +152,19 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     }
   }, []);
 
+  // Función para determinar si se necesita onboarding
+  const needsOnboarding = useCallback((): boolean => {
+    if (!config || loading) return false;
+    // Onboarding necesario si tiene valores por defecto
+    return config.growName === 'Growshop' && config.logoUrl === null;
+  }, [config, loading]);
+
   const value: ConfigContextValue = {
     config,
     loading,
     error,
     themeMode,
+    needsOnboarding: needsOnboarding(),
     updateConfiguration,
     refreshConfiguration,
     applyColorTheme,

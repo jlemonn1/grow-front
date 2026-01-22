@@ -5,6 +5,7 @@ import { TopBar } from './TopBar';
 import { ToastHost } from '@/components/common/ToastHost';
 import { ConnectionStatus } from '@/components/common/ConnectionStatus';
 import { QuickSaleButton } from '@/components/sale/QuickSaleButton';
+import { TickerCarousel } from '@/components/common/TickerCarousel';
 import './AppLayout.css';
 
 export function AppLayout() {
@@ -44,6 +45,7 @@ export function AppLayout() {
         />
       )}
       <div className="app-layout-main">
+        <TickerCarousel />
         <TopBar 
           onMenuToggle={openMobileMenu}
           isMenuOpen={isMobileMenuOpen}

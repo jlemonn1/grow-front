@@ -81,6 +81,15 @@
   position: relative;
   z-index: 1;
   transition: opacity var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.product-image-placeholder-icon svg {
+  width: 1.2em;
+  height: 1.2em;
 }
 
 .product-image-placeholder:hover .product-image-placeholder-icon {

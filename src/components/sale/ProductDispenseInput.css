@@ -1,0 +1,101 @@
+.product-dispense-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.product-dispense-input-row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+/* Desktop: ≥1280px */
+@media (min-width: 1280px) {
+  .product-dispense-input {
+    gap: var(--spacing-md);
+  }
+  
+  .product-dispense-input-row {
+    gap: var(--spacing-md);
+  }
+  
+  .product-dispense-input-row > .dispense-input-field {
+    flex: 0 1 auto;
+    width: calc(50% - var(--spacing-md) / 2);
+    min-width: 200px;
+  }
+}
+
+/* Tablet Large: 1024px - 1279px */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .product-dispense-input {
+    gap: var(--spacing-sm);
+  }
+  
+  .product-dispense-input-row {
+    gap: var(--spacing-sm);
+  }
+  
+  .product-dispense-input-row > .dispense-input-field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+/* Tablet: 768px - 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .product-dispense-input {
+    gap: var(--spacing-sm);
+  }
+  
+  .product-dispense-input-row {
+    gap: var(--spacing-xs);
+  }
+  
+  .product-dispense-input-row > .dispense-input-field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+/* Mobile Large: 480px - 767px */
+@media (min-width: 480px) and (max-width: 767px) {
+  .product-dispense-input {
+    gap: var(--spacing-sm);
+  }
+  
+  .product-dispense-input-row {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .product-dispense-input-row > .dispense-input-field {
+    width: 100%;
+  }
+}
+
+/* Mobile Small: <480px */
+@media (max-width: 479px) {
+  .product-dispense-input {
+    gap: var(--spacing-xs);
+  }
+  
+  .product-dispense-input-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .product-dispense-input-row > .dispense-input-field {
+    width: 100%;
+  }
+}
+
+.product-dispense-error {
+  padding: var(--spacing-sm);
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-error);
+}

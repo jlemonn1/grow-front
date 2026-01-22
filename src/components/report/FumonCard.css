@@ -107,6 +107,15 @@
   animation: bounce 2s infinite, crown-glow 3s ease-in-out infinite alternate;
   filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
   transition: filter var(--transition-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd700;
+}
+
+.fumon-card-crown svg {
+  width: 4rem;
+  height: 4rem;
 }
 
 @keyframes bounce {
@@ -225,6 +234,16 @@
 
 .fumon-card-stat-icon {
   font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+}
+
+.fumon-card-stat-icon svg {
+  width: 2rem;
+  height: 2rem;
 }
 
 .fumon-card-stat-content {

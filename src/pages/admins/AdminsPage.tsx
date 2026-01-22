@@ -1,11 +1,13 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HiSparkles } from 'react-icons/hi2';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { Input } from '@/components/forms/Input';
 import { FormCard } from '@/components/forms/FormCard';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
+import { AdminPermissionsEditor } from '@/components/admin/AdminPermissionsEditor';
 import { useUI } from '@/context/ui.context';
 import { useAuth } from '@/context/auth.context';
 import { getAllAdmins, createAdmin, deleteAdmin } from '@/services/admin.service';
@@ -27,6 +29,7 @@ export function AdminsPage() {
     isOpen: false,
     admin: null,
   });
+  const [editingPermissionsFor, setEditingPermissionsFor] = useState<string | null>(null);
 
   // Verificar que el usuario sea admin principal
   useEffect(() => {
@@ -158,7 +161,12 @@ export function AdminsPage() {
             <div className="admin-info">
               <div className="admin-username">
                 {admin.username}
-                {admin.isMainAdmin && <span className="admin-badge">👑 Principal</span>}
+                {admin.isMainAdmin && (
+                  <span className="admin-badge">
+                    <HiSparkles className="admin-badge-icon" />
+                    Principal
+                  </span>
+                )}
                 {!admin.isActive && <span className="admin-badge-inactive">Inactivo</span>}
               </div>
               {admin.createdAt && (
@@ -169,15 +177,39 @@ export function AdminsPage() {
             </div>
             <div className="admin-actions">
               {!admin.isMainAdmin && admin.isActive && (
-                <Button
-                  variant="danger"
-                  size="small"
-                  onClick={() => handleDeleteClick(admin)}
-                >
-                  Desactivar
-                </Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => setEditingPermissionsFor(
+                      editingPermissionsFor === admin.id ? null : admin.id
+                    )}
+                  >
+                    {editingPermissionsFor === admin.id ? 'Ocultar Permisos' : 'Permisos'}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="small"
+                    onClick={() => handleDeleteClick(admin)}
+                  >
+                    Desactivar
+                  </Button>
+                </>
               )}
             </div>
+            {editingPermissionsFor === admin.id && (
+              <div className="admin-permissions-section">
+                <FormCard plain>
+                  <AdminPermissionsEditor
+                    admin={admin}
+                    onUpdate={() => {
+                      loadAdmins();
+                      refreshUser();
+                    }}
+                  />
+                </FormCard>
+              </div>
+            )}
           </div>
         ))}
       </div>

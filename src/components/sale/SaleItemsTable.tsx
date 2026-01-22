@@ -35,6 +35,17 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
       cell: (value: unknown) => formatMoney(value as number),
     },
     {
+      header: 'Descuento',
+      accessor: (row: SaleItem) => {
+        if (row.discount !== undefined && row.discountType) {
+          return row.discountType === 'PERCENTAGE' 
+            ? `${row.discount}%`
+            : formatMoney(row.discount);
+        }
+        return '-';
+      },
+    },
+    {
       header: 'Subtotal',
       accessor: 'lineTotal',
       cell: (value: unknown) => formatMoney(value as number),

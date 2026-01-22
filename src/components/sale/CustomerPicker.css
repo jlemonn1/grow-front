@@ -9,6 +9,20 @@
   align-items: center;
 }
 
+.customer-picker-input-wrapper :global(.form-input) {
+  padding-right: 96px; /* Espacio para botón QR (40px + 36px + 8px) y botón clear (36px + 8px) */
+}
+
+/* Cuando solo hay botón QR (sin clear) */
+.customer-picker-input-wrapper:has(.customer-picker-qr-button):not(:has(.customer-picker-clear)) :global(.form-input) {
+  padding-right: 52px; /* Solo botón QR: 36px + 8px + 8px */
+}
+
+/* Cuando solo hay botón clear (sin QR) - aunque esto no debería pasar normalmente */
+.customer-picker-input-wrapper:has(.customer-picker-clear):not(:has(.customer-picker-qr-button)) :global(.form-input) {
+  padding-right: 52px; /* Solo botón clear: 36px + 8px + 8px */
+}
+
 .customer-picker:has(input:focus) .customer-picker-input-wrapper::after {
   content: '';
   position: absolute;
@@ -35,26 +49,85 @@
   }
 }
 
+.customer-picker-qr-button {
+  position: absolute;
+  right: 48px; /* 8px (margen) + 36px (botón clear) + 4px (espacio) */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  font-size: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  z-index: 10;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Cuando no hay botón clear, el QR puede estar más cerca del borde */
+.customer-picker-input-wrapper:not(:has(.customer-picker-clear)) .customer-picker-qr-button {
+  right: 8px;
+}
+
+.customer-picker-qr-button:hover {
+  color: var(--primary-color);
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-led-color);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary), 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.customer-picker-qr-button:active {
+  box-shadow: 0 0 4px var(--neon-glow-primary), 0 1px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-50%) scale(1);
+}
+
 .customer-picker-clear {
   position: absolute;
   right: 8px;
-  background: none;
-  border: none;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   font-size: 24px;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 0;
   line-height: 1;
-  z-index: 1;
+  z-index: 10;
   transition: all var(--transition-base), box-shadow var(--transition-glow);
   border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .customer-picker-clear:hover {
   color: var(--color-error);
+  background-color: var(--bg-tertiary);
+  border-color: var(--color-error);
   text-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5), 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.customer-picker-clear:active {
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5), 0 1px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-50%) scale(1);
 }
 
 .customer-picker-results {
@@ -199,6 +272,19 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.customer-picker-item-phone-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.customer-picker-item-phone-icon svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .customer-picker-selected {
@@ -222,15 +308,37 @@
 }
 
 .customer-picker-hint {
-  margin-top: var(--spacing-xs);
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  right: 96px; /* Espacio para botones QR y clear */
+  margin-top: 0;
   font-size: 0.75rem;
   color: var(--text-secondary);
   padding: 0 var(--spacing-xs);
   opacity: 0.7;
+  z-index: 5;
+  pointer-events: none;
+  width: auto;
+  max-width: none;
+}
+
+/* Cuando solo hay botón QR (sin clear) */
+.customer-picker-input-wrapper:has(.customer-picker-qr-button):not(:has(.customer-picker-clear)) .customer-picker-hint {
+  right: 52px; /* Solo espacio para botón QR */
+}
+
+/* Cuando solo hay botón clear (sin QR) */
+.customer-picker-input-wrapper:has(.customer-picker-clear):not(:has(.customer-picker-qr-button)) .customer-picker-hint {
+  right: 52px; /* Solo espacio para botón clear */
 }
 
 .customer-picker-search-type {
-  margin-top: var(--spacing-xs);
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  right: 96px; /* Espacio para botones QR y clear */
+  margin-top: 0;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 4px var(--spacing-xs);
@@ -242,6 +350,20 @@
   border: 1px solid var(--border-led-color);
   box-shadow: 0 0 8px var(--neon-glow-primary);
   animation: searchTypePulse 2s ease-in-out infinite;
+  z-index: 5;
+  pointer-events: none; /* No interferir con los clicks en los botones */
+  width: auto;
+  max-width: none;
+}
+
+/* Cuando solo hay botón QR (sin clear) */
+.customer-picker-input-wrapper:has(.customer-picker-qr-button):not(:has(.customer-picker-clear)) .customer-picker-search-type {
+  right: 52px; /* Solo espacio para botón QR */
+}
+
+/* Cuando solo hay botón clear (sin QR) */
+.customer-picker-input-wrapper:has(.customer-picker-clear):not(:has(.customer-picker-qr-button)) .customer-picker-search-type {
+  right: 52px; /* Solo espacio para botón clear */
 }
 
 .customer-picker-search-type::before {
@@ -272,6 +394,17 @@
 .customer-picker-search-type {
   color: var(--neon-primary);
   text-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.customer-picker-search-type-icon {
+  flex-shrink: 0;
+  color: var(--neon-primary);
+  filter: drop-shadow(0 0 4px var(--neon-glow-primary));
+}
+
+.customer-picker-search-type-icon svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .customer-picker-item-header {

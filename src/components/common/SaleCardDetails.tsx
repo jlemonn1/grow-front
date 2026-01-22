@@ -21,6 +21,12 @@ export function SaleCardDetails({ sale, customerId }: SaleCardDetailsProps) {
           <span className="sale-card-detail-label">Cambio:</span>
           <span className="sale-card-detail-value">{formatMoney(sale.changeAmount)}</span>
         </div>
+        {(sale.createdByUsername || sale.createdBy?.username) && (
+          <div className="sale-card-detail-row">
+            <span className="sale-card-detail-label">Realizado por:</span>
+            <span className="sale-card-detail-value">{sale.createdByUsername || sale.createdBy?.username}</span>
+          </div>
+        )}
       </div>
       <div className="sale-card-actions">
         <Link

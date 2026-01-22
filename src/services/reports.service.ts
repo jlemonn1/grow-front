@@ -1,4 +1,5 @@
 import { get } from './http';
+import { buildApiUrl } from '@/utils/apiUrl';
 import type { 
   SalesSummaryResponse, 
   StockSummaryResponse, 
@@ -6,7 +7,11 @@ import type {
   StockSummaryParams,
   SalesTrendResponse,
   SalesTrendParams,
-  MonthlyDashboardResponse
+  MonthlyDashboardResponse,
+  HourlySalesResponse,
+  HourlyStockResponse,
+  HourlyProductStatsResponse,
+  DashboardTickerResponse
 } from '@/types/models';
 
 /**
@@ -122,7 +127,7 @@ export async function downloadAccountBookPdf(
   const queryString = queryParams.toString();
   const endpoint = `/reports/account-book/pdf${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(`http://localhost:8080/api/v1${endpoint}`, {
+  const response = await fetch(buildApiUrl(endpoint), {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -134,4 +139,77 @@ export async function downloadAccountBookPdf(
   }
 
   return response.blob();
+}
+
+/**
+ * Obtiene estadísticas de ventas agrupadas por hora del día
+ */
+export async function getHourlySales(
+  from?: string,
+  to?: string
+): Promise<HourlySalesResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (from) {
+    queryParams.append('from', from);
+  }
+  if (to) {
+    queryParams.append('to', to);
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/reports/sales/hourly${queryString ? `?${queryString}` : ''}`;
+
+  return get<HourlySalesResponse>(endpoint);
+}
+
+/**
+ * Obtiene estadísticas de movimientos de stock agrupadas por hora del día
+ */
+export async function getHourlyStockMovements(
+  from?: string,
+  to?: string
+): Promise<HourlyStockResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (from) {
+    queryParams.append('from', from);
+  }
+  if (to) {
+    queryParams.append('to', to);
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/reports/stock/hourly${queryString ? `?${queryString}` : ''}`;
+
+  return get<HourlyStockResponse>(endpoint);
+}
+
+/**
+ * Obtiene los productos más vendidos agrupados por hora del día
+ */
+export async function getTopProductsByHour(
+  from?: string,
+  to?: string
+): Promise<HourlyProductStatsResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (from) {
+    queryParams.append('from', from);
+  }
+  if (to) {
+    queryParams.append('to', to);
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/reports/products/hourly${queryString ? `?${queryString}` : ''}`;
+
+  return get<HourlyProductStatsResponse>(endpoint);
+}
+
+/**
+ * Obtiene los datos del ticker del dashboard
+ */
+export async function getDashboardTicker(): Promise<DashboardTickerResponse> {
+  return get<DashboardTickerResponse>('/reports/dashboard/ticker');
 }

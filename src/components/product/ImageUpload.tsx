@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { uploadImage } from '@/services/images.service';
+import { buildResourceUrl } from '@/utils/apiUrl';
 import { useUI } from '@/context/ui.context';
 import { HiCamera, HiPhotograph } from 'react-icons/hi';
 import './ImageUpload.css';
@@ -136,7 +137,7 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
       >
         {preview ? (
           <div className={`image-upload-preview ${dragOver ? 'image-upload-drag-over' : ''}`}>
-            <img src={preview.startsWith('http') ? preview : `http://localhost:8080${preview}`} alt="Preview" />
+            <img src={buildResourceUrl(preview)} alt="Preview" />
             {!uploading && (
               <button
                 type="button"

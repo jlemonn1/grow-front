@@ -424,7 +424,7 @@ export function CustomerCreatePage() {
                 </div>
               </div>
               <div className="form-row">
-                <div className="form-field-with-icon">
+                <div className="form-field-with-icon form-field-with-select">
                   <HiOutlineCreditCard className="form-field-icon" />
                   <Select
                     id="subscriptionType"

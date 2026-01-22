@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HiCurrencyEuro, HiCube, HiUser, HiChartBar } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { HomeTopProductsChart } from '@/components/home/HomeTopProductsChart';
 import { HomeTopCustomersChart } from '@/components/home/HomeTopCustomersChart';
+import { GlobalSearchInput } from '@/components/home/GlobalSearchInput';
+import { GlobalSearchModal } from '@/components/home/GlobalSearchModal';
 import { getSalesSummary, getMonthlyDashboard } from '@/services/reports.service';
 import { getPredefinedPeriod, dateToISO } from '@/utils/dates';
 import type { SalesSummaryResponse, MonthlyDashboardResponse } from '@/types/models';
@@ -13,7 +16,7 @@ interface HomeCard {
   path: string;
   title: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 export function HomePage() {
@@ -23,6 +26,7 @@ export function HomePage() {
   const [topProducts, setTopProducts] = useState<SalesSummaryResponse | null>(null);
   const [dashboard, setDashboard] = useState<MonthlyDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,25 +61,25 @@ export function HomePage() {
       path: '/sales/new',
       title: 'Caja',
       description: 'Dispensar productos y gestionar ventas rápidamente',
-      icon: '💰',
+      icon: <HiCurrencyEuro />,
     },
     {
       path: '/products',
       title: 'Productos',
       description: 'Gestionar inventario, stock y catálogo de productos',
-      icon: '📦',
+      icon: <HiCube />,
     },
     {
       path: '/customers',
       title: 'Clientes',
       description: 'Ver, crear y gestionar clientes y suscripciones',
-      icon: '👤',
+      icon: <HiUser />,
     },
     {
       path: '/reports',
       title: 'Reportes',
       description: 'Ver resúmenes detallados, estadísticas y análisis',
-      icon: '📊',
+      icon: <HiChartBar />,
     },
   ];
 
@@ -86,6 +90,8 @@ export function HomePage() {
 
   return (
     <>
+      <GlobalSearchInput onOpenModal={() => setIsSearchModalOpen(true)} />
+      
       <PageHeader 
         title="Bienvenido" 
         subtitle={`Resumen del mes: ${formattedMonthName}`} 
@@ -127,6 +133,11 @@ export function HomePage() {
           </div>
         </div>
       </div>
+
+      <GlobalSearchModal 
+        isOpen={isSearchModalOpen} 
+        onClose={() => setIsSearchModalOpen(false)} 
+      />
     </>
   );
 }

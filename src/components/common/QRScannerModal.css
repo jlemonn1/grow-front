@@ -1,0 +1,260 @@
+/* Modal de escáner QR - Pantalla completa */
+.qr-scanner-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100dvw !important; /* Dynamic viewport width - mejor para móviles */
+  height: 100dvh !important; /* Dynamic viewport height - mejor para móviles */
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 999999 !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  outline: none !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  transform: none !important;
+  isolation: isolate !important;
+  contain: layout style paint !important;
+}
+
+/* Asegurar que body y html no interfieran cuando el modal está abierto */
+body:has(.qr-scanner-fullscreen),
+html:has(.qr-scanner-fullscreen),
+body.qr-scanner-open,
+html.qr-scanner-open {
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.qr-scanner-fullscreen-content {
+  width: 90% !important;
+  max-width: 800px !important;
+  height: auto !important;
+  max-height: 90vh !important;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  position: relative;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: auto !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-neon-lg);
+  overflow: hidden;
+}
+
+.qr-scanner-fullscreen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+  position: relative;
+  z-index: 10;
+}
+
+.qr-scanner-fullscreen-title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.qr-scanner-fullscreen-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.qr-scanner-fullscreen-close:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--error-color);
+  transform: scale(1.1);
+}
+
+.qr-scanner-fullscreen-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-lg);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  box-sizing: border-box;
+}
+
+.qr-scanner-fullscreen-instructions {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.qr-scanner-fullscreen-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 1;
+  min-height: 400px;
+  max-height: 600px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: var(--shadow-neon-md);
+  box-sizing: border-box;
+}
+
+.qr-scanner-fullscreen-area {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.qr-scanner-fullscreen-placeholder {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  color: var(--text-secondary);
+  z-index: 2;
+}
+
+.qr-scanner-fullscreen-error {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+  z-index: 2;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+}
+
+.qr-scanner-fullscreen-error p {
+  color: var(--error-color);
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.qr-scanner-fullscreen-retry {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.qr-scanner-fullscreen-retry:hover {
+  background: var(--primary-color-dark);
+}
+
+.qr-scanner-fullscreen-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 2px solid var(--border-color);
+  position: relative;
+  z-index: 10;
+}
+
+.qr-scanner-fullscreen-close-button {
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.qr-scanner-fullscreen-close-button:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* Asegurar que html5-qrcode tenga el z-index correcto */
+.qr-scanner-fullscreen-area :global(#qr-reader),
+.qr-scanner-fullscreen-area :global(video),
+.qr-scanner-fullscreen-area :global(canvas) {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .qr-scanner-fullscreen-content {
+    width: 95% !important;
+    max-width: 95% !important;
+    max-height: 95vh !important;
+  }
+
+  .qr-scanner-fullscreen-container {
+    max-width: 100%;
+    max-height: 60vh;
+    min-height: 300px;
+  }
+
+  .qr-scanner-fullscreen-header {
+    padding: var(--spacing-md);
+  }
+
+  .qr-scanner-fullscreen-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .qr-scanner-fullscreen-body {
+    padding: var(--spacing-md);
+    min-height: 300px;
+  }
+}

@@ -1,7 +1,15 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getCurrentUser, logout as logoutService } from '@/services/auth.service';
 import { getCurrentAdmin } from '@/services/admin.service';
+import { AdminPermission } from '@/types/models';
 import type { Admin } from '@/types/models';
+
+// Importar para guardar borrador antes de logout
+let saveDraftBeforeLogout: (() => Promise<void>) | null = null;
+
+export function setSaveDraftBeforeLogoutCallback(callback: () => Promise<void>) {
+  saveDraftBeforeLogout = callback;
+}
 
 interface AuthContextType {
   currentUser: { username: string; isMainAdmin: boolean } | null;
@@ -9,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   refreshUser: () => Promise<void>;
   logout: () => void;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,11 +70,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Guardar borrador antes de cerrar sesión
+    if (saveDraftBeforeLogout) {
+      try {
+        await saveDraftBeforeLogout();
+      } catch (error) {
+        console.error('Error al guardar borrador antes de logout:', error);
+      }
+    }
+    
     logoutService();
     setCurrentUser(null);
     setCurrentAdmin(null);
   };
+
+  const hasPermission = useCallback((permission: string): boolean => {
+    // Si no hay usuario autenticado, no tiene permisos
+    if (!currentUser && !currentAdmin) {
+      return false;
+    }
+
+    // El admin principal siempre tiene todos los permisos
+    // Verificar tanto en currentAdmin como en currentUser (fallback)
+    if (currentAdmin?.isMainAdmin || currentUser?.isMainAdmin) {
+      return true;
+    }
+
+    // Si no hay currentAdmin cargado, no podemos verificar permisos específicos
+    if (!currentAdmin) {
+      return false;
+    }
+
+    // Verificar si el permiso está en los permisos del admin
+    return currentAdmin.permissions?.[permission] === true;
+  }, [currentUser, currentAdmin]);
 
   useEffect(() => {
     refreshUser();
@@ -79,6 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading,
         refreshUser,
         logout,
+        hasPermission,
       }}
     >
       {children}

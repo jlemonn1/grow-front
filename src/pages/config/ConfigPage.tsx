@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/forms/Input';
@@ -11,11 +11,18 @@ import { useUI } from '@/context/ui.context';
 import type { UpdateGrowConfigurationRequest } from '@/services/config.service';
 import type { ValidationError } from '@/types/api';
 import { generateColorPalette } from '@/utils/colorSystem';
+import { customersService } from '@/services/customers.service';
+import { createProduct } from '@/services/products.service';
+import { createSale } from '@/services/sales.service';
+import { listCategories, createCategory } from '@/services/categories.service';
+import type { CreateCustomerRequest, CreateProductRequest, CreateSaleRequest } from '@/types/models';
+import { useAuth } from '@/context/auth.context';
 import './ConfigPage.css';
 
 export function ConfigPage() {
   const { config, loading, updateConfiguration } = useConfig();
   const { showToast } = useUI();
+  const { currentAdmin } = useAuth();
 
   const [formData, setFormData] = useState<UpdateGrowConfigurationRequest>({
     growName: '',
@@ -26,6 +33,12 @@ export function ConfigPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Estados para el easter egg (solo para admin principal)
+  const [clickCount, setClickCount] = useState(0);
+  const [scrollListenerActive, setScrollListenerActive] = useState(false);
+  const [loadingTestData, setLoadingTestData] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // Cargar configuración cuando esté disponible
   useEffect(() => {
@@ -39,6 +52,219 @@ export function ConfigPage() {
       setHasChanges(false);
     }
   }, [config]);
+
+  // Función para cargar datos de prueba (solo para admin principal)
+  const loadTestData = useCallback(async () => {
+    // Verificar que sea admin principal
+    if (!currentAdmin?.isMainAdmin) {
+      return;
+    }
+    
+    if (loadingTestData || dataLoaded) return;
+    
+    setLoadingTestData(true);
+    setScrollListenerActive(false);
+    showToast('Cargando datos de prueba...', 'info');
+
+    try {
+      // Obtener o crear categoría
+      let categories = await listCategories();
+      let categoryId: string;
+      
+      if (categories.length === 0) {
+        const newCategory = await createCategory({ name: 'Categoría de Prueba' });
+        categoryId = newCategory.id;
+      } else {
+        categoryId = categories[0].id;
+      }
+
+      // Crear 5 clientes
+      const customerNames = [
+        { displayName: 'Juan Pérez', phone: '+34 600 123 456', pin: '12AB', subscriptionPrice: 50 },
+        { displayName: 'María García', phone: '+34 600 234 567', pin: '23CD', subscriptionPrice: 75 },
+        { displayName: 'Carlos López', phone: '+34 600 345 678', pin: '34EF', subscriptionPrice: 100 },
+        { displayName: 'Ana Martínez', phone: '+34 600 456 789', pin: '45GH', subscriptionPrice: 60 },
+        { displayName: 'Luis Rodríguez', phone: '+34 600 567 890', pin: '56IJ', subscriptionPrice: 80 },
+      ];
+
+      const createdCustomers = [];
+      for (const customerData of customerNames) {
+        const customerRequest: CreateCustomerRequest = {
+          displayName: customerData.displayName,
+          phone: customerData.phone,
+          pin: customerData.pin,
+          subscriptionType: 'MONTHLY',
+          subscriptionPrice: customerData.subscriptionPrice,
+          notes: 'Cliente de prueba generado por easter egg',
+        };
+        const customer = await customersService.create(customerRequest);
+        createdCustomers.push(customer);
+      }
+
+      // Crear 5 productos con stock suficiente para 40 ventas
+      const productData = [
+        { name: 'Producto Premium A', price: 12.50, description: 'Producto de alta calidad', stock: 2000 },
+        { name: 'Producto Estándar B', price: 8.75, description: 'Producto estándar', stock: 2000 },
+        { name: 'Producto Especial C', price: 15.00, description: 'Producto especial', stock: 2000 },
+        { name: 'Producto Básico D', price: 6.25, description: 'Producto básico', stock: 2000 },
+        { name: 'Producto Exclusivo E', price: 20.00, description: 'Producto exclusivo', stock: 2000 },
+      ];
+
+      const createdProducts = [];
+      for (const productInfo of productData) {
+        const productRequest: CreateProductRequest = {
+          name: productInfo.name,
+          categoryId: categoryId,
+          pricePerGram: productInfo.price,
+          description: productInfo.description,
+          imageUrl: 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(productInfo.name),
+          initialStockGrams: productInfo.stock,
+        };
+        const product = await createProduct(productRequest);
+        createdProducts.push(product);
+      }
+
+      // Crear 40 ventas distribuidas entre el 5 de diciembre 2025 y el 21 de enero 2026
+      const sales = [];
+      const startDate = new Date('2025-12-05T08:00:00');
+      const endDate = new Date('2026-01-21T23:00:00');
+      const timeDiff = endDate.getTime() - startDate.getTime();
+
+      for (let i = 0; i < 40; i++) {
+        // Generar fecha aleatoria entre el 5 de diciembre 2025 y el 21 de enero 2026
+        const randomTime = Math.random() * timeDiff;
+        const saleDate = new Date(startDate.getTime() + randomTime);
+        
+        // Asegurar que la hora esté entre 8:00 y 23:00
+        const hour = 8 + Math.floor(Math.random() * 16); // 8-23 (inclusive)
+        const minute = Math.floor(Math.random() * 60);
+        const second = Math.floor(Math.random() * 60);
+        saleDate.setHours(hour, minute, second, 0);
+
+        // Seleccionar cliente y producto aleatorios
+        const randomCustomer = createdCustomers[Math.floor(Math.random() * createdCustomers.length)];
+        const randomProduct = createdProducts[Math.floor(Math.random() * createdProducts.length)];
+        
+        // Gramos aleatorios entre 5 y 50
+        const grams = 5 + Math.floor(Math.random() * 45);
+        const pricePerGram = randomProduct.pricePerGram;
+        const subtotal = grams * pricePerGram;
+        
+        // Efectivo entregado (un poco más que el total para tener cambio)
+        const cashGiven = Math.ceil(subtotal * (1.1 + Math.random() * 0.2));
+
+        const saleRequest: CreateSaleRequest = {
+          customerId: randomCustomer.id,
+          cashGiven: cashGiven,
+          items: [
+            {
+              productId: randomProduct.id,
+              grams: grams,
+            },
+          ],
+          // Enviar fecha personalizada en formato ISO 8601 compatible con LocalDateTime
+          // Formato: YYYY-MM-DDTHH:mm:ss (sin zona horaria)
+          createdAt: saleDate.toISOString().slice(0, 19), // Formato: 2024-12-05T14:30:00
+        };
+
+        try {
+          const sale = await createSale(saleRequest);
+          sales.push(sale);
+        } catch (error) {
+          console.error(`Error creando venta ${i + 1}:`, error);
+        }
+      }
+
+      setDataLoaded(true);
+      showToast(
+        `¡Easter egg activado! Se crearon ${createdCustomers.length} clientes, ${createdProducts.length} productos y ${sales.length} ventas.`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error cargando datos de prueba:', error);
+      showToast('Error al cargar datos de prueba', 'error');
+      setScrollListenerActive(false);
+    } finally {
+      setLoadingTestData(false);
+    }
+  }, [currentAdmin, loadingTestData, dataLoaded, showToast]);
+
+  // Usar refs para mantener los valores actuales sin depender del closure
+  const scrollListenerActiveRef = useRef(false);
+  const loadingTestDataRef = useRef(false);
+  const dataLoadedRef = useRef(false);
+
+  useEffect(() => {
+    scrollListenerActiveRef.current = scrollListenerActive;
+  }, [scrollListenerActive]);
+
+  useEffect(() => {
+    loadingTestDataRef.current = loadingTestData;
+  }, [loadingTestData]);
+
+  useEffect(() => {
+    dataLoadedRef.current = dataLoaded;
+  }, [dataLoaded]);
+
+  // Detectar clics en el título (solo para admin principal)
+  useEffect(() => {
+    // Solo activar el easter egg si es admin principal y no se han cargado datos
+    if (!currentAdmin?.isMainAdmin || dataLoaded) return;
+    
+    let timeoutId: NodeJS.Timeout | null = null;
+    let titleElement: HTMLElement | null = null;
+
+    const handleTitleClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      setClickCount((prev) => {
+        const newCount = prev + 1;
+        console.log('Click en título detectado, contador:', newCount);
+        if (newCount === 3) {
+          console.log('¡3 clics alcanzados! La luz roja debería aparecer. Haz un cuarto clic para activar.');
+          setScrollListenerActive(true);
+        } else if (newCount >= 4) {
+          // Usar los refs para tener los valores actuales
+          if (scrollListenerActiveRef.current && !loadingTestDataRef.current && !dataLoadedRef.current) {
+            console.log('¡Cuarto clic! Activando carga de datos...');
+            loadTestData();
+          } else {
+            console.log('Cuarto clic detectado pero condiciones no cumplidas:', {
+              scrollActive: scrollListenerActiveRef.current,
+              loading: loadingTestDataRef.current,
+              loaded: dataLoadedRef.current
+            });
+          }
+        }
+        return newCount;
+      });
+    };
+
+    // Esperar a que el DOM esté listo antes de buscar el elemento
+    const findAndAttachListener = () => {
+      titleElement = document.querySelector('.page-header-title') as HTMLElement;
+      if (!titleElement) {
+        // Si no se encuentra, intentar de nuevo después de un breve delay
+        timeoutId = setTimeout(findAndAttachListener, 100);
+        return;
+      }
+
+      console.log('Listener de clics agregado al título');
+      titleElement.addEventListener('click', handleTitleClick);
+    };
+
+    findAndAttachListener();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (titleElement) {
+        titleElement.removeEventListener('click', handleTitleClick);
+      }
+    };
+  }, [currentAdmin, dataLoaded, scrollListenerActive, loadingTestData, loadTestData]);
+
+  // Mantener los refs actualizados (ya no necesitamos el listener de scroll)
 
   const handleChange = useCallback((field: keyof UpdateGrowConfigurationRequest, value: string | boolean | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -113,6 +339,13 @@ export function ConfigPage() {
   return (
     <div className="config-page">
       <PageHeader title="Configuración" />
+      
+      {/* Indicador visual del easter egg (luz roja discreta) */}
+      {currentAdmin?.isMainAdmin && clickCount >= 3 && !dataLoaded && (
+        <div className="easter-egg-indicator" title="Easter egg activado - Haz un cuarto clic en el título para cargar datos de prueba">
+          <div className="easter-egg-light"></div>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <FormCard>

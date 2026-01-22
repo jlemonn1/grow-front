@@ -12,11 +12,14 @@ export function useTicket() {
   const { products, getProductById, refreshProduct } = useProducts();
 
   const getBaseStock = useCallback((productId: string): number | null => {
+    // Siempre priorizar el stock del contexto de productos (más actualizado)
     const product = products.find(p => p.id === productId);
     if (product) {
       return product.stockGrams;
     }
 
+    // Solo usar el stock del item como fallback si no está en el contexto
+    // Esto puede pasar durante la carga inicial, pero debería actualizarse pronto
     const itemWithProduct = ticket.items.find(
       item => item.productId === productId && item.product
     );

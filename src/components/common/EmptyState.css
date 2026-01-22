@@ -15,6 +15,15 @@
   filter: drop-shadow(0 0 8px var(--neon-glow-primary));
   animation: emptyStatePulse 2s ease-in-out infinite;
   transition: filter var(--transition-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.empty-state-icon svg {
+  width: 48px;
+  height: 48px;
 }
 
 @keyframes emptyStatePulse {
