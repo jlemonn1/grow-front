@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useState, useRef } from 'react';
 import { HiSparkles } from 'react-icons/hi2';
 import { useConfig } from '@/context/config.context';
@@ -18,10 +18,9 @@ export function TopBar({ title, onMenuToggle, isMenuOpen = false }: TopBarProps)
   const { config } = useConfig();
   const { currentUser } = useAuth();
   const { showToast } = useUI();
-  const navigate = useNavigate();
   const [isPanicModeReady, setIsPanicModeReady] = useState(false);
   const clickCountRef = useRef(0);
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUsernameClick = () => {
     // Limpiar timeout anterior si existe

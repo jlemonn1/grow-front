@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getCurrentUser, logout as logoutService } from '@/services/auth.service';
 import { getCurrentAdmin } from '@/services/admin.service';
-import { AdminPermission } from '@/types/models';
 import type { Admin } from '@/types/models';
 
 // Importar para guardar borrador antes de logout

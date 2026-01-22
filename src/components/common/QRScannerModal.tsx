@@ -123,7 +123,7 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
             }
           }
         },
-        (errorMessage) => {
+        (_errorMessage) => {
           // Ignorar errores de escaneo continuo
         }
       );

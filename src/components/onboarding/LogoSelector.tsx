@@ -91,14 +91,6 @@ export function LogoSelector({ growName, selectedLogo, onSelectLogo }: LogoSelec
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    handleFileSelect(file);
-    // Reset input
-    if (e.target) {
-      e.target.value = '';
-    }
-  };
 
   const getLogoPreview = (logo: LogoOption | null): string | null => {
     if (!logo) return null;

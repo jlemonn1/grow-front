@@ -191,8 +191,7 @@ export function CustomersPage() {
     },
     ...(isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? [] : [{
       header: 'Acciones',
-      accessor: 'id',
-      cell: (_value, row) => (
+      accessor: (row: Customer) => (
         <Button
           variant="danger"
           onClick={(e) => handleDeleteClick(e, row)}

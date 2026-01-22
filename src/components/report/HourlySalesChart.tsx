@@ -78,7 +78,7 @@ export function HourlySalesChart({ data, loading }: HourlySalesChartProps) {
             stroke={borderColor}
           />
           <Tooltip 
-            formatter={(value: number | undefined, name: string) => {
+            formatter={(value: number | undefined, name: string | undefined) => {
               if (name === 'monto') {
                 return value !== undefined ? formatMoney(value) : '';
               }

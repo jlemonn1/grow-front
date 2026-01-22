@@ -177,7 +177,7 @@ export function QRCodeModal({ isOpen, onClose, customer }: QRCodeModalProps) {
       try {
         const logoImg = new Image();
         logoImg.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
           logoImg.onload = () => resolve();
           logoImg.onerror = () => {
             console.warn('No se pudo cargar el logo para la descarga');

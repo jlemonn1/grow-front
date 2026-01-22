@@ -78,7 +78,7 @@ export function HourlyStockChart({ data, loading }: HourlyStockChartProps) {
             stroke={borderColor}
           />
           <Tooltip 
-            formatter={(value: number | undefined, name: string) => {
+            formatter={(value: number | undefined, name: string | undefined) => {
               if (name === 'recargas' || name === 'ventas') {
                 return value !== undefined ? `${value.toFixed(2)} g` : '';
               }

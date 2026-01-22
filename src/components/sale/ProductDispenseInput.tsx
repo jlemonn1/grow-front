@@ -30,7 +30,6 @@ export function ProductDispenseInput({
     error,
     setGrams,
     setEuros,
-    isValid,
     effectivePricePerGram,
   } = useProductDispense({
     product,

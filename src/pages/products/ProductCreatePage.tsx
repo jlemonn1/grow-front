@@ -40,6 +40,7 @@ interface FormErrors {
   description?: string;
   imageUrl?: string;
   initialStockGrams?: string;
+  onSale?: string;
   salePricePerGram?: string;
   saleDiscountPercent?: string;
 }
@@ -141,9 +142,9 @@ export function ProductCreatePage() {
     
     // Limpiar error del campo cuando el usuario empieza a escribir
     setErrors((prev) => {
-      if (prev[name]) {
+      if (name in prev) {
         const newErrors = { ...prev };
-        delete newErrors[name];
+        delete newErrors[name as keyof FormErrors];
         return newErrors;
       }
       return prev;
@@ -152,9 +153,12 @@ export function ProductCreatePage() {
 
   const handleBlur = useCallback((name: keyof FormData) => {
     const value = formDataRef.current[name];
-    const error = validateField(name, value);
-    if (error) {
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+    // Solo validar campos que no sean booleanos y que no sean undefined
+    if (typeof value !== 'boolean' && value !== undefined) {
+      const error = validateField(name, value);
+      if (error) {
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+      }
     }
   }, []);
 
@@ -208,12 +212,13 @@ export function ProductCreatePage() {
         if (apiError.status === 422 && apiError.fieldErrors) {
           const fieldErrors: FormErrors = {};
           
-          Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
-            if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
-                field === 'description' || field === 'imageUrl' || field === 'initialStockGrams') {
-              fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
-            }
-          });
+      Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
+        if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
+            field === 'description' || field === 'imageUrl' || field === 'initialStockGrams' ||
+            field === 'onSale' || field === 'salePricePerGram' || field === 'saleDiscountPercent') {
+          fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
+        }
+      });
 
           setErrors(fieldErrors);
           
@@ -375,12 +380,13 @@ export function ProductCreatePage() {
         if (apiError.status === 422 && apiError.fieldErrors) {
           const fieldErrors: FormErrors = {};
           
-          Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
-            if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
-                field === 'description' || field === 'imageUrl' || field === 'initialStockGrams') {
-              fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
-            }
-          });
+      Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
+        if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
+            field === 'description' || field === 'imageUrl' || field === 'initialStockGrams' ||
+            field === 'onSale' || field === 'salePricePerGram' || field === 'saleDiscountPercent') {
+          fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
+        }
+      });
 
           setErrors(fieldErrors);
           
@@ -578,15 +584,19 @@ export function ProductCreatePage() {
                         id="saleDiscountPercent"
                         label="Porcentaje de descuento (%)"
                         value={formData.saleDiscountPercent || 0}
-                        onChange={(value) => {
-                          const percent = value;
-                          setFormData({ 
-                            ...formData, 
-                            saleDiscountPercent: percent > 0 ? percent : undefined,
-                            salePricePerGram: undefined // Limpiar precio fijo cuando se usa porcentaje
-                          });
-                        }}
-                        onBlur={() => handleBlur('saleDiscountPercent')}
+                          onChange={(value) => {
+                            const percent = value ?? 0;
+                            setFormData({ 
+                              ...formData, 
+                              saleDiscountPercent: percent > 0 ? percent : undefined,
+                              salePricePerGram: undefined // Limpiar precio fijo cuando se usa porcentaje
+                            });
+                          }}
+                          onBlur={() => {
+                            if (formData.saleDiscountPercent !== undefined) {
+                              handleBlur('saleDiscountPercent');
+                            }
+                          }}
                         error={errors.saleDiscountPercent}
                         min={0}
                         max={100}
@@ -615,13 +625,18 @@ export function ProductCreatePage() {
                           label="Precio de oferta por gramo (€)"
                           value={formData.salePricePerGram || 0}
                           onChange={(value) => {
+                            const price = value ?? 0;
                             setFormData({ 
                               ...formData, 
-                              salePricePerGram: value > 0 ? value : undefined,
+                              salePricePerGram: price > 0 ? price : undefined,
                               saleDiscountPercent: undefined // Limpiar porcentaje cuando se usa precio fijo
                             });
                           }}
-                          onBlur={() => handleBlur('salePricePerGram')}
+                          onBlur={() => {
+                            if (formData.salePricePerGram !== undefined) {
+                              handleBlur('salePricePerGram');
+                            }
+                          }}
                           error={errors.salePricePerGram}
                           min={0}
                           step={0.01}

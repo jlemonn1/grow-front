@@ -166,8 +166,7 @@ export function ProductsPage() {
     },
     ...(isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) ? [] : [{
       header: 'Acciones',
-      accessor: 'id',
-      cell: (_value, row) => (
+      accessor: (row: Product) => (
         <Button
           variant="danger"
           onClick={(e) => handleDeleteClick(e, row)}

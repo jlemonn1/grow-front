@@ -57,7 +57,6 @@ function TicketItemRowComponent({
   // Sincronizar con el item cuando cambia externamente (por ejemplo, cuando se aplica un descuento)
   useEffect(() => {
     if (!isUpdatingFromGramsRef.current && !isUpdatingFromEurosRef.current) {
-      const expectedEuros = item.grams * effectivePricePerGram;
       // Solo sincronizar si hay una diferencia significativa (más de 0.01)
       if (Math.abs(dispenseGrams - item.grams) > 0.01) {
         isUpdatingFromGramsRef.current = true;
@@ -166,9 +165,6 @@ function TicketItemRowComponent({
   const maxDiscount = item.discountType === 'FIXED_AMOUNT' 
     ? (item.subtotalBeforeDiscount || item.grams * item.pricePerGram)
     : 100;
-
-  // Calcular euros totales (antes de descuentos)
-  const totalEuros = item.grams * effectivePricePerGram;
 
   return (
     <div className={`ticket-item-row ${isExpanded ? 'ticket-item-row-expanded' : ''} ${isInvalid ? 'ticket-item-row-invalid' : ''} ${isChecking ? 'ticket-item-row-checking' : ''}`}>

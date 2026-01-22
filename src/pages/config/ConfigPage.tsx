@@ -211,7 +211,7 @@ export function ConfigPage() {
     // Solo activar el easter egg si es admin principal y no se han cargado datos
     if (!currentAdmin?.isMainAdmin || dataLoaded) return;
     
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let titleElement: HTMLElement | null = null;
 
     const handleTitleClick = (e: MouseEvent) => {
