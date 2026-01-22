@@ -52,7 +52,7 @@ export function ConfigPage() {
   const isInitialLoadRef = useRef(true);
   
   // Estados para el easter egg de datos de prueba (solo para admin principal)
-  const [clickCount, setClickCount] = useState(0);
+  const [_clickCount, setClickCount] = useState(0);
   const [scrollListenerActive, setScrollListenerActive] = useState(false);
   const [loadingTestData, setLoadingTestData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
