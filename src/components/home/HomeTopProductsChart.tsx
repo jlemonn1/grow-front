@@ -19,36 +19,42 @@ export function HomeTopProductsChart({ products, loading }: HomeTopProductsChart
   // Calcular altura para mostrar 1.5 elementos (contraído)
   useEffect(() => {
     if (firstItemRef.current && !isExpanded) {
-      const itemHeight = firstItemRef.current.offsetHeight;
-      const gap = 8; // var(--spacing-sm) aproximado
-      const height = itemHeight * 1.5 + gap * 0.5;
-      setCollapsedHeight(height);
+      // Usar requestAnimationFrame para asegurar que el DOM esté renderizado
+      requestAnimationFrame(() => {
+        if (firstItemRef.current) {
+          const itemHeight = firstItemRef.current.offsetHeight;
+          const gap = 8; // var(--spacing-sm) aproximado
+          const height = itemHeight * 1.5 + gap * 0.5;
+          setCollapsedHeight(height);
+        }
+      });
     }
-  }, [products]);
+  }, [products, isExpanded]);
 
   // Calcular altura total cuando se expande
   useEffect(() => {
     if (isExpanded && listRef.current) {
-      // Usar setTimeout para asegurar que el DOM se haya actualizado
-      const timer = setTimeout(() => {
-        if (listRef.current) {
-          const items = listRef.current.children;
-          let totalHeight = 0;
-          const gap = 8; // var(--spacing-sm) aproximado
-          for (let i = 0; i < items.length; i++) {
-            totalHeight += (items[i] as HTMLElement).offsetHeight;
-            if (i < items.length - 1) {
-              totalHeight += gap;
+      // Usar requestAnimationFrame para asegurar que el DOM se haya actualizado (mejor para móviles)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (listRef.current) {
+            const items = listRef.current.children;
+            let totalHeight = 0;
+            const gap = 8; // var(--spacing-sm) aproximado
+            for (let i = 0; i < items.length; i++) {
+              totalHeight += (items[i] as HTMLElement).offsetHeight;
+              if (i < items.length - 1) {
+                totalHeight += gap;
+              }
             }
+            setExpandedHeight(totalHeight);
           }
-          setExpandedHeight(totalHeight);
-        }
-      }, 0);
-      return () => clearTimeout(timer);
+        });
+      });
     } else if (!isExpanded) {
       setExpandedHeight(null);
     }
-  }, [isExpanded]);
+  }, [isExpanded, products]);
 
   if (loading) {
     return (
@@ -119,7 +125,9 @@ export function HomeTopProductsChart({ products, loading }: HomeTopProductsChart
             ? { maxHeight: `${collapsedHeight}px`, overflow: 'hidden' }
             : isExpanded && expandedHeight
             ? { maxHeight: `${expandedHeight}px`, overflow: 'visible' }
-            : {}
+            : !isExpanded
+            ? { overflow: 'hidden' }
+            : { overflow: 'visible' }
         }
       >
         {topProducts.map((product, index) => {
