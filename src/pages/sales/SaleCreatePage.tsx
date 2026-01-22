@@ -45,6 +45,7 @@ export function SaleCreatePage() {
     validateItemWithStock,
     refreshProductAndValidate,
     findProductIdByName,
+    ensureProductInContext,
   } = ticket;
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -164,32 +165,23 @@ export function SaleCreatePage() {
     }
   }, []);
 
-  // Calcular stock disponible para el producto seleccionado
-  const getAvailableStockForSelected = useCallback((product: Product | null): number => {
-    if (!product) return 0;
-
-    const contextProduct = products.find(p => p.id === product.id);
-    const baseStock = contextProduct?.stockGrams ?? product.stockGrams;
-    const gramsInTicket = items.reduce((sum, item) => {
-      if (item.productId === product.id) {
-        return sum + item.grams;
-      }
-      return sum;
-    }, 0);
-
-    return Math.max(0, baseStock - gramsInTicket);
-  }, [products, items]);
-
   // Manejar selección de producto
-  const handleProductSelect = useCallback((product: Product | null) => {
+  const handleProductSelect = useCallback(async (product: Product | null) => {
     setSelectedProduct(product);
     if (product) {
-      const stock = getAvailableStockForSelected(product);
-      setGramsToAdd(Math.min(1, stock)); // Sugerir 1g o el stock disponible si es menor
+      try {
+        await ensureProductInContext(product);
+        const stock = getProductStock(product.id);
+        setGramsToAdd(Math.min(1, stock));
+      } catch (error) {
+        console.error('Error al cargar producto:', error);
+        showToast('Error al cargar el producto', 'error');
+        setSelectedProduct(null);
+      }
     } else {
       setGramsToAdd(0);
     }
-  }, [getAvailableStockForSelected]);
+  }, [ensureProductInContext, getProductStock, showToast]);
 
   // Agregar producto al ticket
   const handleAddProduct = useCallback(async () => {
@@ -198,34 +190,23 @@ export function SaleCreatePage() {
       return;
     }
 
-    const stock = getAvailableStockForSelected(selectedProduct);
-    if (gramsToAdd > stock) {
-      showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
-      return;
-    }
-
-    // Obtener producto actualizado si no está en cache
-    let product = products.find(p => p.id === selectedProduct.id);
-    if (!product) {
-      try {
-        const fetchedProduct = await getProductById(selectedProduct.id);
-        product = fetchedProduct || undefined;
-      } catch (error) {
-        showToast('Error al obtener el producto', 'error');
+    try {
+      const product = await ensureProductInContext(selectedProduct);
+      const stock = getProductStock(product.id);
+      
+      if (gramsToAdd > stock) {
+        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
         return;
       }
-    }
 
-    if (!product) {
-      showToast('Producto no encontrado', 'error');
-      return;
+      await addProductToTicket(product, gramsToAdd);
+      setSelectedProduct(null);
+      setGramsToAdd(0);
+      showToast('Producto agregado al ticket', 'success');
+    } catch (error) {
+      showToast('Error al obtener el producto', 'error');
     }
-
-    await addProductToTicket(product, gramsToAdd);
-    setSelectedProduct(null);
-    setGramsToAdd(0);
-    showToast('Producto agregado al ticket', 'success');
-  }, [selectedProduct, gramsToAdd, getAvailableStockForSelected, products, getProductById, addProductToTicket, showToast]);
+  }, [selectedProduct, gramsToAdd, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
   // Procesar venta
   const handleProcessSale = useCallback(async () => {
@@ -503,7 +484,7 @@ export function SaleCreatePage() {
                   }}>
                     <ProductDispenseInput
                       product={selectedProduct}
-                      availableStock={getAvailableStockForSelected(selectedProduct)}
+                      availableStock={getProductStock(selectedProduct.id)}
                       onGramsChange={setGramsToAdd}
                       gramsInputRef={gramsInputRef}
                       eurosInputRef={eurosInputRef}

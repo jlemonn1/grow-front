@@ -161,6 +161,29 @@ export function useTicket() {
     return product?.id ?? null;
   }, [products]);
 
+  /**
+   * Asegura que un producto esté en el contexto de productos antes de usarlo
+   * Si no está, lo carga desde la API y espera a que React procese la actualización
+   */
+  const ensureProductInContext = useCallback(async (product: Product): Promise<Product> => {
+    // Verificar si está en contexto
+    let productInContext = products.find(p => p.id === product.id);
+    
+    if (!productInContext) {
+      // Cargar desde API
+      const fetched = await getProductById(product.id);
+      if (!fetched) {
+        throw new Error(`Producto ${product.id} no encontrado`);
+      }
+      productInContext = fetched;
+      
+      // Esperar un frame para que React procese la actualización
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+    
+    return productInContext;
+  }, [products, getProductById]);
+
   // Restaurar productos cuando se carga el ticket desde localStorage
   useEffect(() => {
     const itemsWithoutProduct = ticket.items.filter(item => !item.product);
@@ -219,6 +242,7 @@ export function useTicket() {
     updateItemGrams,
     refreshProductAndValidate,
     findProductIdByName,
+    ensureProductInContext,
     // Exponer métodos del ticket directamente
     removeItem: ticket.removeItem,
     validateItem: ticket.validateItem,

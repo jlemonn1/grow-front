@@ -43,10 +43,10 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     getProductStock,
     addProductToTicket,
     validateAllItems,
+    ensureProductInContext,
   } = ticket;
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedProductStock, setSelectedProductStock] = useState<number>(0);
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
@@ -183,26 +183,11 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     if (!isOpen) {
       reset();
       setSelectedProduct(null);
-      setSelectedProductStock(0);
       setGramsToAdd(0);
       setShowAddMore(false);
       setTopProducts([]);
     }
   }, [isOpen, reset]);
-
-  // Actualizar stock del producto seleccionado cuando cambia el contexto de productos
-  useEffect(() => {
-    if (selectedProduct) {
-      const productInContext = products.find(p => p.id === selectedProduct.id);
-      if (productInContext) {
-        const stock = getProductStock(selectedProduct.id);
-        setSelectedProductStock(stock);
-      } else {
-        // Si no está en el contexto, usar el stock del producto seleccionado
-        setSelectedProductStock(selectedProduct.stockGrams);
-      }
-    }
-  }, [selectedProduct, products, getProductStock]);
 
   // Función centralizada para calcular la altura del modal
   const calculateModalHeight = useCallback(() => {
@@ -459,29 +444,21 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const handleProductSelect = useCallback(async (product: Product | null) => {
     setSelectedProduct(product);
     if (product) {
-      // Asegurarse de que el producto esté en el contexto antes de obtener el stock
-      let productInContext: Product | undefined = products.find(p => p.id === product.id);
-      if (!productInContext) {
-        try {
-          // Si no está en el contexto, obtenerlo para actualizar el cache
-          const fetchedProduct = await getProductById(product.id);
-          productInContext = fetchedProduct ?? undefined;
-        } catch (error) {
-          console.error('Error al obtener producto:', error);
-          // Si falla, usar el producto seleccionado directamente
-          productInContext = product;
-        }
+      try {
+        // Asegurar que el producto esté en el contexto
+        await ensureProductInContext(product);
+        // Calcular stock disponible (ahora el producto está garantizado en contexto)
+        const stock = getProductStock(product.id);
+        setGramsToAdd(Math.min(1, stock));
+      } catch (error) {
+        console.error('Error al cargar producto:', error);
+        showToast('Error al cargar el producto', 'error');
+        setSelectedProduct(null);
       }
-      
-      // Calcular stock disponible
-      const stock = productInContext ? getProductStock(productInContext.id) : product.stockGrams;
-      setSelectedProductStock(stock);
-      setGramsToAdd(Math.min(1, stock));
     } else {
-      setSelectedProductStock(0);
       setGramsToAdd(0);
     }
-  }, [getProductStock, products, getProductById]);
+  }, [ensureProductInContext, getProductStock, showToast]);
 
   const handleAddProduct = useCallback(async () => {
     if (!selectedProduct || gramsToAdd <= 0) {
@@ -489,33 +466,24 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       return;
     }
 
-    const stock = getProductStock(selectedProduct.id);
-    if (gramsToAdd > stock) {
-      showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
-      return;
-    }
-
-    let product = products.find(p => p.id === selectedProduct.id);
-    if (!product) {
-      try {
-        const fetchedProduct = await getProductById(selectedProduct.id);
-        product = fetchedProduct || undefined;
-      } catch (error) {
-        showToast('Error al obtener el producto', 'error');
+    try {
+      // Asegurar que el producto esté en el contexto con stock actualizado
+      const product = await ensureProductInContext(selectedProduct);
+      
+      const stock = getProductStock(product.id);
+      if (gramsToAdd > stock) {
+        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
         return;
       }
-    }
 
-    if (!product) {
-      showToast('Producto no encontrado', 'error');
-      return;
+      await addProductToTicket(product, gramsToAdd);
+      setSelectedProduct(null);
+      setGramsToAdd(0);
+      showToast('Producto agregado', 'success');
+    } catch (error) {
+      showToast('Error al obtener el producto', 'error');
     }
-
-    await addProductToTicket(product, gramsToAdd);
-    setSelectedProduct(null);
-    setGramsToAdd(0);
-    showToast('Producto agregado', 'success');
-  }, [selectedProduct, gramsToAdd, getProductStock, products, getProductById, addProductToTicket, showToast]);
+  }, [selectedProduct, gramsToAdd, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
   const handleTopProductClick = useCallback(async (topProduct: TopProduct) => {
     try {
@@ -679,7 +647,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
                   <div className="quick-sale-dispense-input">
                     <ProductDispenseInput
                       product={selectedProduct}
-                      availableStock={selectedProductStock}
+                      availableStock={getProductStock(selectedProduct.id)}
                       onGramsChange={setGramsToAdd}
                     />
                   </div>
