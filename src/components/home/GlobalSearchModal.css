@@ -14,7 +14,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  z-index: 2000;
+  z-index: 10001; /* Mayor que SideNav (10000) para aparecer por encima */
   padding: var(--spacing-md);
   padding-top: var(--spacing-xl);
   animation: fadeIn var(--transition-base);

@@ -1,4 +1,4 @@
-import { get, post, del } from './http';
+import { get, post, del, put } from './http';
 import type { PageResponse } from '@/types/api';
 import type { Sale, CreateSaleRequest, SaleDraft, SaveSaleDraftRequest } from '@/types/models';
 
@@ -83,4 +83,12 @@ export async function getSaleDraft(): Promise<SaleDraft | null> {
  */
 export async function deleteSaleDraft(): Promise<void> {
   await del<void>('/sales/draft');
+}
+
+/**
+ * Limpia el borrador de venta del admin actual sin eliminarlo.
+ * Establece customerId=null, items=[], cashGiven=0
+ */
+export async function clearSaleDraft(): Promise<void> {
+  await put<void>('/sales/draft/clear');
 }

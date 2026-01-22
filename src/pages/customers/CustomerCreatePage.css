@@ -125,12 +125,12 @@
 
 .pin-suggestion-button {
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  border: 1px solid var(--border-led-color);
+  background: var(--bg-dark);
+  color: var(--text-inverse);
+  border: 1px solid var(--color-primary);
   border-radius: var(--border-radius);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast), box-shadow var(--transition-glow);
   box-shadow: var(--shadow-sm);
@@ -138,7 +138,7 @@
 
 .pin-suggestion-button:hover {
   background: var(--neon-primary);
-  color: white;
+  color: var(--text-inverse);
   border-color: var(--neon-primary);
   box-shadow: var(--shadow-neon-md), 0 0 12px var(--neon-glow-primary);
   transform: translateY(-1px);
@@ -147,6 +147,7 @@
 .pin-suggestion-button:active {
   transform: translateY(0);
   box-shadow: var(--shadow-neon-sm);
+  background: var(--color-primary-dark);
 }
 
 @media (max-width: 768px) {

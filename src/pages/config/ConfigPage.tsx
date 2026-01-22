@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Button } from '@/components/common/Button';
 import { Input } from '@/components/forms/Input';
 import { FormCard } from '@/components/forms/FormCard';
 import { FormSection } from '@/components/forms/FormSection';
@@ -17,12 +17,26 @@ import { createSale } from '@/services/sales.service';
 import { listCategories, createCategory } from '@/services/categories.service';
 import type { CreateCustomerRequest, CreateProductRequest, CreateSaleRequest } from '@/types/models';
 import { useAuth } from '@/context/auth.context';
+import { registerMainAdmin, hasToken } from '@/services/auth.service';
 import './ConfigPage.css';
 
 export function ConfigPage() {
-  const { config, loading, updateConfiguration } = useConfig();
+  const { config, loading, updateConfiguration, refreshConfiguration } = useConfig();
   const { showToast } = useUI();
-  const { currentAdmin } = useAuth();
+  const { currentAdmin, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  
+  // Estados para el formulario de registro del admin principal
+  const [needsRegistration, setNeedsRegistration] = useState(false);
+  const [registrationData, setRegistrationData] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    panicPassword: '',
+    confirmPanicPassword: '',
+  });
+  const [registrationErrors, setRegistrationErrors] = useState<Record<string, string>>({});
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const [formData, setFormData] = useState<UpdateGrowConfigurationRequest>({
     growName: '',
@@ -31,14 +45,30 @@ export function ConfigPage() {
     showCashDetails: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialLoadRef = useRef(true);
   
   // Estados para el easter egg (solo para admin principal)
   const [clickCount, setClickCount] = useState(0);
   const [scrollListenerActive, setScrollListenerActive] = useState(false);
   const [loadingTestData, setLoadingTestData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Detectar si se requiere registro del admin principal
+  useEffect(() => {
+    // Si no hay token, siempre mostrar formulario de registro inmediatamente
+    if (!hasToken()) {
+      setNeedsRegistration(true);
+      return;
+    }
+    
+    // Si hay token y configuración, no se requiere registro
+    if (hasToken() && config) {
+      setNeedsRegistration(false);
+    }
+  }, [config, loading]);
 
   // Cargar configuración cuando esté disponible
   useEffect(() => {
@@ -49,9 +79,71 @@ export function ConfigPage() {
         primaryColor: config.primaryColor,
         showCashDetails: config.showCashDetails,
       });
-      setHasChanges(false);
+      setLastSaved(new Date());
+      isInitialLoadRef.current = true;
+      setNeedsRegistration(false);
     }
   }, [config]);
+
+  // Manejar registro del admin principal
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegistrationErrors({});
+
+    // Validaciones
+    const errors: Record<string, string> = {};
+    
+    if (!registrationData.username || registrationData.username.length < 3) {
+      errors.username = 'El usuario debe tener al menos 3 caracteres';
+    }
+    
+    if (!registrationData.password || registrationData.password.length < 6) {
+      errors.password = 'La contraseña debe tener al menos 6 caracteres';
+    }
+    
+    if (registrationData.password !== registrationData.confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+    
+    if (registrationData.panicPassword && registrationData.panicPassword.length < 6) {
+      errors.panicPassword = 'La contraseña de pánico debe tener al menos 6 caracteres';
+    }
+    
+    if (registrationData.panicPassword && registrationData.panicPassword === registrationData.password) {
+      errors.panicPassword = 'La contraseña de pánico debe ser diferente a la contraseña normal';
+    }
+    
+    if (registrationData.panicPassword !== registrationData.confirmPanicPassword) {
+      errors.confirmPanicPassword = 'Las contraseñas de pánico no coinciden';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setRegistrationErrors(errors);
+      return;
+    }
+
+    setIsRegistering(true);
+
+    try {
+      await registerMainAdmin(
+        registrationData.username,
+        registrationData.password,
+        registrationData.panicPassword || undefined
+      );
+      
+      showToast('Admin principal registrado exitosamente', 'success');
+      await refreshUser();
+      await refreshConfiguration();
+      setNeedsRegistration(false);
+      navigate('/home', { replace: true });
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Error al registrar el admin principal';
+      setRegistrationErrors({ general: errorMessage });
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
   // Función para cargar datos de prueba (solo para admin principal)
   const loadTestData = useCallback(async () => {
@@ -268,7 +360,6 @@ export function ConfigPage() {
 
   const handleChange = useCallback((field: keyof UpdateGrowConfigurationRequest, value: string | boolean | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
     // Limpiar error del campo si existe
     if (errors[field]) {
       setErrors((prev) => {
@@ -279,15 +370,14 @@ export function ConfigPage() {
     }
   }, [errors]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Función de autoguardado con validación
+  const autoSave = useCallback(async (data: UpdateGrowConfigurationRequest) => {
     // Validaciones
     const newErrors: Record<string, string> = {};
-    if (!formData.growName.trim()) {
+    if (!data.growName.trim()) {
       newErrors.growName = 'El nombre de la grow es obligatorio';
     }
-    if (!formData.primaryColor.match(/^#[0-9A-Fa-f]{6}$/)) {
+    if (!data.primaryColor.match(/^#[0-9A-Fa-f]{6}$/)) {
       newErrors.primaryColor = 'El color debe estar en formato hexadecimal (#RRGGBB)';
     }
 
@@ -296,13 +386,12 @@ export function ConfigPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsSaving(true);
     setErrors({});
 
     try {
-      await updateConfiguration(formData);
-      showToast('Configuración guardada exitosamente', 'success');
-      setHasChanges(false);
+      await updateConfiguration(data);
+      setLastSaved(new Date());
     } catch (error) {
       if ((error as ValidationError).fieldErrors) {
         const fieldErrors = (error as ValidationError).fieldErrors || {};
@@ -318,12 +407,293 @@ export function ConfigPage() {
         showToast(errorMessage, 'error');
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
-  }, [formData, updateConfiguration, showToast]);
+  }, [updateConfiguration, showToast]);
+
+  // Autoguardado con debounce
+  useEffect(() => {
+    // No guardar en la carga inicial o si no hay configuración cargada
+    if (isInitialLoadRef.current || !config) {
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+      }
+      return;
+    }
+
+    // Comparar con la configuración actual para evitar guardados innecesarios
+    const hasChanges = 
+      formData.growName !== config.growName ||
+      formData.logoUrl !== config.logoUrl ||
+      formData.primaryColor !== config.primaryColor ||
+      formData.showCashDetails !== config.showCashDetails;
+
+    if (!hasChanges) {
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Establecer nuevo timeout para guardar después de 1 segundo de inactividad
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave(formData);
+    }, 1000);
+
+    // Limpiar timeout al desmontar o cuando cambie formData
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [formData, config, autoSave]);
 
   // Generar paleta de colores para previsualización
   const colorPalette = generateColorPalette(formData.primaryColor);
+
+  // Mostrar formulario de registro si se requiere (no esperar a que termine de cargar si no hay token)
+  // Si no hay token, mostrar inmediatamente sin esperar a que termine de cargar
+  if (!hasToken()) {
+    return (
+      <div className="config-page">
+        <PageHeader title="Configuración Inicial" />
+        <div>
+          <FormCard>
+            <FormSection title="Registrar Administrador Principal">
+              <p className="register-main-admin-info" style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
+                Este es el primer inicio de sesión. Por favor, crea el administrador principal del sistema.
+              </p>
+              
+              {registrationErrors.general && (
+                <div className="register-main-admin-error" style={{ 
+                  backgroundColor: 'var(--error-bg)', 
+                  color: 'var(--error)', 
+                  padding: '0.75rem', 
+                  borderRadius: '0.5rem', 
+                  marginBottom: '1rem' 
+                }}>
+                  {registrationErrors.general}
+                </div>
+              )}
+
+              <form onSubmit={handleRegister}>
+                <Input
+                  label="Usuario"
+                  type="text"
+                  value={registrationData.username}
+                  onChange={(e) => setRegistrationData({ ...registrationData, username: e.target.value })}
+                  placeholder="Ingresa un usuario"
+                  required
+                  autoFocus
+                  disabled={isRegistering}
+                  minLength={3}
+                  error={registrationErrors.username}
+                  id="register-username"
+                />
+
+                <Input
+                  label="Contraseña"
+                  type="password"
+                  value={registrationData.password}
+                  onChange={(e) => setRegistrationData({ ...registrationData, password: e.target.value })}
+                  placeholder="Ingresa una contraseña"
+                  required
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.password}
+                  id="register-password"
+                />
+
+                <Input
+                  label="Confirmar Contraseña"
+                  type="password"
+                  value={registrationData.confirmPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, confirmPassword: e.target.value })}
+                  placeholder="Confirma la contraseña"
+                  required
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.confirmPassword}
+                  id="register-confirm-password"
+                />
+
+                <Input
+                  label="Contraseña de Pánico"
+                  type="password"
+                  value={registrationData.panicPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, panicPassword: e.target.value })}
+                  placeholder="Ingresa una contraseña de pánico (opcional)"
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.panicPassword}
+                  id="register-panic-password"
+                />
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+                  Si inicias sesión con esta contraseña, se ejecutará automáticamente el modo pánico (vaciado de tablas).
+                </p>
+
+                <Input
+                  label="Confirmar Contraseña de Pánico"
+                  type="password"
+                  value={registrationData.confirmPanicPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, confirmPanicPassword: e.target.value })}
+                  placeholder="Confirma la contraseña de pánico"
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.confirmPanicPassword}
+                  id="register-confirm-panic-password"
+                />
+
+                <div className="register-main-admin-actions" style={{ marginTop: '1.5rem' }}>
+                  <button
+                    type="submit"
+                    className="register-main-admin-button"
+                    disabled={isRegistering || !registrationData.username || !registrationData.password || !registrationData.confirmPassword}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      cursor: isRegistering ? 'not-allowed' : 'pointer',
+                      opacity: isRegistering ? 0.6 : 1,
+                    }}
+                  >
+                    {isRegistering ? 'Registrando...' : 'Registrar Admin Principal'}
+                  </button>
+                </div>
+              </form>
+            </FormSection>
+          </FormCard>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsRegistration) {
+    return (
+      <div className="config-page">
+        <PageHeader title="Configuración Inicial" />
+        <div>
+          <FormCard>
+            <FormSection title="Registrar Administrador Principal">
+              <p className="register-main-admin-info" style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
+                Este es el primer inicio de sesión. Por favor, crea el administrador principal del sistema.
+              </p>
+              
+              {registrationErrors.general && (
+                <div className="register-main-admin-error" style={{ 
+                  backgroundColor: 'var(--error-bg)', 
+                  color: 'var(--error)', 
+                  padding: '0.75rem', 
+                  borderRadius: '0.5rem', 
+                  marginBottom: '1rem' 
+                }}>
+                  {registrationErrors.general}
+                </div>
+              )}
+
+              <form onSubmit={handleRegister}>
+                <Input
+                  label="Usuario"
+                  type="text"
+                  value={registrationData.username}
+                  onChange={(e) => setRegistrationData({ ...registrationData, username: e.target.value })}
+                  placeholder="Ingresa un usuario"
+                  required
+                  autoFocus
+                  disabled={isRegistering}
+                  minLength={3}
+                  error={registrationErrors.username}
+                  id="register-username"
+                />
+
+                <Input
+                  label="Contraseña"
+                  type="password"
+                  value={registrationData.password}
+                  onChange={(e) => setRegistrationData({ ...registrationData, password: e.target.value })}
+                  placeholder="Ingresa una contraseña"
+                  required
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.password}
+                  id="register-password"
+                />
+
+                <Input
+                  label="Confirmar Contraseña"
+                  type="password"
+                  value={registrationData.confirmPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, confirmPassword: e.target.value })}
+                  placeholder="Confirma la contraseña"
+                  required
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.confirmPassword}
+                  id="register-confirm-password"
+                />
+
+                <Input
+                  label="Contraseña de Pánico"
+                  type="password"
+                  value={registrationData.panicPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, panicPassword: e.target.value })}
+                  placeholder="Ingresa una contraseña de pánico (opcional)"
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.panicPassword}
+                  id="register-panic-password"
+                />
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+                  Si inicias sesión con esta contraseña, se ejecutará automáticamente el modo pánico (vaciado de tablas).
+                </p>
+
+                <Input
+                  label="Confirmar Contraseña de Pánico"
+                  type="password"
+                  value={registrationData.confirmPanicPassword}
+                  onChange={(e) => setRegistrationData({ ...registrationData, confirmPanicPassword: e.target.value })}
+                  placeholder="Confirma la contraseña de pánico"
+                  disabled={isRegistering}
+                  minLength={6}
+                  error={registrationErrors.confirmPanicPassword}
+                  id="register-confirm-panic-password"
+                />
+
+                <div className="register-main-admin-actions" style={{ marginTop: '1.5rem' }}>
+                  <button
+                    type="submit"
+                    className="register-main-admin-button"
+                    disabled={isRegistering || !registrationData.username || !registrationData.password || !registrationData.confirmPassword}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      cursor: isRegistering ? 'not-allowed' : 'pointer',
+                      opacity: isRegistering ? 0.6 : 1,
+                    }}
+                  >
+                    {isRegistering ? 'Registrando...' : 'Registrar Admin Principal'}
+                  </button>
+                </div>
+              </form>
+            </FormSection>
+          </FormCard>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -338,7 +708,7 @@ export function ConfigPage() {
 
   return (
     <div className="config-page">
-      <PageHeader title="Configuración" />
+      <PageHeader title="Configuración" isSaving={isSaving} />
       
       {/* Indicador visual del easter egg (luz roja discreta) */}
       {currentAdmin?.isMainAdmin && clickCount >= 3 && !dataLoaded && (
@@ -347,7 +717,7 @@ export function ConfigPage() {
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
+      <div>
         <FormCard>
           <FormSection title="Identidad">
             <Input
@@ -447,19 +817,8 @@ export function ConfigPage() {
               </p>
             </div>
           </FormSection>
-
-          <div className="config-actions">
-            <Button
-              type="submit"
-              variant="primary"
-              loading={isSubmitting}
-              disabled={!hasChanges}
-            >
-              Guardar cambios
-            </Button>
-          </div>
         </FormCard>
-      </form>
+      </div>
     </div>
   );
 }

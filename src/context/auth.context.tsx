@@ -1,13 +1,21 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { getCurrentUser, logout as logoutService } from '@/services/auth.service';
+import { getCurrentUser, logout as logoutService, hasToken } from '@/services/auth.service';
 import { getCurrentAdmin } from '@/services/admin.service';
 import type { Admin } from '@/types/models';
+import type { ApiError } from '@/types/api';
 
 // Importar para guardar borrador antes de logout
 let saveDraftBeforeLogout: (() => Promise<void>) | null = null;
 
 export function setSaveDraftBeforeLogoutCallback(callback: () => Promise<void>) {
   saveDraftBeforeLogout = callback;
+}
+
+// Callback global para manejar desautenticación
+let onUnauthorizedCallback: (() => void) | null = null;
+
+export function setOnUnauthorizedCallback(callback: () => void) {
+  onUnauthorizedCallback = callback;
 }
 
 interface AuthContextType {
@@ -38,38 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentAdmin, setCurrentAdmin] = useState<Admin | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshUser = async () => {
-    try {
-      const user = getCurrentUser();
-      
-      // Si hay usuario, intentar obtener información completa del admin
-      if (user) {
-        try {
-          const admin = await getCurrentAdmin();
-          setCurrentAdmin(admin);
-          // Actualizar currentUser con la información del admin obtenido del backend
-          setCurrentUser({
-            username: admin.username,
-            isMainAdmin: admin.isMainAdmin,
-          });
-        } catch (error) {
-          // Si falla, usar la información del localStorage como fallback
-          setCurrentUser(user);
-          setCurrentAdmin(null);
-        }
-      } else {
-        setCurrentUser(null);
-        setCurrentAdmin(null);
-      }
-    } catch (error) {
-      setCurrentUser(null);
-      setCurrentAdmin(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     // Guardar borrador antes de cerrar sesión
     if (saveDraftBeforeLogout) {
       try {
@@ -82,7 +59,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logoutService();
     setCurrentUser(null);
     setCurrentAdmin(null);
-  };
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      // Si no hay token, limpiar estado y salir
+      if (!hasToken()) {
+        setCurrentUser(null);
+        setCurrentAdmin(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const user = getCurrentUser();
+      
+      // Si hay usuario, intentar obtener información completa del admin
+      if (user) {
+        try {
+          const admin = await getCurrentAdmin();
+          setCurrentAdmin(admin);
+          // Actualizar currentUser con la información del admin obtenido del backend
+          setCurrentUser({
+            username: admin.username,
+            isMainAdmin: admin.isMainAdmin,
+          });
+        } catch (error: any) {
+          // Si el error es 401 (no autorizado), 400 (bad request - token inválido) o 404 (admin no encontrado), hacer logout automático
+          const apiError = error as ApiError;
+          if (apiError?.status === 401 || apiError?.status === 400 || apiError?.status === 404) {
+            // Token expirado, inválido o admin no encontrado - hacer logout automático
+            console.warn('Token inválido, expirado o admin no encontrado. Cerrando sesión automáticamente.');
+            await logout();
+            // Disparar callback global si existe
+            if (onUnauthorizedCallback) {
+              onUnauthorizedCallback();
+            }
+            // Disparar evento para redirección
+            window.dispatchEvent(new CustomEvent('auth:logout-complete'));
+            return;
+          }
+          
+          // Para otros errores (red, etc.), limpiar estado pero no hacer logout
+          // para permitir reintentos si es un problema temporal
+          setCurrentUser(null);
+          setCurrentAdmin(null);
+        }
+      } else {
+        // No hay usuario en localStorage, limpiar estado
+        setCurrentUser(null);
+        setCurrentAdmin(null);
+      }
+    } catch (error) {
+      // Error general, limpiar estado
+      setCurrentUser(null);
+      setCurrentAdmin(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [logout]);
 
   const hasPermission = useCallback((permission: string): boolean => {
     // Si no hay usuario autenticado, no tiene permisos
@@ -108,6 +142,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     refreshUser();
   }, []);
+
+  // Escuchar eventos de desautenticación desde http.ts
+  useEffect(() => {
+    const handleUnauthorized = async () => {
+      // Si hay un token pero recibimos un 401, hacer logout
+      if (hasToken()) {
+        await logout();
+        // Disparar evento para redirección
+        window.dispatchEvent(new CustomEvent('auth:logout-complete'));
+      }
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [logout]);
 
   return (
     <AuthContext.Provider

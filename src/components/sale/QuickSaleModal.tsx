@@ -12,7 +12,7 @@ import { useTicket } from '@/hooks/useTicket';
 import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
-import { createSale, getSaleDraft, deleteSaleDraft } from '@/services/sales.service';
+import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { getTopProductsByMovements, type TopProduct } from '@/services/products.service';
 import { formatMoney } from '@/utils/money';
@@ -85,8 +85,12 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
         try {
           const savedDraft = await getSaleDraft();
           if (savedDraft) {
-            setDraft(savedDraft);
-            setShowDraftModal(true);
+            // Solo mostrar el modal si el borrador tiene contenido (cliente o items)
+            const hasContent = savedDraft.customerId !== null || (savedDraft.items && savedDraft.items.length > 0);
+            if (hasContent) {
+              setDraft(savedDraft);
+              setShowDraftModal(true);
+            }
           }
         } catch (error) {
           console.error('Error al cargar borrador:', error);
@@ -527,11 +531,11 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
 
       await createSale(request);
 
-      // Eliminar borrador después de completar venta exitosamente
+      // Limpiar borrador después de completar venta exitosamente
       try {
-        await deleteSaleDraft();
+        await clearSaleDraft();
       } catch (error) {
-        console.error('Error al eliminar borrador después de venta:', error);
+        console.error('Error al limpiar borrador después de venta:', error);
       }
 
       // Actualizar stock optimista

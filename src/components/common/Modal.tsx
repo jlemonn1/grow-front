@@ -6,9 +6,20 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  showCloseButton?: boolean;
+  closeOnOverlayClick?: boolean;
+  closeOnEscape?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children,
+  showCloseButton = true,
+  closeOnOverlayClick = true,
+  closeOnEscape = true,
+}: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
@@ -76,7 +87,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     }
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (closeOnEscape && e.key === 'Escape') {
         onCloseRef.current();
       }
     };
@@ -120,7 +131,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     <div 
       className="modal-overlay" 
-      onClick={onClose}
+      onClick={closeOnOverlayClick ? onClose : undefined}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
@@ -128,14 +139,16 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       <div ref={modalRef} className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 id="modal-title" className="modal-title">{title}</h2>
-          <button 
-            className="modal-close" 
-            onClick={onClose} 
-            aria-label="Cerrar"
-            type="button"
-          >
-            ×
-          </button>
+          {showCloseButton && (
+            <button 
+              className="modal-close" 
+              onClick={onClose} 
+              aria-label="Cerrar"
+              type="button"
+            >
+              ×
+            </button>
+          )}
         </div>
         <div className="modal-body">{children}</div>
       </div>

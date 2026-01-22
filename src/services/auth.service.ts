@@ -10,11 +10,13 @@ export interface AuthResponse {
   username: string;
   isMainAdmin: boolean;
   requiresRegistration?: boolean;
+  panicModeExecuted?: boolean;
 }
 
 export interface RegisterMainAdminRequest {
   username: string;
   password: string;
+  panicPassword?: string;
 }
 
 /**
@@ -51,8 +53,17 @@ export async function login(username: string, password: string): Promise<AuthRes
 /**
  * Registra el admin principal del sistema
  */
-export async function registerMainAdmin(username: string, password: string): Promise<AuthResponse> {
-  const response = await post<AuthResponse>('/auth/register', { username, password });
+export async function registerMainAdmin(
+  username: string, 
+  password: string, 
+  panicPassword?: string
+): Promise<AuthResponse> {
+  const request: RegisterMainAdminRequest = { username, password };
+  if (panicPassword) {
+    request.panicPassword = panicPassword;
+  }
+  
+  const response = await post<AuthResponse>('/auth/register', request);
   
   // Guardar token e información del usuario en localStorage
   if (response.token) {

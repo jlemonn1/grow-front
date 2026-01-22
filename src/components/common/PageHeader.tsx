@@ -1,6 +1,7 @@
 import { HiArrowLeft } from 'react-icons/hi';
 import { IconType } from 'react-icons';
 import { Button } from './Button';
+import { DraftSavingIndicator } from './DraftSavingIndicator';
 import './PageHeader.css';
 
 interface PageHeaderProps {
@@ -12,9 +13,10 @@ interface PageHeaderProps {
     icon?: IconType;
   };
   onBack?: () => void;
+  isSaving?: boolean;
 }
 
-export function PageHeader({ title, subtitle, action, onBack }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action, onBack, isSaving }: PageHeaderProps) {
   const ActionIcon = action?.icon;
   
   return (
@@ -31,10 +33,11 @@ export function PageHeader({ title, subtitle, action, onBack }: PageHeaderProps)
               <HiArrowLeft className="page-header-back-icon" aria-hidden="true" />
             </button>
           )}
-          <div>
+          <div className="page-header-title-container">
             <h1 className="page-header-title">{title}</h1>
             {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
           </div>
+          <DraftSavingIndicator isSaving={isSaving} />
         </div>
         {action && (
           <Button onClick={action.onClick} variant="primary">

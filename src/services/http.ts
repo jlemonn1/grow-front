@@ -137,8 +137,14 @@ async function handleError(response: Response): Promise<never> {
 
   // Error no autorizado (401)
   if (response.status === 401) {
-    // Limpiar token inválido
+    // Limpiar token inválido y datos de usuario
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('isMainAdmin');
+    
+    // Disparar evento personalizado para que el contexto de auth maneje el logout
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    
     throw error;
   }
 
@@ -234,6 +240,16 @@ export async function get<T>(endpoint: string): Promise<T> {
 export async function post<T>(endpoint: string, body?: unknown): Promise<T> {
   return request<T>(endpoint, {
     method: 'POST',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
+ * PUT request
+ */
+export async function put<T>(endpoint: string, body?: unknown): Promise<T> {
+  return request<T>(endpoint, {
+    method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
   });
 }

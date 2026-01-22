@@ -18,7 +18,14 @@ export function DraftRecoveryModal({ isOpen, draft, onRecover, onDiscard }: Draf
   const totalGrams = draft.items.reduce((sum, item) => sum + item.grams, 0);
 
   return (
-    <Modal isOpen={isOpen} onClose={onDiscard} title="Borrador de Venta Encontrado">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onDiscard} 
+      title="Borrador de Venta Encontrado"
+      showCloseButton={false}
+      closeOnOverlayClick={false}
+      closeOnEscape={false}
+    >
       <div className="draft-recovery-modal">
         <div className="draft-recovery-content">
           <p className="draft-recovery-message">

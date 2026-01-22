@@ -226,6 +226,7 @@
 @media (max-width: 768px) {
   .side-nav {
     width: 240px;
+    z-index: 100; /* Reducir z-index en tablet para que los modales aparezcan por encima */
   }
 
   .side-nav-label {

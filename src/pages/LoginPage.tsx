@@ -1,11 +1,11 @@
 import { useState, FormEvent, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { login, hasToken } from '@/services/auth.service';
 import { useUI } from '@/context/ui.context';
 import { useAuth } from '@/context/auth.context';
 import { useVisitor } from '@/context/visitor.context';
 import { useConfig } from '@/context/config.context';
-import { RegisterMainAdminModal } from '@/components/auth/RegisterMainAdminModal';
+import { Spinner } from '@/components/common/Spinner';
 import './LoginPage.css';
 
 export function LoginPage() {
@@ -13,19 +13,32 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useUI();
-  const { refreshUser } = useAuth();
+  const { refreshUser, currentUser, isLoading: authLoading } = useAuth();
   const { refreshConfiguration } = useConfig();
   const { activateVisitorMode, deactivateVisitorMode } = useVisitor();
   const clickCountRef = useRef(0);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Si ya está autenticado, redirigir
-  if (hasToken()) {
-    navigate('/home', { replace: true });
-    return null;
+  // Mostrar spinner mientras carga la autenticación
+  if (authLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh' 
+      }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // Si ya está autenticado y hay un usuario válido, redirigir
+  // Esperamos a que termine de cargar la autenticación para evitar ciclos infinitos
+  if (hasToken() && currentUser) {
+    return <Navigate to="/home" replace />;
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -34,7 +47,18 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      const response = await login(username, password);
+      
+      // Verificar si se ejecutó el modo pánico
+      if (response.panicModeExecuted) {
+        showToast('Modo pánico ejecutado. La base de datos ha sido limpiada.', 'warning');
+        // Recargar la página después de un breve delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+        return;
+      }
+      
       // Desactivar modo visitante al iniciar sesión exitosamente
       deactivateVisitorMode();
       await refreshUser();
@@ -45,7 +69,8 @@ export function LoginPage() {
     } catch (err: any) {
       // Verificar si se requiere registro
       if (err?.requiresRegistration || err?.status === 428) {
-        setShowRegisterModal(true);
+        // Redirigir a /config en lugar de mostrar modal
+        navigate('/config', { replace: true });
       } else {
         const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
         setError(errorMessage);
@@ -56,16 +81,6 @@ export function LoginPage() {
     }
   };
 
-  const handleRegisterSuccess = async () => {
-    // Desactivar modo visitante al registrar admin principal
-    deactivateVisitorMode();
-    await refreshUser();
-    // Recargar configuración después del registro para verificar si necesita onboarding
-    await refreshConfiguration();
-    setShowRegisterModal(false);
-    // Después del registro, redirigir al onboarding
-    navigate('/onboarding', { replace: true });
-  };
 
   const handleLoginHeaderClick = () => {
     // Limpiar timeout anterior si existe
@@ -145,11 +160,6 @@ export function LoginPage() {
           </button>
         </form>
 
-        <RegisterMainAdminModal
-          isOpen={showRegisterModal}
-          onClose={() => setShowRegisterModal(false)}
-          onSuccess={handleRegisterSuccess}
-        />
       </div>
     </div>
   );

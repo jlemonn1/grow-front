@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiOutlineCurrencyEuro } from 'react-icons/hi';
+import { HiOutlineCurrencyEuro, HiChevronDown, HiChevronUp, HiOutlineInformationCircle } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
@@ -48,6 +48,7 @@ export function ProductDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [expandedMovements, setExpandedMovements] = useState<Set<string>>(new Set());
+  const [isProductExpanded, setIsProductExpanded] = useState(false);
   
   const [editData, setEditData] = useState<UpdateProductRequest>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -708,66 +709,151 @@ export function ProductDetailPage() {
           ) : (
             <FormCard>
               <div className="product-info">
-                <FormSection
-                  title="Información del producto"
-                  description="Detalles principales del producto"
-                >
-                  <div className="product-detail-image-container">
-                    <ProductImage 
-                      imageUrl={product.imageUrl} 
-                      alt={product.name}
-                      size="large"
-                    />
-                  </div>
-                  <div className="product-info-grid">
-                    <div className="product-info-item">
-                      <span className="product-info-label">Nombre:</span>
-                      <span className="product-info-value">{product.name}</span>
-                    </div>
-                    <div className="product-info-item">
-                      <span className="product-info-label">Categoría:</span>
-                      <span className="product-info-value">{product.category.name}</span>
-                    </div>
-                    <div className="product-info-item">
-                      <span className="product-info-label">Precio por gramo:</span>
-                      <span className="product-info-value">{formatMoney(product.pricePerGram)}</span>
-                    </div>
-                    <div className="product-info-item">
-                      <span className="product-info-label">Stock actual:</span>
-                      <span className="product-info-value">{product.stockGrams.toFixed(2)}g</span>
-                    </div>
-                    {product.description && (
-                      <div className="product-info-item product-info-item-full">
-                        <span className="product-info-label">Descripción:</span>
-                        <span className="product-info-value">{product.description}</span>
+                {/* Vista resumida */}
+                {!isProductExpanded && (
+                  <div 
+                    className="product-summary-view"
+                    onClick={() => setIsProductExpanded(true)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsProductExpanded(true);
+                      }
+                    }}
+                    aria-label="Expandir detalles del producto"
+                  >
+                    <button
+                      type="button"
+                      className="product-expand-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsProductExpanded(true);
+                      }}
+                      aria-label="Expandir detalles"
+                      aria-expanded={false}
+                    >
+                      <HiChevronDown className="product-expand-icon" aria-hidden="true" />
+                    </button>
+                    <div className="product-summary-content">
+                      <ProductImage 
+                        imageUrl={product.imageUrl} 
+                        alt={product.name}
+                        size="medium"
+                        className="product-summary-image"
+                      />
+                      <div className="product-summary-info">
+                        <h3 className="product-summary-name">{product.name}</h3>
+                        <div className="product-summary-stats">
+                          <div className="product-summary-stat">
+                            <span className="product-summary-stat-label">Stock:</span>
+                            <span className="product-summary-stat-value">{product.stockGrams.toFixed(2)}g</span>
+                          </div>
+                          <div className="product-summary-stat">
+                            <span className="product-summary-stat-label">Precio:</span>
+                            <span className="product-summary-stat-value">{formatMoney(product.pricePerGram)}/g</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    {product.createdAt && (
-                      <div className="product-info-item">
-                        <span className="product-info-label">Fecha creación:</span>
-                        <span className="product-info-value">{formatDateTime(product.createdAt)}</span>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                </FormSection>
+                )}
 
-                <div className="product-actions">
-                  {hasPermission(AdminPermission.GESTIONAR_STOCK) && (
-                    <Button variant="primary" onClick={() => setShowRechargeModal(true)}>
-                      Recargar Stock
-                    </Button>
-                  )}
-                  {hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) && (
-                    <>
-                      <Button variant="secondary" onClick={handleEdit}>
-                        Editar
-                      </Button>
-                      <Button variant="danger" onClick={handleDelete}>
-                        Eliminar
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {/* Vista expandida */}
+                {isProductExpanded && (
+                  <>
+                    <div className="product-expanded-header">
+                      <div 
+                        className="product-expandable-header"
+                        onClick={() => setIsProductExpanded(false)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setIsProductExpanded(false);
+                          }
+                        }}
+                        aria-label="Colapsar detalles del producto"
+                      >
+                        <div className="form-section-header">
+                          <h3 className="form-section-title">Información del producto</h3>
+                          <p className="form-section-description">
+                            <HiOutlineInformationCircle className="form-section-icon" />
+                            Detalles principales del producto
+                          </p>
+                        </div>
+                      </div>
+                      <FormSection>
+                        <div className="product-detail-image-container">
+                          <ProductImage 
+                            imageUrl={product.imageUrl} 
+                            alt={product.name}
+                            size="large"
+                          />
+                        </div>
+                        <div className="product-info-grid">
+                          <div className="product-info-item">
+                            <span className="product-info-label">Nombre:</span>
+                            <span className="product-info-value">{product.name}</span>
+                          </div>
+                          <div className="product-info-item">
+                            <span className="product-info-label">Categoría:</span>
+                            <span className="product-info-value">{product.category.name}</span>
+                          </div>
+                          <div className="product-info-item">
+                            <span className="product-info-label">Precio por gramo:</span>
+                            <span className="product-info-value">{formatMoney(product.pricePerGram)}</span>
+                          </div>
+                          <div className="product-info-item">
+                            <span className="product-info-label">Stock actual:</span>
+                            <span className="product-info-value">{product.stockGrams.toFixed(2)}g</span>
+                          </div>
+                          {product.description && (
+                            <div className="product-info-item product-info-item-full">
+                              <span className="product-info-label">Descripción:</span>
+                              <span className="product-info-value">{product.description}</span>
+                            </div>
+                          )}
+                          {product.createdAt && (
+                            <div className="product-info-item">
+                              <span className="product-info-label">Fecha creación:</span>
+                              <span className="product-info-value">{formatDateTime(product.createdAt)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </FormSection>
+                      <button
+                        type="button"
+                        className="product-collapse-button"
+                        onClick={() => setIsProductExpanded(false)}
+                        aria-label="Colapsar detalles"
+                        aria-expanded={true}
+                      >
+                        <HiChevronUp className="product-expand-icon" aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    <div className="product-actions">
+                      {hasPermission(AdminPermission.GESTIONAR_STOCK) && (
+                        <Button variant="primary" onClick={() => setShowRechargeModal(true)}>
+                          Recargar Stock
+                        </Button>
+                      )}
+                      {hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) && (
+                        <>
+                          <Button variant="secondary" onClick={handleEdit}>
+                            Editar
+                          </Button>
+                          <Button variant="danger" onClick={handleDelete}>
+                            Eliminar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </FormCard>
           )}

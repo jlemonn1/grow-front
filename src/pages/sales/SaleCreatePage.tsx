@@ -14,7 +14,7 @@ import { useTicket } from '@/hooks/useTicket';
 import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
-import { createSale, getSaleDraft, deleteSaleDraft } from '@/services/sales.service';
+import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { login } from '@/services/auth.service';
 import type { ValidationError, ApiError } from '@/types/api';
@@ -34,6 +34,9 @@ export function SaleCreatePage() {
     cashGiven,
     change,
     isValid,
+    isSavingDraft,
+  } = ticketContext;
+  const {
     setCustomer,
     setCashGiven,
     removeItem,
@@ -92,8 +95,12 @@ export function SaleCreatePage() {
       try {
         const savedDraft = await getSaleDraft();
         if (savedDraft) {
-          setDraft(savedDraft);
-          setShowDraftModal(true);
+          // Solo mostrar el modal si el borrador tiene contenido (cliente o items)
+          const hasContent = savedDraft.customerId !== null || (savedDraft.items && savedDraft.items.length > 0);
+          if (hasContent) {
+            setDraft(savedDraft);
+            setShowDraftModal(true);
+          }
         }
       } catch (error) {
         console.error('Error al cargar borrador:', error);
@@ -245,11 +252,11 @@ export function SaleCreatePage() {
       // Crear venta
       const sale = await createSale(request);
 
-      // Eliminar borrador después de completar venta exitosamente
+      // Limpiar borrador después de completar venta exitosamente
       try {
-        await deleteSaleDraft();
+        await clearSaleDraft();
       } catch (error) {
-        console.error('Error al eliminar borrador después de venta:', error);
+        console.error('Error al limpiar borrador después de venta:', error);
       }
 
       // Actualizar stock optimista para cada producto
@@ -443,6 +450,7 @@ export function SaleCreatePage() {
       <PageHeader 
         title="Caja" 
         onBack={handleBack}
+        isSaving={isSavingDraft}
         action={{
           label: 'Limpiar todo',
           onClick: handleReset,

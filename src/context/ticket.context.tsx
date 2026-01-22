@@ -11,6 +11,7 @@ interface TicketContextValue {
   cashGiven: number;
   change: number;
   isValid: boolean;
+  isSavingDraft: boolean;
   addItem: (product: Product, grams: number) => void;
   updateItem: (index: number, grams: number) => void;
   updateItemDiscount: (index: number, discount: number | undefined, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | undefined) => void;
@@ -39,6 +40,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const [total, setTotal] = useState<number>(0);
   const [change, setChange] = useState<number>(0);
   const [isValid, setIsValid] = useState<boolean>(false);
+  const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
   
   // Ref para evitar guardar durante la carga de un borrador
   const isLoadingDraftRef = useRef(false);
@@ -113,8 +115,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     };
 
     setItems((prev) => {
-      const updated = [...prev, newItem];
-      return updated;
+      return [...prev, newItem];
     });
   }, [calculateSubtotalWithDiscount]);
 
@@ -278,6 +279,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
       return;
     }
 
+    setIsSavingDraft(true);
     try {
       await saveSaleDraft({
         customerId: customer?.id || null,
@@ -318,22 +320,47 @@ export function TicketProvider({ children }: TicketProviderProps) {
       } catch (e) {
         // Ignorar errores de localStorage
       }
+    } finally {
+      setIsSavingDraft(false);
     }
   }, [customer, items, cashGiven]);
 
-  // Debounce del guardado automático (800ms)
+  // Debounce del guardado automático (800ms) para cambios menores
   const debouncedSaveDraft = useRef(
     debounce(() => {
       saveDraftToBackend();
     }, 800)
   ).current;
 
-  // Guardar borrador cuando cambian customer, items o cashGiven
+  // Ref para rastrear la longitud anterior de items para detectar adiciones
+  const prevItemsLengthRef = useRef(items.length);
+  const prevCustomerRef = useRef(customer);
+
+  // Guardar inmediatamente cuando se añade un producto o se selecciona un cliente
   useEffect(() => {
-    if (!isLoadingDraftRef.current) {
+    if (isLoadingDraftRef.current) {
+      return;
+    }
+
+    const itemsLengthChanged = items.length !== prevItemsLengthRef.current;
+    const customerChanged = customer !== prevCustomerRef.current;
+
+    // Si se añadió un producto (longitud aumentó) o se cambió el cliente, guardar inmediatamente
+    if (itemsLengthChanged && items.length > prevItemsLengthRef.current) {
+      // Se añadió un producto
+      prevItemsLengthRef.current = items.length;
+      saveDraftToBackend();
+    } else if (customerChanged) {
+      // Se cambió el cliente
+      prevCustomerRef.current = customer;
+      saveDraftToBackend();
+    } else {
+      // Otros cambios (modificación de gramos, cashGiven, etc.) usar debounce
+      prevItemsLengthRef.current = items.length;
+      prevCustomerRef.current = customer;
       debouncedSaveDraft();
     }
-  }, [customer, items, cashGiven, debouncedSaveDraft]);
+  }, [customer, items, cashGiven, debouncedSaveDraft, saveDraftToBackend]);
 
   // Guardar inmediatamente antes de cerrar la página
   useEffect(() => {
@@ -451,6 +478,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     cashGiven,
     change,
     isValid,
+    isSavingDraft,
     addItem,
     updateItem,
     updateItemDiscount,
