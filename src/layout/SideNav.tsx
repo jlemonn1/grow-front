@@ -90,7 +90,7 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
   };
 
   // Manejar clics en el botón de configuración para el easter egg
-  const handleConfigClick = (e: React.MouseEvent) => {
+  const handleConfigClick = (_e: React.MouseEvent) => {
     // Solo activar el easter egg si el usuario está autenticado
     if (!currentUser) {
       return;
