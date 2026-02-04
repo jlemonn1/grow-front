@@ -994,8 +994,8 @@ const TOUR_STARTED_KEY = 'onboarding_tour_started';
 
 export function useOnboardingTour() {
   const navigate = useNavigate();
-  const { completeFunctionalOnboarding, needsFunctionalOnboarding } = useConfig();
-  const { activateDemoMode, deactivateDemoMode, demoData } = useDemo();
+  const { completeFunctionalOnboarding } = useConfig();
+  const { deactivateDemoMode, demoData } = useDemo();
   const { loadProducts, products } = useProducts();
   const { loadCustomers, customers } = useCustomers();
   

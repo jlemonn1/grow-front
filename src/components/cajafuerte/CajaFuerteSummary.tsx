@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { formatMoney } from '@/utils/money';
-import { STANDARD_DENOMINATIONS, getDenominationLabel, calculateTotal } from '@/utils/denominations';
+import { STANDARD_DENOMINATIONS, getDenominationLabel } from '@/utils/denominations';
 import type { CajaFuerte } from '@/types/models';
 import './CajaFuerteSummary.css';
 

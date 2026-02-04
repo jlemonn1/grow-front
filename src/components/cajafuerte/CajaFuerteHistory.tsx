@@ -18,23 +18,6 @@ const TRANSACTION_TYPE_OPTIONS = [
   { value: 'SALE_OUTPUT', label: 'Salida por cambio' },
 ];
 
-const getTransactionTypeLabel = (type: CajaFuerteTransactionType): string => {
-  switch (type) {
-    case 'ADD':
-      return 'Añadir';
-    case 'WITHDRAW':
-      return 'Retirar';
-    case 'CHANGE':
-      return 'Cambio';
-    case 'SALE_INPUT':
-      return 'Entrada por venta';
-    case 'SALE_OUTPUT':
-      return 'Salida por cambio';
-    default:
-      return type;
-  }
-};
-
 export function CajaFuerteHistory() {
   const [transactions, setTransactions] = useState<CajaFuerteTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,9 +120,8 @@ export function CajaFuerteHistory() {
             options={TRANSACTION_TYPE_OPTIONS}
           />
           <DateRangePicker
-            label="Rango de fechas"
-            value={dateRange}
-            onChange={setDateRange}
+            value={dateRange ?? undefined}
+            onChange={(range) => setDateRange(range)}
           />
           <div className="cajafuerte-history-filters-actions">
             <Button

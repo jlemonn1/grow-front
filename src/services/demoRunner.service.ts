@@ -12,7 +12,7 @@ import type {
   WaitForStep,
   SayStep,
 } from '@/types/demo.types';
-import { findElementByTour, waitForElement, simulateInput, simulateKeyPress } from '@/utils/demoUtils';
+import { waitForElement, simulateInput } from '@/utils/demoUtils';
 
 /**
  * Callbacks para interactuar con React Router y mostrar mensajes
@@ -65,7 +65,8 @@ async function executeClickStep(
         cancelable: true,
         view: window,
       });
-      element.dispatchEvent(clickEvent);
+      // Todos los elementos del DOM son EventTarget
+      (element as EventTarget).dispatchEvent(clickEvent);
     }
     
     // Esperar un poco después del click para que se procese
@@ -267,7 +268,9 @@ export async function executeStep(
       await executeSayStep(step, callbacks);
       break;
     default:
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustive: never = step;
+      void _exhaustive; // Marcar como usado intencionalmente
       throw new Error(`Tipo de paso desconocido: ${(step as any).type}`);
   }
 }

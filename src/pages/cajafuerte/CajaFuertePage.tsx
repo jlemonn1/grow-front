@@ -14,7 +14,7 @@ import { HiPlus, HiMinus, HiArrowsRightLeft } from 'react-icons/hi2';
 import './CajaFuertePage.css';
 
 export function CajaFuertePage() {
-  const { showToast, setGlobalLoading } = useUI();
+  const { showToast } = useUI();
   const [cajaFuerte, setCajaFuerte] = useState<CajaFuerte | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);

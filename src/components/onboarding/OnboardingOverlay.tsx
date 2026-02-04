@@ -42,9 +42,6 @@ export function OnboardingOverlay({ targetElement, isVisible, onClick }: Onboard
       const spotlightTop = Math.max(0, rect.top - padding);
       const spotlightRight = Math.min(viewportWidth, rect.right + padding);
       const spotlightBottom = Math.min(viewportHeight, rect.bottom + padding);
-      const spotlightWidth = spotlightRight - spotlightLeft;
-      const spotlightHeight = spotlightBottom - spotlightTop;
-
       // Usar clip-path con polygon para crear un agujero rectangular
       // El polygon crea un rectángulo que cubre toda la pantalla excepto el área del spotlight
       const clipPath = `polygon(

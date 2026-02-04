@@ -4,7 +4,7 @@ import { Button } from '@/components/common/Button';
 import { NumberInput } from '@/components/forms/NumberInput';
 import { CashBillButtons } from './CashBillButtons';
 import { formatMoney } from '@/utils/money';
-import { getDenominationLabel, calculateTotal } from '@/utils/denominations';
+import { getDenominationLabel } from '@/utils/denominations';
 import { useConfig } from '@/context/config.context';
 import type { TicketItem, DenominationsMap } from '@/types/models';
 import './TicketSummary.css';
@@ -67,10 +67,6 @@ function TicketSummaryComponent({
     setLocalCashGiven(cashGiven);
   }, [cashGiven]);
 
-  const handleCashGivenChange = useCallback((value: number) => {
-    setLocalCashGiven(value);
-    onCashGivenChange(value);
-  }, [onCashGivenChange]);
 
   const handleAddAmount = useCallback((amount: number) => {
     const newValue = (localCashGiven || 0) + amount;

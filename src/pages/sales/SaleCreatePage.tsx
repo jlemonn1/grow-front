@@ -47,7 +47,6 @@ export function SaleCreatePage() {
     setUseBalance,
     setBalanceToUse,
     setSaveChangeToBalance,
-    saveAsPendingSale,
   } = ticketContext;
   const {
     setCustomer,
@@ -406,7 +405,7 @@ export function SaleCreatePage() {
         customerId: customer.id,
         cashGiven,
         cashGivenDenominations,
-        changeDenominations: change > 0 && !saveChangeToBalance ? changeDenominations : undefined,
+        changeDenominations: change > 0 && !saveChangeToBalance ? (changeDenominations ?? undefined) : undefined,
         useBalance,
         balanceToUse: useBalance ? balanceToUse : undefined,
         saveChangeToBalance,

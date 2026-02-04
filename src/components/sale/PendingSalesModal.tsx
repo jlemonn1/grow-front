@@ -126,7 +126,6 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
       isOpen={isOpen} 
       onClose={onClose} 
       title="Pedidos Pendientes"
-      size="large"
     >
       <div className="pending-sales-modal">
         {loading ? (
@@ -237,7 +236,6 @@ function PendingSaleDetailsModal({
       isOpen={isOpen} 
       onClose={onClose} 
       title={`Detalles - ${pendingSale.customerName || 'Sin cliente'}`}
-      size="large"
     >
       <div className="pending-sale-details">
         <div className="pending-sale-details-section">

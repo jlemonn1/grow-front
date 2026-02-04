@@ -392,6 +392,7 @@ export interface CreateCustomerRequest {
   pin: string;
   subscriptionType?: 'MONTHLY' | 'ANNUAL';
   subscriptionPrice: number;
+  dniNumber?: string;
 }
 
 export interface RenewSubscriptionRequest {

@@ -99,14 +99,12 @@ export function TicketProvider({ children }: TicketProviderProps) {
     
     let newBalanceUsed = actualBalanceToUse;
     let newBalanceRemaining = availableBalance - actualBalanceToUse;
-    let newCashGiven = cashGiven;
     let newChange = 0;
     
     if (useBalance && actualBalanceToUse > 0) {
       const remainingAmount = newTotal - actualBalanceToUse;
       if (remainingAmount <= 0) {
         // El saldo cubre todo
-        newCashGiven = 0;
         newChange = 0;
       } else {
         // Queda dinero por pagar
@@ -530,14 +528,14 @@ export function TicketProvider({ children }: TicketProviderProps) {
             
             loadedItems.push({
               productId: product.id,
-              productName: product.name,
+              product: product,
               grams: draftItem.grams,
               pricePerGram,
               subtotal,
               subtotalBeforeDiscount,
               discount: draftItem.discount,
               discountType: draftItem.discountType,
-              validationState: 'pending',
+              validationState: 'checking' as const,
               errorMessage: undefined,
             });
           }

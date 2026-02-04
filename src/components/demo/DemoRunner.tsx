@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDemo } from '@/context/demo.context';
-import { demoRunner } from '@/services/demoRunner.service';
+import { executeStep as executeDemoStep } from '@/services/demoRunner.service';
 import { DemoControls } from './DemoControls';
 import type { DemoStep, SayStep } from '@/types/demo.types';
 import './DemoRunner.css';
@@ -30,13 +30,8 @@ export function DemoRunner({ script }: DemoRunnerProps) {
     nextStep,
   } = useDemo();
 
-  const executionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Configurar función de navegación en el servicio
-  useEffect(() => {
-    demoRunner.setNavigateFn(navigate);
-  }, [navigate]);
+  const executionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Iniciar script si se proporciona como prop y el modo demo está activo
   useEffect(() => {
@@ -91,7 +86,7 @@ export function DemoRunner({ script }: DemoRunnerProps) {
           }, duration);
         } else {
           // Ejecutar el paso usando el servicio
-          await demoRunner.executeStep(step, speed);
+          await executeDemoStep(step, { navigate, onError: (err: Error) => console.error(err) });
           // Avanzar al siguiente paso después de ejecutar
           nextStep();
         }

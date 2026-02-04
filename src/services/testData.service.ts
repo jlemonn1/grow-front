@@ -104,6 +104,7 @@ export async function loadTestDataForOnboarding(): Promise<{
     const saleRequest: CreateSaleRequest = {
       customerId: randomCustomer.id,
       cashGiven: cashGiven,
+      cashGivenDenominations: {}, // Denominaciones vacías para datos de prueba
       items: [
         {
           productId: randomProduct.id,

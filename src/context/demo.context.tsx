@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react';
 import { generateMockData, type DemoData } from '@/services/onboardingDemo.service';
 import { executeScript, type DemoRunnerCallbacks } from '@/services/demoRunner.service';
 import type { DemoScript, DemoSpeed } from '@/types/demo.types';

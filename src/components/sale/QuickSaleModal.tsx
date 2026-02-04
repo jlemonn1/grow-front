@@ -7,7 +7,6 @@ import { CashBillButtons } from './CashBillButtons';
 import { DraftRecoveryModal } from './DraftRecoveryModal';
 import { ProductImage } from '@/components/common/ProductImage';
 import { Button } from '@/components/common/Button';
-import { NumberInput } from '@/components/forms/NumberInput';
 import { useTicket } from '@/hooks/useTicket';
 import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
@@ -536,7 +535,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       const request = {
         customerId: customer.id,
         cashGiven,
-        cashGivenDenominations: hasCashGivenDenominations ? cashGivenDenominations : undefined,
+        cashGivenDenominations: hasCashGivenDenominations ? cashGivenDenominations : {},
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,

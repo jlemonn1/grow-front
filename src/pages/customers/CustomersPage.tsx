@@ -6,7 +6,6 @@ import { CardList } from '@/components/common/CardList';
 import { CustomerCard } from '@/components/common/CustomerCard';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
-import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
 import { Button } from '@/components/common/Button';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useUI } from '@/context/ui.context';
@@ -43,10 +42,6 @@ export function CustomersPage() {
     customer: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
-  const [editModal, setEditModal] = useState<{ isOpen: boolean; customer: Customer | null }>({
-    isOpen: false,
-    customer: null,
-  });
   
   // Estado para modo visitante
   const [visitorCustomers, setVisitorCustomers] = useState<Customer[]>([]);

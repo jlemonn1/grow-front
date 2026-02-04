@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/common/Button';
 import { useOnboardingTour } from '@/hooks/useOnboardingTour';
 import { Spinner } from '@/components/common/Spinner';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
@@ -247,7 +246,6 @@ export function SimpleOnboardingTour({ onComplete, onSkip }: SimpleOnboardingTou
                            currentStepData?.id === 'transition-to-customers' ||
                            currentStepData?.id === 'transition-to-customer-create' ||
                            currentStepData?.id === 'transition-to-customer-detail';
-  const isTransitionToProducts = currentStepData?.id === 'transition-to-products';
   const isTransitionToProductsList = currentStepData?.id === 'transition-to-products-list';
   const isTransitionToProductDetail = currentStepData?.id === 'transition-to-product-detail';
   const isTransitionToCustomers = currentStepData?.id === 'transition-to-customers';
@@ -610,8 +608,6 @@ export function SimpleOnboardingTour({ onComplete, onSkip }: SimpleOnboardingTou
     return null;
   }
 
-  // Los nombres de los pasos se obtienen del currentStepData, no necesitamos TOUR_STEPS aquí
-  const stepNames: string[] = [];
 
   return createPortal(
     <>
