@@ -11,18 +11,14 @@ import { useUI } from '@/context/ui.context';
 import type { UpdateGrowConfigurationRequest } from '@/services/config.service';
 import type { ValidationError } from '@/types/api';
 import { generateColorPalette } from '@/utils/colorSystem';
-import { customersService } from '@/services/customers.service';
-import { createProduct } from '@/services/products.service';
-import { createSale } from '@/services/sales.service';
-import { listCategories, createCategory } from '@/services/categories.service';
-import type { CreateCustomerRequest, CreateProductRequest, CreateSaleRequest } from '@/types/models';
+import { loadTestDataForOnboarding } from '@/services/testData.service';
 import { useAuth } from '@/context/auth.context';
 import { registerMainAdmin, hasToken } from '@/services/auth.service';
 import { triggerCompleteReset } from '@/services/panic.service';
 import './ConfigPage.css';
 
 export function ConfigPage() {
-  const { config, loading, updateConfiguration, refreshConfiguration } = useConfig();
+  const { config, loading, updateConfiguration, refreshConfiguration, needsFunctionalOnboarding, needsOnboarding, quickSaleMode, setQuickSaleMode } = useConfig();
   const { showToast } = useUI();
   const { currentAdmin, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -141,7 +137,29 @@ export function ConfigPage() {
       await refreshUser();
       await refreshConfiguration();
       setNeedsRegistration(false);
-      navigate('/home', { replace: true });
+      
+      // Cargar datos de prueba después de crear el admin principal
+      console.log('[ConfigPage] Cargando datos de prueba después de crear admin principal...');
+      try {
+        const result = await loadTestDataForOnboarding();
+        console.log(`[ConfigPage] ✓ Datos de prueba cargados: ${result.customers} clientes, ${result.products} productos, ${result.sales} ventas`);
+        showToast('Datos de prueba cargados', 'info');
+      } catch (error) {
+        console.error('[ConfigPage] Error cargando datos de prueba:', error);
+        // Continuar aunque falle la carga de datos
+      }
+      
+      // Esperar un momento para que el contexto se actualice después de refreshConfiguration
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verificar necesidades de onboarding y redirigir apropiadamente
+      if (needsFunctionalOnboarding) {
+        navigate('/onboarding/tour', { replace: true });
+      } else if (needsOnboarding) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (err: any) {
       const errorMessage = err?.message || 'Error al registrar el admin principal';
       setRegistrationErrors({ general: errorMessage });
@@ -165,117 +183,10 @@ export function ConfigPage() {
     showToast('Cargando datos de prueba...', 'info');
 
     try {
-      // Obtener o crear categoría
-      let categories = await listCategories();
-      let categoryId: string;
-      
-      if (categories.length === 0) {
-        const newCategory = await createCategory({ name: 'Categoría de Prueba' });
-        categoryId = newCategory.id;
-      } else {
-        categoryId = categories[0].id;
-      }
-
-      // Crear 5 clientes
-      const customerNames = [
-        { displayName: 'Juan Pérez', phone: '+34 600 123 456', pin: '12AB', subscriptionPrice: 50 },
-        { displayName: 'María García', phone: '+34 600 234 567', pin: '23CD', subscriptionPrice: 75 },
-        { displayName: 'Carlos López', phone: '+34 600 345 678', pin: '34EF', subscriptionPrice: 100 },
-        { displayName: 'Ana Martínez', phone: '+34 600 456 789', pin: '45GH', subscriptionPrice: 60 },
-        { displayName: 'Luis Rodríguez', phone: '+34 600 567 890', pin: '56IJ', subscriptionPrice: 80 },
-      ];
-
-      const createdCustomers = [];
-      for (const customerData of customerNames) {
-        const customerRequest: CreateCustomerRequest = {
-          displayName: customerData.displayName,
-          phone: customerData.phone,
-          pin: customerData.pin,
-          subscriptionType: 'MONTHLY',
-          subscriptionPrice: customerData.subscriptionPrice,
-          notes: 'Cliente de prueba generado por easter egg',
-        };
-        const customer = await customersService.create(customerRequest);
-        createdCustomers.push(customer);
-      }
-
-      // Crear 5 productos con stock suficiente para 40 ventas
-      const productData = [
-        { name: 'Producto Premium A', price: 12.50, description: 'Producto de alta calidad', stock: 2000 },
-        { name: 'Producto Estándar B', price: 8.75, description: 'Producto estándar', stock: 2000 },
-        { name: 'Producto Especial C', price: 15.00, description: 'Producto especial', stock: 2000 },
-        { name: 'Producto Básico D', price: 6.25, description: 'Producto básico', stock: 2000 },
-        { name: 'Producto Exclusivo E', price: 20.00, description: 'Producto exclusivo', stock: 2000 },
-      ];
-
-      const createdProducts = [];
-      for (const productInfo of productData) {
-        const productRequest: CreateProductRequest = {
-          name: productInfo.name,
-          categoryId: categoryId,
-          pricePerGram: productInfo.price,
-          description: productInfo.description,
-          imageUrl: 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(productInfo.name),
-          initialStockGrams: productInfo.stock,
-        };
-        const product = await createProduct(productRequest);
-        createdProducts.push(product);
-      }
-
-      // Crear 40 ventas distribuidas entre el 5 de diciembre 2025 y el 21 de enero 2026
-      const sales = [];
-      const startDate = new Date('2025-12-05T08:00:00');
-      const endDate = new Date('2026-01-21T23:00:00');
-      const timeDiff = endDate.getTime() - startDate.getTime();
-
-      for (let i = 0; i < 40; i++) {
-        // Generar fecha aleatoria entre el 5 de diciembre 2025 y el 21 de enero 2026
-        const randomTime = Math.random() * timeDiff;
-        const saleDate = new Date(startDate.getTime() + randomTime);
-        
-        // Asegurar que la hora esté entre 8:00 y 23:00
-        const hour = 8 + Math.floor(Math.random() * 16); // 8-23 (inclusive)
-        const minute = Math.floor(Math.random() * 60);
-        const second = Math.floor(Math.random() * 60);
-        saleDate.setHours(hour, minute, second, 0);
-
-        // Seleccionar cliente y producto aleatorios
-        const randomCustomer = createdCustomers[Math.floor(Math.random() * createdCustomers.length)];
-        const randomProduct = createdProducts[Math.floor(Math.random() * createdProducts.length)];
-        
-        // Gramos aleatorios entre 5 y 50
-        const grams = 5 + Math.floor(Math.random() * 45);
-        const pricePerGram = randomProduct.pricePerGram;
-        const subtotal = grams * pricePerGram;
-        
-        // Efectivo entregado (un poco más que el total para tener cambio)
-        const cashGiven = Math.ceil(subtotal * (1.1 + Math.random() * 0.2));
-
-        const saleRequest: CreateSaleRequest = {
-          customerId: randomCustomer.id,
-          cashGiven: cashGiven,
-          items: [
-            {
-              productId: randomProduct.id,
-              grams: grams,
-            },
-          ],
-          // Enviar fecha personalizada en formato ISO 8601 compatible con LocalDateTime
-          // Formato: YYYY-MM-DDTHH:mm:ss (sin zona horaria)
-          createdAt: saleDate.toISOString().slice(0, 19), // Formato: 2024-12-05T14:30:00
-        };
-
-        try {
-          const sale = await createSale(saleRequest);
-          sales.push(sale);
-        } catch (error) {
-          console.error(`Error creando venta ${i + 1}:`, error);
-        }
-      }
-
+      const result = await loadTestDataForOnboarding();
       setDataLoaded(true);
       showToast(
-        `¡Easter egg activado! Se crearon ${createdCustomers.length} clientes, ${createdProducts.length} productos y ${sales.length} ventas.`,
+        `¡Easter egg activado! Se crearon ${result.customers} clientes, ${result.products} productos y ${result.sales} ventas.`,
         'success'
       );
     } catch (error) {
@@ -927,6 +838,47 @@ export function ConfigPage() {
               <p className="config-toggle-description">
                 Cuando está desactivado, solo se muestra el total de la venta. 
                 El efectivo recibido y el cambio quedan ocultos en la UI, tickets y reportes.
+              </p>
+            </div>
+
+            <div className="form-field" style={{ marginTop: '2rem' }}>
+              <label className="form-label">
+                Comportamiento del botón de venta rápida
+              </label>
+              <div className="config-radio-group">
+                <label className="config-radio-option">
+                  <input
+                    type="radio"
+                    name="quickSaleMode"
+                    value="modal"
+                    checked={quickSaleMode === 'modal'}
+                    onChange={() => setQuickSaleMode('modal')}
+                  />
+                  <span className="config-radio-label">
+                    <strong>Modal</strong>
+                    <span className="config-radio-description">
+                      Abre el proceso de venta en un modal flotante
+                    </span>
+                  </span>
+                </label>
+                <label className="config-radio-option">
+                  <input
+                    type="radio"
+                    name="quickSaleMode"
+                    value="redirect"
+                    checked={quickSaleMode === 'redirect'}
+                    onChange={() => setQuickSaleMode('redirect')}
+                  />
+                  <span className="config-radio-label">
+                    <strong>Redirigir a página</strong>
+                    <span className="config-radio-description">
+                      Redirige a la página completa de dispensar (/sales/new)
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <p className="config-toggle-description">
+                Elige cómo quieres que funcione el botón flotante de venta rápida.
               </p>
             </div>
           </FormSection>

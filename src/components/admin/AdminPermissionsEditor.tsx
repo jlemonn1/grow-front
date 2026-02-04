@@ -17,7 +17,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   [AdminPermission.DISPENSAR]: 'Realizar ventas y dispensaciones',
   [AdminPermission.GESTIONAR_PRODUCTOS]: 'Crear y editar productos',
   [AdminPermission.GESTIONAR_STOCK]: 'Añadir stock y recargar inventario',
-  [AdminPermission.GESTIONAR_CLIENTES]: 'Crear y editar clientes',
+  [AdminPermission.GESTIONAR_CLIENTES]: 'Crear y editar socios',
   [AdminPermission.VER_REPORTES]: 'Ver reportes, resúmenes y balances',
   [AdminPermission.GESTIONAR_ADMINS]: 'Gestionar administradores',
 };
@@ -144,6 +144,7 @@ export function AdminPermissionsEditor({ admin, onUpdate }: AdminPermissionsEdit
                 disabled={isDisabled}
                 aria-label={`${PERMISSION_LABELS[permission]}: ${isEnabled ? 'activado' : 'desactivado'}`}
                 aria-pressed={isEnabled}
+                data-tour={`permission-toggle-${permission}`}
               >
                 <span className="admin-permission-toggle-slider" />
               </button>
@@ -158,6 +159,7 @@ export function AdminPermissionsEditor({ admin, onUpdate }: AdminPermissionsEdit
             onClick={handleSave}
             disabled={saving}
             variant="primary"
+            data-tour="save-permissions"
           >
             {saving ? 'Guardando...' : 'Guardar Permisos'}
           </Button>

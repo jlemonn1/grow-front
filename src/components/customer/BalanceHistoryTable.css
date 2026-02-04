@@ -1,0 +1,19 @@
+.balance-history-table {
+  width: 100%;
+}
+
+.balance-history-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.balance-positive {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.balance-negative {
+  color: var(--color-error);
+  font-weight: 600;
+}

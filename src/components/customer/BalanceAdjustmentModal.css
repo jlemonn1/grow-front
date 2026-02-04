@@ -1,0 +1,35 @@
+.balance-adjustment-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.balance-adjustment-info {
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.balance-adjustment-text,
+.balance-adjustment-current-balance,
+.balance-adjustment-new-balance {
+  margin: 0;
+  margin-bottom: var(--spacing-xs);
+}
+
+.balance-adjustment-new-balance {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.balance-adjustment-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.balance-adjustment-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}

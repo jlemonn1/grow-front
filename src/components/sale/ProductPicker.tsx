@@ -2,7 +2,8 @@ import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, fo
 import { Input } from '@/components/forms/Input';
 import { ProductImage } from '@/components/common/ProductImage';
 import { listProducts } from '@/services/products.service';
-import type { Product } from '@/types/models';
+import { listCategories } from '@/services/categories.service';
+import type { Product, Category } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import './ProductPicker.css';
 
@@ -28,6 +29,26 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showCategories, setShowCategories] = useState(false);
+
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const cats = await listCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   // Limpiar estados internos cuando selectedProduct cambia a null
   useEffect(() => {
@@ -35,6 +56,7 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
       setSearchQuery('');
       setResults([]);
       setShowResults(false);
+      setSelectedCategoryId(null);
       // Limpiar el input si existe
       if (inputRef.current) {
         inputRef.current.value = '';
@@ -50,23 +72,60 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     if (selectedProduct && trimmed === selectedProduct.name) {
       setResults([]);
       setShowResults(false);
+      setShowCategories(false);
       return;
+    }
+    
+    // Si hay una categoría seleccionada, buscar productos de esa categoría
+    if (selectedCategoryId && !trimmed) {
+      const timer = setTimeout(async () => {
+        setLoading(true);
+        try {
+          const response = await listProducts({ 
+            categoryId: selectedCategoryId, 
+            page: 0, 
+            size: 100 
+          });
+          setResults(response.content);
+          setShowResults(true);
+          setShowCategories(false);
+        } catch (error) {
+          console.error('Error al buscar productos por categoría:', error);
+          setResults([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
     
     if (!trimmed) {
       setResults([]);
       setShowResults(false);
+      // Si no hay texto y hay categorías, mostrar categorías
+      if (categories.length > 0 && !selectedCategoryId) {
+        setShowCategories(true);
+      } else {
+        setShowCategories(false);
+      }
       return;
     }
 
+    // Si hay texto, buscar productos normalmente
+    setShowCategories(false);
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await listProducts({ 
-          q: trimmed, 
-          page: 0, 
-          size: 10 
-        });
+        const params: { q: string; categoryId?: string; page: number; size: number } = {
+          q: trimmed,
+          page: 0,
+          size: 10
+        };
+        // Si hay una categoría seleccionada, también filtrar por categoría
+        if (selectedCategoryId) {
+          params.categoryId = selectedCategoryId;
+        }
+        const response = await listProducts(params);
         setResults(response.content);
         setShowResults(true);
       } catch (error) {
@@ -78,7 +137,7 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedProduct]);
+  }, [searchQuery, selectedProduct, selectedCategoryId, categories.length]);
 
   const handleSelect = useCallback((product: Product) => {
     onSelect(product);
@@ -94,7 +153,26 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     setSearchQuery('');
     setResults([]);
     setShowResults(false);
+    setSelectedCategoryId(null);
+    setShowCategories(false);
   }, [onSelect]);
+
+  const handleCategorySelect = useCallback((category: Category) => {
+    setSelectedCategoryId(category.id);
+    setSearchQuery('');
+    setShowCategories(false);
+    // La búsqueda se activará automáticamente por el useEffect
+  }, []);
+
+  const handleClearCategory = useCallback(() => {
+    setSelectedCategoryId(null);
+    setSearchQuery('');
+    setResults([]);
+    setShowResults(false);
+    if (categories.length > 0) {
+      setShowCategories(true);
+    }
+  }, [categories.length]);
 
   return (
     <div className="product-picker" role="combobox" aria-expanded={showResults} aria-haspopup="listbox">
@@ -104,16 +182,29 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
           type="text"
           placeholder="Buscar producto..."
           value={searchQuery}
+          data-tour="product-search-input"
           onChange={(e) => {
             setSearchQuery(e.target.value);
             // Si hay un producto seleccionado y el usuario empieza a escribir, limpiar selección
             if (selectedProduct && e.target.value !== selectedProduct.name) {
               onSelect(null);
             }
+            // Si el usuario empieza a escribir, ocultar categorías
+            if (e.target.value.trim().length > 0) {
+              setShowCategories(false);
+            }
           }}
           onFocus={() => {
+            // Si no hay texto y no hay producto seleccionado, mostrar categorías
+            if (!selectedProduct && !searchQuery.trim() && categories.length > 0 && !selectedCategoryId) {
+              setShowCategories(true);
+            }
             // Solo mostrar resultados si hay búsqueda activa y no hay producto seleccionado
-            if (!selectedProduct && results.length > 0 && searchQuery.trim().length > 0) {
+            else if (!selectedProduct && results.length > 0 && searchQuery.trim().length > 0) {
+              setShowResults(true);
+            }
+            // Si hay categoría seleccionada pero no hay texto, mostrar productos de esa categoría
+            else if (!selectedProduct && selectedCategoryId && !searchQuery.trim()) {
               setShowResults(true);
             }
           }}
@@ -124,6 +215,13 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
               if (selectedProduct) {
                 setSearchQuery(selectedProduct.name);
                 setShowResults(false);
+                setShowCategories(false);
+              } else {
+                // Si no hay producto seleccionado, ocultar categorías y resultados
+                setShowCategories(false);
+                if (!selectedCategoryId) {
+                  setShowResults(false);
+                }
               }
             }, 200);
           }}
@@ -144,8 +242,67 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
         )}
       </div>
 
+      {showCategories && (
+        <div className="product-picker-results" role="listbox" id="product-picker-categories">
+          {loadingCategories ? (
+            <div className="product-picker-loading" role="status" aria-live="polite">
+              Cargando categorías...
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="product-picker-empty" role="status" aria-live="polite">
+              No hay categorías disponibles
+            </div>
+          ) : (
+            <ul className="product-picker-list">
+              {categories.map((category) => (
+                <li
+                  key={category.id}
+                  id={`category-${category.id}`}
+                  className={`product-picker-item product-picker-category-item ${
+                    selectedCategoryId === category.id ? 'selected' : ''
+                  }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                  }}
+                  onClick={() => handleCategorySelect(category)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleCategorySelect(category);
+                    }
+                  }}
+                  role="option"
+                  aria-selected={selectedCategoryId === category.id}
+                  tabIndex={0}
+                >
+                  <div className="product-picker-category-icon">📁</div>
+                  <div className="product-picker-item-info">
+                    <div className="product-picker-item-name">{category.name}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {showResults && (
         <div className="product-picker-results" role="listbox" id="product-picker-list">
+          {selectedCategoryId && (
+            <div className="product-picker-category-filter">
+              <span className="product-picker-category-filter-label">
+                Categoría: <strong>{categories.find(c => c.id === selectedCategoryId)?.name}</strong>
+              </span>
+              <button
+                type="button"
+                className="product-picker-category-filter-clear"
+                onClick={handleClearCategory}
+                aria-label="Limpiar filtro de categoría"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="product-picker-loading" role="status" aria-live="polite">
               Buscando...
@@ -163,6 +320,7 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
                   className={`product-picker-item ${
                     selectedProduct?.id === product.id ? 'selected' : ''
                   } ${product.stockGrams <= 0 ? 'out-of-stock' : ''}`}
+                  data-tour={`product-row-${product.id}`}
                   onMouseDown={(e) => {
                     // Prevenir que el blur del input cierre el dropdown antes del click
                     e.preventDefault();

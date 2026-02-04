@@ -12,9 +12,11 @@ interface DateRangePickerProps {
   value?: DateRange;
   onChange: (range: DateRange | null) => void;
   className?: string;
+  dataTourFrom?: string;
+  dataTourTo?: string;
 }
 
-export function DateRangePicker({ value, onChange, className = '' }: DateRangePickerProps) {
+export function DateRangePicker({ value, onChange, className = '', dataTourFrom, dataTourTo }: DateRangePickerProps) {
   const [fromDate, setFromDate] = useState(value?.from || '');
   const [toDate, setToDate] = useState(value?.to || '');
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +110,7 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
           onChange={handleFromChange}
           style={{ maxWidth: '200px' }}
           error={error && error.includes('inicial') ? error : undefined}
+          data-tour={dataTourFrom}
         />
         <Input
           type="date"
@@ -116,6 +119,7 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
           onChange={handleToChange}
           style={{ maxWidth: '200px' }}
           error={error && (error.includes('final') || error.includes('posterior')) ? error : undefined}
+          data-tour={dataTourTo}
         />
       </div>
       {error && !error.includes('inicial') && !error.includes('final') && (

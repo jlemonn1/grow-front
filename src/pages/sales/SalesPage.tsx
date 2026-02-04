@@ -111,7 +111,7 @@ export function SalesPage() {
   };
 
   const customerOptions: SelectOption[] = [
-    { value: '', label: 'Todos los clientes' },
+    { value: '', label: 'Todos los socios' },
     ...customers.map((customer) => ({
       value: customer.id,
       label: customer.displayName,
@@ -139,7 +139,7 @@ export function SalesPage() {
       ),
     },
     {
-      header: 'Cliente',
+      header: 'Socio',
       accessor: (row) => (
         <button
           onClick={() => navigate(`/customers/${row.customerId}`)}
@@ -193,11 +193,12 @@ export function SalesPage() {
           <div className="sales-page-filters-content">
             <div className="sales-page-filter-group">
               <Select
-                label="Cliente"
+                label="Socio"
                 options={customerOptions}
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
                 disabled={customersLoading}
+                data-tour="filter-customer"
               />
             </div>
             
@@ -205,6 +206,8 @@ export function SalesPage() {
               <DateRangePicker
                 value={dateRange || undefined}
                 onChange={(range) => setDateRange(range || null)}
+                dataTourFrom="filter-date-start"
+                dataTourTo="filter-date-end"
               />
             </div>
 
@@ -214,6 +217,7 @@ export function SalesPage() {
                   type="button"
                   variant="secondary"
                   onClick={handleClearFilters}
+                  data-tour="clear-filters"
                 >
                   Limpiar filtros
                 </Button>
@@ -228,29 +232,32 @@ export function SalesPage() {
           </div>
         )}
 
-        <CardList
-          columns={columns}
-          data={sales}
-          loading={loading}
-          pagination={pagination ? {
-            page: pagination.page,
-            size: pagination.size,
-            total: pagination.total,
-            totalPages: pagination.totalPages,
-          } : undefined}
-          onPageChange={handlePageChange}
-          onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-          emptyMessage="No hay ventas disponibles"
-          renderCard={(sale, isExpanded, onToggleExpand) => (
-            <SaleCard
-              sale={sale}
-              customerName={getCustomerName(sale.customerId)}
-              isExpanded={isExpanded}
-              onToggleExpand={onToggleExpand}
-              onClick={(sale) => navigate(`/sales/${sale.id}`)}
-            />
-          )}
-        />
+        <div data-tour="sales-list">
+          <CardList
+            columns={columns}
+            data={sales}
+            loading={loading}
+            pagination={pagination ? {
+              page: pagination.page,
+              size: pagination.size,
+              total: pagination.total,
+              totalPages: pagination.totalPages,
+            } : undefined}
+            onPageChange={handlePageChange}
+            onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
+            emptyMessage="No hay ventas disponibles"
+            getRowDataTour={(sale) => `sale-row-${sale.id}`}
+            renderCard={(sale, isExpanded, onToggleExpand) => (
+              <SaleCard
+                sale={sale}
+                customerName={getCustomerName(sale.customerId)}
+                isExpanded={isExpanded}
+                onToggleExpand={onToggleExpand}
+                onClick={(sale) => navigate(`/sales/${sale.id}`)}
+              />
+            )}
+          />
+        </div>
       </div>
     </>
   );

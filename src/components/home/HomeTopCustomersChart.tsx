@@ -56,7 +56,7 @@ export function HomeTopCustomersChart({ customers, loading }: HomeTopCustomersCh
       <div className="home-top-customers-chart loading">
         <h3 className="home-top-customers-chart-title">
           <HiUsers className="home-top-customers-chart-title-icon" />
-          TopClientes
+          TopSocios
         </h3>
         <div className="home-top-customers-chart-loading">Cargando datos...</div>
       </div>
@@ -68,7 +68,7 @@ export function HomeTopCustomersChart({ customers, loading }: HomeTopCustomersCh
       <div className="home-top-customers-chart empty">
         <h3 className="home-top-customers-chart-title">
           <HiUsers className="home-top-customers-chart-title-icon" />
-          TopClientes
+          TopSocios
         </h3>
         <div className="home-top-customers-chart-empty">No hay datos disponibles</div>
       </div>
@@ -114,7 +114,7 @@ export function HomeTopCustomersChart({ customers, loading }: HomeTopCustomersCh
       <div className="home-top-customers-chart-header">
         <h3 className="home-top-customers-chart-title">
           <HiUsers className="home-top-customers-chart-title-icon" />
-          TopClientes
+          TopSocios
         </h3>
         <button
           className="home-top-customers-chart-toggle"

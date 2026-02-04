@@ -120,6 +120,7 @@ export function AdminsPage() {
         action={{
           label: showCreateForm ? 'Cancelar' : 'Nuevo Admin',
           onClick: () => setShowCreateForm(!showCreateForm),
+          dataTour: 'create-admin-button',
         }}
       />
 
@@ -135,6 +136,7 @@ export function AdminsPage() {
               required
               minLength={3}
               disabled={isCreating}
+              data-tour="admin-username-input"
             />
             <Input
               label="Contraseña"
@@ -145,9 +147,10 @@ export function AdminsPage() {
               required
               minLength={6}
               disabled={isCreating}
+              data-tour="admin-password-input"
             />
             <div className="admins-form-actions">
-              <Button type="submit" disabled={isCreating || !newUsername || !newPassword}>
+              <Button type="submit" disabled={isCreating || !newUsername || !newPassword} data-tour="save-admin">
                 {isCreating ? 'Creando...' : 'Crear Admin'}
               </Button>
             </div>
@@ -155,9 +158,9 @@ export function AdminsPage() {
         </FormCard>
       )}
 
-      <div className="admins-list">
+      <div className="admins-list" data-tour="admins-list">
         {admins.map((admin) => (
-          <div key={admin.id} className="admin-card">
+          <div key={admin.id} className="admin-card" data-tour={`admin-row-${admin.id}`}>
             <div className="admin-info">
               <div className="admin-username">
                 {admin.username}
@@ -184,6 +187,7 @@ export function AdminsPage() {
                     onClick={() => setEditingPermissionsFor(
                       editingPermissionsFor === admin.id ? null : admin.id
                     )}
+                    data-tour={`permissions-button-${admin.id}`}
                   >
                     {editingPermissionsFor === admin.id ? 'Ocultar Permisos' : 'Permisos'}
                   </Button>
@@ -191,6 +195,7 @@ export function AdminsPage() {
                     variant="danger"
                     size="small"
                     onClick={() => handleDeleteClick(admin)}
+                    data-tour={`deactivate-button-${admin.id}`}
                   >
                     Desactivar
                   </Button>

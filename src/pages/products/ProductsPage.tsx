@@ -185,10 +185,11 @@ export function ProductsPage() {
         action={!isVisitorMode && hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) ? {
           label: '+ Nuevo producto',
           onClick: () => navigate('/products/new'),
+          dataTour: 'create-product',
         } : undefined}
       />
       
-      <div className="products-page-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+      <div className="products-page-container" style={{ marginTop: 'var(--spacing-lg)' }} data-tour="products-list">
         <div className="products-page-search">
           <Input
             type="text"
@@ -196,6 +197,7 @@ export function ProductsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ maxWidth: '400px', width: '100%' }}
+            data-tour="product-search"
           />
         </div>
 
@@ -216,17 +218,20 @@ export function ProductsPage() {
             setDeleteModal({ isOpen: true, product });
           })}
           emptyMessage="No hay productos disponibles"
+          getRowDataTour={(product) => `product-row-${product.id}`}
           renderCard={(product, isExpanded, onToggleExpand) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              isExpanded={isExpanded}
-              onToggleExpand={onToggleExpand}
-              onClick={isVisitorMode ? undefined : handleRowClick}
-              onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) ? undefined : ((p) => {
-                setDeleteModal({ isOpen: true, product: p });
-              })}
-            />
+            <div data-tour={`product-row-${product.id}`}>
+              <ProductCard
+                key={product.id}
+                product={product}
+                isExpanded={isExpanded}
+                onToggleExpand={onToggleExpand}
+                onClick={isVisitorMode ? undefined : handleRowClick}
+                onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) ? undefined : ((p) => {
+                  setDeleteModal({ isOpen: true, product: p });
+                })}
+              />
+            </div>
           )}
         />
       </div>

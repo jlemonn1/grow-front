@@ -5,6 +5,13 @@
   margin-bottom: var(--spacing-md);
 }
 
+.cash-money-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
 .cash-money-label {
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -12,7 +19,33 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: center;
-  margin-bottom: var(--spacing-xs);
+  flex: 1;
+}
+
+.cash-money-reset-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-sm);
+  color: var(--color-error);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cash-money-reset-button:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--color-error);
+  transform: scale(1.05);
+}
+
+.cash-money-reset-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .cash-coins-section,
@@ -40,11 +73,16 @@
   justify-content: space-between;
 }
 
-.cash-bill-button {
+.cash-bill-button-wrapper {
   position: relative;
   flex: 1;
   min-width: 90px;
   max-width: 90px;
+}
+
+.cash-bill-button {
+  position: relative;
+  width: 100%;
   height: 55px;
   padding: 0;
   border: none;
@@ -57,6 +95,39 @@
   align-items: center;
   justify-content: center;
   filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+.cash-denomination-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 12px var(--color-primary);
+  border: 2px solid white;
+  z-index: 10;
+  animation: badgePulse 0.3s ease-out;
+}
+
+@keyframes badgePulse {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Colores específicos por billete con efectos neon mejorados */
@@ -166,11 +237,16 @@
 }
 
 /* Estilos para monedas */
-.cash-coin-button {
+.cash-coin-button-wrapper {
   position: relative;
   flex: 1;
   min-width: 48px;
   max-width: 48px;
+}
+
+.cash-coin-button {
+  position: relative;
+  width: 100%;
   height: 48px;
   padding: 0;
   border: none;
@@ -295,26 +371,50 @@
     justify-content: center;
   }
 
+  .cash-bill-button-wrapper {
+    min-width: 75px;
+    max-width: 75px;
+  }
+
   .cash-bill-button {
-    width: 75px;
     height: 46px;
   }
 
+  .cash-coin-button-wrapper {
+    min-width: 42px;
+    max-width: 42px;
+  }
+
   .cash-coin-button {
-    width: 42px;
     height: 42px;
   }
 }
 
 @media (max-width: 480px) {
+  .cash-bill-button-wrapper {
+    min-width: 65px;
+    max-width: 65px;
+  }
+
   .cash-bill-button {
-    width: 65px;
     height: 40px;
   }
 
+  .cash-coin-button-wrapper {
+    min-width: 38px;
+    max-width: 38px;
+  }
+
   .cash-coin-button {
-    width: 38px;
     height: 38px;
+  }
+
+  .cash-denomination-badge {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.625rem;
+    top: -6px;
+    right: -6px;
   }
 
   .cash-money-label {

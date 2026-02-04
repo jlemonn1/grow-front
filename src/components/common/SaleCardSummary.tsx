@@ -40,7 +40,7 @@ export function SaleCardSummary({ sale, customerName, isExpanded, onToggleExpand
           </span>
         </div>
         <div className="sale-card-customer">
-          <span className="sale-card-customer-label">Cliente:</span>
+          <span className="sale-card-customer-label">Socio:</span>
           <span className="sale-card-customer-value">{customerName}</span>
         </div>
         <div className="sale-card-stats">

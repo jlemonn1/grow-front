@@ -1,18 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { QuickSaleModal } from './QuickSaleModal';
+import { useConfig } from '@/context/config.context';
 import './QuickSaleButton.css';
 
 export function QuickSaleButton() {
+  const navigate = useNavigate();
+  const { quickSaleMode } = useConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDispensar, setShowDispensar] = useState(false);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      // Mostrar el mensaje cada 4 segundos cuando el modal está cerrado
+      const interval = setInterval(() => {
+        setShowDispensar(true);
+        // Ocultar después de que termine la animación (2.5s)
+        setTimeout(() => {
+          setShowDispensar(false);
+        }, 2500);
+      }, 4000);
+
+      // Mostrar inmediatamente al montar si está cerrado
+      setShowDispensar(true);
+      setTimeout(() => {
+        setShowDispensar(false);
+      }, 2500);
+
+      return () => clearInterval(interval);
+    } else {
+      setShowDispensar(false);
+    }
+  }, [isModalOpen]);
 
   return (
     <>
       <div className="quick-sale-button-wrapper">
+        {!isModalOpen && showDispensar && (
+          <div className="quick-sale-dispensar-message">
+            <div className="quick-sale-dispensar-smoke">
+              <div className="quick-sale-smoke-particle quick-sale-smoke-1"></div>
+              <div className="quick-sale-smoke-particle quick-sale-smoke-2"></div>
+              <div className="quick-sale-smoke-particle quick-sale-smoke-3"></div>
+              <div className="quick-sale-smoke-particle quick-sale-smoke-4"></div>
+              <div className="quick-sale-dispensar-text">dispensar!!</div>
+            </div>
+          </div>
+        )}
         <button
           className="quick-sale-button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            if (quickSaleMode === 'redirect') {
+              navigate('/sales/new');
+            } else {
+              setIsModalOpen(true);
+            }
+          }}
           aria-label="Venta rápida"
           type="button"
         >
@@ -67,7 +112,7 @@ export function QuickSaleButton() {
           </div>
         </button>
       </div>
-      {isModalOpen && createPortal(
+      {isModalOpen && quickSaleMode === 'modal' && createPortal(
         <QuickSaleModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -76,4 +121,13 @@ export function QuickSaleButton() {
       )}
     </>
   );
+}
+
+/**
+ * Hook para obtener y configurar el modo de venta rápida
+ * @returns [mode, setMode] - El modo actual y la función para cambiarlo
+ */
+export function useQuickSaleMode() {
+  const { quickSaleMode, setQuickSaleMode } = useConfig();
+  return [quickSaleMode, setQuickSaleMode] as const;
 }

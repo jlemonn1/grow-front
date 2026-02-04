@@ -70,6 +70,7 @@ export function ProductDispenseInput({
           onChange={setGrams}
           error={error && grams > availableStock ? error : undefined}
           inputRef={gramsInputRef}
+          dataTour="grams-input"
           shortcuts={
             <ShortcutButtons
               shortcuts={gramsShortcuts}

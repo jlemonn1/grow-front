@@ -6,16 +6,19 @@ import { CardList } from '@/components/common/CardList';
 import { CustomerCard } from '@/components/common/CustomerCard';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
+import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
 import { Button } from '@/components/common/Button';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useUI } from '@/context/ui.context';
 import { useVisitor } from '@/context/visitor.context';
 import { useAuth } from '@/context/auth.context';
+import { useDemo } from '@/context/demo.context';
 import { AdminPermission } from '@/types/models';
 import { customersService } from '@/services/customers.service';
 import type { Customer } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 import { formatDateTime } from '@/utils/dates';
+import { formatMoney } from '@/utils/money';
 import './CustomersPage.css';
 
 export function CustomersPage() {
@@ -23,6 +26,7 @@ export function CustomersPage() {
   const { showToast } = useUI();
   const { isVisitorMode } = useVisitor();
   const { hasPermission } = useAuth();
+  const { isDemoMode } = useDemo();
   
   // Siempre llamar al hook (requisito de React)
   const customersContext = useCustomers();
@@ -39,6 +43,10 @@ export function CustomersPage() {
     customer: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; customer: Customer | null }>({
+    isOpen: false,
+    customer: null,
+  });
   
   // Estado para modo visitante
   const [visitorCustomers, setVisitorCustomers] = useState<Customer[]>([]);
@@ -72,7 +80,7 @@ export function CustomersPage() {
           totalPages: response.totalPages,
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Error al cargar clientes';
+        const errorMessage = err instanceof Error ? err.message : 'Error al cargar socios';
         setVisitorError(errorMessage);
         setVisitorCustomers([]);
       } finally {
@@ -105,9 +113,12 @@ export function CustomersPage() {
 
   // Cargar clientes al montar
   useEffect(() => {
-    loadCustomersData({ page: 0, size: 25 });
+    // Si estamos en modo demo o modo normal, cargar datos
+    if (!isVisitorMode) {
+      loadCustomersData({ page: 0, size: 25 });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisitorMode]);
+  }, [isVisitorMode, isDemoMode]); // Incluir isDemoMode para recargar cuando se active el modo demo
 
   // Debounce para búsqueda - solo buscar si hay 3+ caracteres
   useEffect(() => {
@@ -147,12 +158,12 @@ export function CustomersPage() {
     setIsDeleting(true);
     try {
       await customersService.delete(deleteModal.customer.id);
-      showToast('Cliente eliminado exitosamente', 'success');
+      showToast('Socio eliminado exitosamente', 'success');
       setDeleteModal({ isOpen: false, customer: null });
       // Recargar clientes
       loadCustomersData({ q: searchQuery || undefined, page: 0, size: 25 });
     } catch (err) {
-      showToast('Error al eliminar cliente', 'error');
+      showToast('Error al eliminar socio', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -185,6 +196,11 @@ export function CustomersPage() {
       cell: (value) => value || '-',
     },
     {
+      header: 'Saldo',
+      accessor: 'balance',
+      cell: (value) => value !== undefined ? formatMoney(value) : formatMoney(0),
+    },
+    {
       header: 'Fecha creación',
       accessor: 'createdAt',
       cell: (value) => value ? formatDateTime(value) : '-',
@@ -206,10 +222,11 @@ export function CustomersPage() {
   return (
     <>
       <PageHeader
-        title="Clientes"
+        title="Socios"
         action={!isVisitorMode && hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? {
-          label: '+ Nuevo cliente',
+          label: '+ Nuevo socio',
           onClick: () => navigate('/customers/new'),
+          dataTour: 'create-customer',
         } : undefined}
       />
       
@@ -221,6 +238,7 @@ export function CustomersPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ maxWidth: '400px', width: '100%' }}
+            data-tour="customer-search"
           />
           {searchQuery.length > 0 && searchQuery.length < 3 && (
             <div className="customers-page-search-hint">
@@ -242,30 +260,32 @@ export function CustomersPage() {
           </div>
         )}
 
-        <CardList
-          columns={columns}
-          data={customers}
-          loading={loading}
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onRowClick={isVisitorMode ? undefined : handleRowClick}
-          onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((customer) => {
-            setDeleteModal({ isOpen: true, customer });
-          })}
-          emptyMessage="No hay clientes disponibles"
-          renderCard={(customer, isExpanded, onToggleExpand) => (
-            <CustomerCard
-              key={customer.id}
-              customer={customer}
-              isExpanded={isExpanded}
-              onToggleExpand={onToggleExpand}
-              onClick={isVisitorMode ? undefined : handleRowClick}
-              onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((c) => {
-                setDeleteModal({ isOpen: true, customer: c });
-              })}
-            />
-          )}
-        />
+        <div data-tour="customers-list">
+          <CardList
+            columns={columns}
+            data={customers}
+            loading={loading}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onRowClick={isVisitorMode ? undefined : handleRowClick}
+            onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((customer) => {
+              setDeleteModal({ isOpen: true, customer });
+            })}
+            emptyMessage="No hay socios disponibles"
+            renderCard={(customer, isExpanded, onToggleExpand) => (
+              <CustomerCard
+                key={customer.id}
+                customer={customer}
+                isExpanded={isExpanded}
+                onToggleExpand={onToggleExpand}
+                onClick={isVisitorMode ? undefined : handleRowClick}
+                onDelete={isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_CLIENTES) ? undefined : ((c) => {
+                  setDeleteModal({ isOpen: true, customer: c });
+                })}
+              />
+            )}
+          />
+        </div>
       </div>
 
       {deleteModal.isOpen && deleteModal.customer && (
@@ -273,8 +293,8 @@ export function CustomersPage() {
           isOpen={deleteModal.isOpen}
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
-          title="Eliminar cliente"
-          message="¿Estás seguro de que deseas eliminar el cliente"
+          title="Eliminar socio"
+          message="¿Estás seguro de que deseas eliminar el socio"
           itemName={deleteModal.customer.displayName}
           isDeleting={isDeleting}
         />

@@ -142,6 +142,7 @@ export function RechargeStockModal({
           disabled={isSubmitting}
           placeholder="0.00"
           autoFocus
+          data-tour="recharge-stock-grams-input"
         />
 
         <Input
@@ -152,6 +153,7 @@ export function RechargeStockModal({
           onChange={handleNoteChange}
           disabled={isSubmitting}
           placeholder="Ej: Reposición semanal"
+          data-tour="recharge-stock-note-input"
         />
 
         {error && <div className="recharge-stock-error">{error}</div>}
@@ -162,6 +164,7 @@ export function RechargeStockModal({
             variant="secondary"
             onClick={handleClose}
             disabled={isSubmitting}
+            data-tour="recharge-stock-cancel"
           >
             Cancelar
           </Button>
@@ -170,6 +173,7 @@ export function RechargeStockModal({
             variant="primary"
             loading={isSubmitting}
             disabled={isSubmitting}
+            data-tour="recharge-stock-submit"
           >
             Recargar
           </Button>

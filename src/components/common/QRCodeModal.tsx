@@ -317,17 +317,17 @@ export function QRCodeModal({ isOpen, onClose, customer }: QRCodeModalProps) {
   const logoUrl = config?.logoUrl ? getLogoUrl(config.logoUrl) : null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Código QR del Cliente">
+    <Modal isOpen={isOpen} onClose={onClose} title="Código QR del Socio">
       <div className="qr-code-modal-content">
         <div className="qr-code-modal-info">
           <p className="qr-code-modal-customer-name">
-            Cliente: <strong>{customer.displayName}</strong>
+            Socio: <strong>{customer.displayName}</strong>
           </p>
           <p className="qr-code-modal-pin">
             PIN: <strong>{customer.pin}</strong>
           </p>
           <p className="qr-code-modal-description">
-            Escanea este código QR para buscar rápidamente al cliente en los buscadores.
+            Escanea este código QR para buscar rápidamente al socio en los buscadores.
           </p>
         </div>
         

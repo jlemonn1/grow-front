@@ -50,6 +50,7 @@ export function MonthSelector({ year, month, onChange, className = '' }: MonthSe
         value={year.toString()}
         onChange={handleYearChange}
         style={{ minWidth: '100px' }}
+        data-tour="month-selector-year"
       />
       <Select
         label="Mes"
@@ -57,6 +58,7 @@ export function MonthSelector({ year, month, onChange, className = '' }: MonthSe
         value={month.toString()}
         onChange={handleMonthChange}
         style={{ minWidth: '150px' }}
+        data-tour="month-selector-month"
       />
     </div>
   );

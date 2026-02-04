@@ -35,7 +35,7 @@ export function DraftRecoveryModal({ isOpen, draft, onRecover, onDiscard }: Draf
           <div className="draft-recovery-summary">
             {draft.customerId && (
               <div className="draft-recovery-item">
-                <span className="draft-recovery-label">Cliente:</span>
+                <span className="draft-recovery-label">Socio:</span>
                 <span className="draft-recovery-value">Seleccionado</span>
               </div>
             )}

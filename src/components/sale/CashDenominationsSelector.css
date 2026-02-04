@@ -1,0 +1,73 @@
+.cash-denominations-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cash-denominations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cash-denominations-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cash-denominations-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cash-denominations-loading {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.cash-denominations-error,
+.cash-denominations-warning {
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.cash-denominations-error {
+  background: var(--error-bg);
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
+}
+
+.cash-denominations-warning {
+  background: var(--warning-bg);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+.cash-denominations-error svg,
+.cash-denominations-warning svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.cash-denominations-warning ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.cash-denominations-empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}

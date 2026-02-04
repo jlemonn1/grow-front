@@ -1,6 +1,6 @@
 import { get, post, del, put } from './http';
 import type { PageResponse } from '@/types/api';
-import type { Sale, CreateSaleRequest, SaleDraft, SaveSaleDraftRequest } from '@/types/models';
+import type { Sale, CreateSaleRequest, SaleDraft, SaveSaleDraftRequest, PendingSale, SavePendingSaleRequest } from '@/types/models';
 
 export interface ListSalesParams {
   customerId?: string;
@@ -91,4 +91,57 @@ export async function deleteSaleDraft(): Promise<void> {
  */
 export async function clearSaleDraft(): Promise<void> {
   await put<void>('/sales/draft/clear');
+}
+
+/**
+ * Cancela una venta y restaura el saldo si se usó
+ */
+export async function cancelSale(saleId: string): Promise<void> {
+  await post<void>(`/sales/${saleId}/cancel`);
+}
+
+// ========== Funciones de Pedidos Pendientes ==========
+
+/**
+ * Guarda o actualiza un pedido pendiente
+ */
+export async function savePendingSale(draft: SavePendingSaleRequest): Promise<PendingSale> {
+  return post<PendingSale>('/sales/pending', draft);
+}
+
+/**
+ * Obtiene todos los pedidos pendientes del admin actual
+ */
+export async function getAllPendingSales(): Promise<PendingSale[]> {
+  return get<PendingSale[]>('/sales/pending');
+}
+
+/**
+ * Obtiene un pedido pendiente por ID de cliente
+ */
+export async function getPendingSaleByCustomerId(customerId: string): Promise<PendingSale | null> {
+  try {
+    return await get<PendingSale>(`/sales/pending/${customerId}`);
+  } catch (error: any) {
+    // Si es 404, no hay pendiente (esto es normal, no es un error)
+    if (error?.status === 404) {
+      return null;
+    }
+    console.error('Error al obtener pedido pendiente:', error);
+    throw error;
+  }
+}
+
+/**
+ * Recupera un pedido pendiente (convierte borrador actual en pendiente primero)
+ */
+export async function recoverPendingSale(customerId: string): Promise<PendingSale> {
+  return post<PendingSale>(`/sales/pending/${customerId}/recover`);
+}
+
+/**
+ * Elimina un pedido pendiente por ID de cliente
+ */
+export async function deletePendingSale(customerId: string): Promise<void> {
+  await del<void>(`/sales/pending/${customerId}`);
 }

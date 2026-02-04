@@ -95,10 +95,10 @@ export function MonthlyDashboard() {
     <>
       <PageHeader title="Dashboard Mensual" />
       
-      <div className="monthly-dashboard">
+      <div className="monthly-dashboard" data-tour="reports-dashboard">
         {/* Header con selector de mes y botón PDF */}
         <div className="monthly-dashboard-header">
-          <div className="monthly-dashboard-selector">
+          <div className="monthly-dashboard-selector" data-tour="month-selector">
             <MonthSelector
               year={year}
               month={month}
@@ -115,6 +115,7 @@ export function MonthlyDashboard() {
             loading={generatingPdf}
             disabled={loading}
             icon={<HiDocumentText />}
+            data-tour="generate-pdf"
           >
             Generar Libro de Cuentas PDF
           </Button>
@@ -132,7 +133,7 @@ export function MonthlyDashboard() {
             </div>
 
             {/* Top Productos - Grid de 2 columnas */}
-            <div className="monthly-dashboard-products">
+            <div className="monthly-dashboard-products" data-tour="top-products">
               <TopProductCard
                 product={dashboard?.topProduct || null}
                 title="Producto Más Popular"
@@ -150,7 +151,7 @@ export function MonthlyDashboard() {
             </div>
 
             {/* Top 3 Compradores */}
-            <div className="monthly-dashboard-customers">
+            <div className="monthly-dashboard-customers" data-tour="top-customers">
               <TopCustomersCard
                 customers={dashboard?.topCustomers || []}
                 loading={false}
@@ -158,7 +159,7 @@ export function MonthlyDashboard() {
             </div>
 
             {/* Estadísticas por Hora */}
-            <div className="monthly-dashboard-hourly">
+            <div className="monthly-dashboard-hourly" data-tour="hourly-stats">
               <h2 className="monthly-dashboard-section-title">Estadísticas por Hora</h2>
               
               {/* Horas Pico */}

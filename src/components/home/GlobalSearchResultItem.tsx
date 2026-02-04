@@ -74,7 +74,7 @@ export function GlobalSearchResultItem({
           <div className="global-search-result-header">
             <h3 className="global-search-result-title">{customer.displayName}</h3>
             <span className="global-search-result-badge global-search-result-badge-customer">
-              Cliente
+              Socio
             </span>
           </div>
           <div className="global-search-result-details">

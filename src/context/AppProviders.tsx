@@ -3,6 +3,7 @@ import { UIContextProvider } from './ui.context';
 import { AuthProvider } from './auth.context';
 import { VisitorProvider } from './visitor.context';
 import { ConfigProvider } from './config.context';
+import { DemoProvider } from './demo.context';
 import { ProductsProvider } from './products.context';
 import { CustomersContextProvider } from './customers.context';
 import { TicketProvider } from './ticket.context';
@@ -18,15 +19,17 @@ export function AppProviders({ children }: AppProvidersProps) {
       <VisitorProvider>
         <AuthProvider>
           <ConfigProvider>
-            <ReportsProvider>
-              <ProductsProvider>
-                <CustomersContextProvider>
-                  <TicketProvider>
-                    {children}
-                  </TicketProvider>
-                </CustomersContextProvider>
-              </ProductsProvider>
-            </ReportsProvider>
+            <DemoProvider>
+              <ReportsProvider>
+                <ProductsProvider>
+                  <CustomersContextProvider>
+                    <TicketProvider>
+                      {children}
+                    </TicketProvider>
+                  </CustomersContextProvider>
+                </ProductsProvider>
+              </ReportsProvider>
+            </DemoProvider>
           </ConfigProvider>
         </AuthProvider>
       </VisitorProvider>

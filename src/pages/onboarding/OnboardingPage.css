@@ -76,7 +76,7 @@
 .onboarding-container {
   width: 100%;
   max-width: 900px;
-  max-height: 90vh;
+  height: 95vh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -115,22 +115,147 @@
   margin: 0;
 }
 
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+}
+
+.onboarding-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.onboarding-progress-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.onboarding-progress-step.active .onboarding-progress-number {
+  background: var(--bg-tertiary);
+  border-color: var(--border-led-color);
+  color: var(--color-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.onboarding-progress-step.current .onboarding-progress-number {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
+  box-shadow: 0 0 12px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--neon-glow-primary), 0 0 32px var(--neon-glow-secondary), 0 0 48px var(--neon-glow-intense);
+  }
+}
+
+.onboarding-progress-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  transition: color var(--transition-base);
+}
+
+.onboarding-progress-step.active .onboarding-progress-label {
+  color: var(--text-primary);
+}
+
+.onboarding-progress-step.current .onboarding-progress-label {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.onboarding-progress-line {
+  width: 60px;
+  height: 2px;
+  background: var(--border-color);
+  transition: background var(--transition-base), box-shadow var(--transition-glow);
+  margin-bottom: 20px;
+}
+
+.onboarding-progress-line.active {
+  background: linear-gradient(90deg, 
+    var(--border-led-color) 0%, 
+    var(--neon-primary) 50%, 
+    var(--border-led-color) 100%);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
 .onboarding-form-card {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: calc(90vh - 120px);
+  min-height: 0;
 }
 
 .onboarding-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   flex: 1;
-  padding-right: var(--spacing-xs);
+  min-height: 0;
+}
+
+.onboarding-form .form-section {
+  flex-shrink: 0;
+}
+
+.onboarding-form .onboarding-logo-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.onboarding-form .onboarding-logo-section .form-section-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.onboarding-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  animation: fadeInSlide 0.3s ease-out;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Scrollbar personalizado */
@@ -180,6 +305,7 @@
 .onboarding-actions {
   display: flex;
   justify-content: center;
+  gap: var(--spacing-md);
   margin-top: var(--spacing-md);
   flex-shrink: 0;
   padding-top: var(--spacing-md);
@@ -193,7 +319,7 @@
   }
 
   .onboarding-container {
-    max-height: 95vh;
+    height: 97vh;
   }
 
   .onboarding-title {
@@ -202,10 +328,6 @@
 
   .onboarding-subtitle {
     font-size: var(--font-size-xs);
-  }
-
-  .onboarding-form-card {
-    max-height: calc(95vh - 100px);
   }
 
   .onboarding-form {
@@ -219,7 +341,7 @@
   }
 
   .onboarding-container {
-    max-height: 100vh;
+    height: 100vh;
   }
 
   .onboarding-title {
@@ -228,10 +350,6 @@
 
   .onboarding-header {
     margin-bottom: var(--spacing-md);
-  }
-
-  .onboarding-form-card {
-    max-height: calc(100vh - 80px);
   }
 }
 

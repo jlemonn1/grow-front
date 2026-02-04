@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { HiShoppingCart } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -9,11 +10,19 @@ import { SaleHistoryCard } from '@/components/common/SaleHistoryCard';
 import { Tabs, type Tab } from '@/components/common/Tabs';
 import { CustomerSummaryTable } from '@/components/customer/CustomerSummaryTable';
 import { RenewSubscriptionModal } from '@/components/customer/RenewSubscriptionModal';
+import { BalanceAdjustmentModal } from '@/components/customer/BalanceAdjustmentModal';
+import { BalanceTransferModal } from '@/components/customer/BalanceTransferModal';
+import { BalanceHistoryTable } from '@/components/customer/BalanceHistoryTable';
+import { ShowDniModal } from '@/components/customer/ShowDniModal';
+import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { QRCodeModal } from '@/components/common/QRCodeModal';
 import { Button } from '@/components/common/Button';
 import { useUI } from '@/context/ui.context';
 import { useAuth } from '@/context/auth.context';
+import { useDemo } from '@/context/demo.context';
+import { useCustomers } from '@/context/customers.context';
+import { useTicket } from '@/context/ticket.context';
 import { customersService } from '@/services/customers.service';
 import { AdminPermission } from '@/types/models';
 import type { Customer, CustomerSale, CustomerSummary } from '@/types/models';
@@ -26,6 +35,9 @@ export function CustomerDetailPage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { hasPermission } = useAuth();
+  const { isDemoMode, demoData } = useDemo();
+  const { getCustomerById } = useCustomers();
+  const { setCustomer: setTicketCustomer } = useTicket();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [sales, setSales] = useState<CustomerSale[]>([]);
@@ -33,11 +45,16 @@ export function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [loadingSales, setLoadingSales] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [hasLoadedSales, setHasLoadedSales] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false);
+  const [showTransferBalanceModal, setShowTransferBalanceModal] = useState(false);
+  const [showDniModal, setShowDniModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [salesPagination, setSalesPagination] = useState({
     page: 0,
     size: 25,
@@ -51,19 +68,44 @@ export function CustomerDetailPage() {
       if (!id) return;
 
       setLoading(true);
+      // Resetear estados relacionados con ventas cuando cambia el cliente
+      setSales([]);
+      setHasLoadedSales(false);
+      setSalesPagination({
+        page: 0,
+        size: 25,
+        total: 0,
+        totalPages: 0,
+      });
+      
       try {
-        const customerData = await customersService.getById(id);
+        let customerData: Customer | null = null;
+        
+        // Si estamos en modo demo, usar datos mock del contexto
+        if (isDemoMode) {
+          customerData = await getCustomerById(id);
+        } else {
+          // Modo normal: llamar a la API
+          customerData = await customersService.getById(id);
+        }
+
+        if (!customerData) {
+          showToast('Socio no encontrado', 'error');
+          navigate('/customers');
+          return;
+        }
+
         setCustomer(customerData);
       } catch (err) {
         if (err && typeof err === 'object' && 'status' in err) {
           const apiError = err as { status: number };
           if (apiError.status === 404) {
-            showToast('Cliente no encontrado', 'error');
+            showToast('Socio no encontrado', 'error');
             navigate('/customers');
             return;
           }
         }
-        showToast('Error al cargar cliente', 'error');
+        showToast('Error al cargar socio', 'error');
         navigate('/customers');
       } finally {
         setLoading(false);
@@ -71,7 +113,7 @@ export function CustomerDetailPage() {
     };
 
     loadCustomer();
-  }, [id, navigate, showToast]);
+  }, [id, navigate, showToast, isDemoMode, getCustomerById]);
 
   // Cargar historial de ventas
   const loadSales = useCallback(async (page: number = 0) => {
@@ -79,23 +121,52 @@ export function CustomerDetailPage() {
 
     setLoadingSales(true);
     try {
-      const response = await customersService.getSales(id, {
-        page,
-        size: 25,
-      });
-      setSales(response.content);
-      setSalesPagination({
-        page: response.number,
-        size: response.size,
-        total: response.totalElements,
-        totalPages: response.totalPages,
-      });
+      // Si estamos en modo demo, usar datos mock
+      if (isDemoMode && demoData) {
+        const customerSales = demoData.sales
+          .filter(sale => sale.customerId === id)
+          .map(sale => ({
+            id: sale.id,
+            totalAmount: sale.totalAmount,
+            createdAt: sale.createdAt,
+            status: sale.status,
+          }));
+
+        // Simular paginación
+        const size = 25;
+        const start = page * size;
+        const end = start + size;
+        const paginatedSales = customerSales.slice(start, end);
+
+        setSales(paginatedSales);
+        setSalesPagination({
+          page: page,
+          size: size,
+          total: customerSales.length,
+          totalPages: Math.ceil(customerSales.length / size),
+        });
+      } else {
+        // Modo normal: llamar a la API
+        const response = await customersService.getSales(id, {
+          page,
+          size: 25,
+        });
+        setSales(response.content);
+        setSalesPagination({
+          page: response.number,
+          size: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages,
+        });
+      }
+      setHasLoadedSales(true);
     } catch (err) {
       showToast('Error al cargar historial de ventas', 'error');
+      setHasLoadedSales(true);
     } finally {
       setLoadingSales(false);
     }
-  }, [id, showToast]);
+  }, [id, showToast, isDemoMode, demoData]);
 
   // Cargar resumen
   const loadSummary = useCallback(async () => {
@@ -103,29 +174,77 @@ export function CustomerDetailPage() {
 
     setLoadingSummary(true);
     try {
-      const summaryData = await customersService.getSummary(id);
-      setSummary(summaryData);
+      // Si estamos en modo demo, generar resumen mock
+      if (isDemoMode && demoData) {
+        const customerSales = demoData.sales.filter(sale => sale.customerId === id);
+        const totalSpent = customerSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        
+        // Agrupar por producto
+        const productMap = new Map<string, { totalGrams: number; totalAmount: number }>();
+        customerSales.forEach(sale => {
+          sale.items.forEach(item => {
+            const existing = productMap.get(item.productId) || { totalGrams: 0, totalAmount: 0 };
+            productMap.set(item.productId, {
+              totalGrams: existing.totalGrams + item.grams,
+              totalAmount: existing.totalAmount + item.lineTotal,
+            });
+          });
+        });
+
+        const items = Array.from(productMap.entries()).map(([productId, stats]) => {
+          const product = demoData.products.find(p => p.id === productId);
+          return {
+            productId,
+            productName: product?.name || 'Producto desconocido',
+            totalGrams: stats.totalGrams,
+            totalAmount: stats.totalAmount,
+          };
+        });
+
+        const summaryData: CustomerSummary = {
+          customerId: id,
+          period: {
+            from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            to: new Date().toISOString().split('T')[0],
+          },
+          totalSpent,
+          items,
+        };
+        setSummary(summaryData);
+      } else {
+        // Modo normal: llamar a la API
+        const summaryData = await customersService.getSummary(id);
+        setSummary(summaryData);
+      }
     } catch (err) {
       showToast('Error al cargar resumen', 'error');
     } finally {
       setLoadingSummary(false);
     }
-  }, [id, showToast]);
+  }, [id, showToast, isDemoMode, demoData]);
 
   // Cargar datos de pestañas cuando cambian
   useEffect(() => {
     if (!customer) return;
 
-    if (activeTab === 'history' && (!sales || sales.length === 0) && !loadingSales) {
+    if (activeTab === 'history' && !hasLoadedSales && !loadingSales) {
       loadSales(0);
     } else if (activeTab === 'summary' && !summary && !loadingSummary) {
       loadSummary();
     }
-  }, [activeTab, customer, sales, summary, loadingSales, loadingSummary, loadSales, loadSummary]);
+  }, [activeTab, customer, hasLoadedSales, summary, loadingSales, loadingSummary, loadSales, loadSummary]);
 
   const handleSalesPageChange = useCallback((page: number) => {
     loadSales(page);
   }, [loadSales]);
+
+  const handleCreateFirstSale = useCallback(() => {
+    if (!customer) return;
+    // Pre-cargar el cliente en el ticket
+    setTicketCustomer(customer);
+    // Navegar a la página de ventas
+    navigate('/sales/new');
+  }, [customer, setTicketCustomer, navigate]);
 
   const handleBack = () => {
     navigate('/customers');
@@ -141,10 +260,10 @@ export function CustomerDetailPage() {
     setIsDeleting(true);
     try {
       await customersService.delete(id);
-      showToast('Cliente eliminado exitosamente', 'success');
+      showToast('Socio eliminado exitosamente', 'success');
       navigate('/customers');
     } catch (err) {
-      showToast('Error al eliminar cliente', 'error');
+      showToast('Error al eliminar socio', 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
@@ -169,6 +288,29 @@ export function CustomerDetailPage() {
       });
     }
     setShowRenewModal(false);
+  };
+
+  const handleBalanceAdjusted = () => {
+    // Recargar datos del cliente
+    if (id) {
+      customersService.getById(id).then(setCustomer).catch(() => {
+        showToast('Error al cargar datos actualizados', 'error');
+      });
+    }
+  };
+
+  const handleBalanceTransferred = () => {
+    // Recargar datos del cliente
+    if (id) {
+      customersService.getById(id).then(setCustomer).catch(() => {
+        showToast('Error al cargar datos actualizados', 'error');
+      });
+    }
+  };
+
+  const handleCustomerUpdated = (updatedCustomer: Customer) => {
+    setCustomer(updatedCustomer);
+    setShowEditModal(false);
   };
 
   const isSubscriptionExpired = (): boolean => {
@@ -218,7 +360,21 @@ export function CustomerDetailPage() {
       id: 'info',
       label: 'Información',
       content: customer ? (
-        <div className="customer-info-section">
+        <div className="customer-info-section" data-tour="customer-tab-info">
+          {customer.profilePictureUrl && (
+            <div className="customer-profile-picture-container">
+              <img 
+                src={customer.profilePictureUrl.startsWith('http') 
+                  ? customer.profilePictureUrl 
+                  : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${customer.profilePictureUrl}`} 
+                alt={customer.displayName}
+                className="customer-profile-picture"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           <div className="customer-info-grid">
             <div className="customer-info-item">
               <span className="customer-info-label">Nombre:</span>
@@ -251,12 +407,62 @@ export function CustomerDetailPage() {
                 </Button>
               </div>
             )}
+            {(customer.dniPictureUrl || customer.dniNumber) && (
+              <div className="customer-info-item customer-info-item-with-action">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <span className="customer-info-label">DNI:</span>
+                  <span className="customer-info-value">
+                    {customer.dniNumber || 'Disponible'}
+                  </span>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowDniModal(true)}
+                  style={{ marginLeft: 'auto' }}
+                >
+                  Mostrar DNI
+                </Button>
+              </div>
+            )}
             {customer.createdAt && (
               <div className="customer-info-item">
                 <span className="customer-info-label">Fecha creación:</span>
                 <span className="customer-info-value">{formatDateTime(customer.createdAt)}</span>
               </div>
             )}
+            <div className="customer-info-item">
+              <span className="customer-info-label">Saldo:</span>
+              <span className="customer-info-value customer-balance-value">
+                {formatMoney(customer.balance || 0)}
+              </span>
+            </div>
+          </div>
+          <div className="customer-balance-section">
+            <h3 className="customer-balance-title">Saldo</h3>
+            <div className="customer-info-grid">
+              <div className="customer-info-item">
+                <span className="customer-info-label">Saldo actual:</span>
+                <span className="customer-info-value customer-balance-value">
+                  {formatMoney(customer.balance || 0)}
+                </span>
+              </div>
+            </div>
+            <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', gap: 'var(--spacing-md)' }}>
+              <Button 
+                variant="primary" 
+                onClick={() => setShowAdjustBalanceModal(true)}
+                data-tour="adjust-balance"
+              >
+                Ajustar saldo
+              </Button>
+              <Button 
+                variant="secondary" 
+                onClick={() => setShowTransferBalanceModal(true)}
+                data-tour="transfer-balance"
+              >
+                Transferir saldo
+              </Button>
+            </div>
           </div>
           <div className="customer-subscription-section">
             <h3 className="customer-subscription-title">Suscripción</h3>
@@ -291,7 +497,7 @@ export function CustomerDetailPage() {
             </div>
             {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
               <div style={{ marginTop: 'var(--spacing-md)' }}>
-                <Button variant="primary" onClick={handleRenewSubscription}>
+                <Button variant="primary" onClick={handleRenewSubscription} data-tour="renew-subscription">
                   Renovar suscripción
                 </Button>
               </div>
@@ -299,8 +505,11 @@ export function CustomerDetailPage() {
           </div>
           {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
             <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-md)' }}>
+              <Button variant="primary" onClick={() => setShowEditModal(true)}>
+                Editar socio
+              </Button>
               <Button variant="danger" onClick={handleDelete}>
-                Eliminar cliente
+                Eliminar socio
               </Button>
             </div>
           )}
@@ -311,29 +520,44 @@ export function CustomerDetailPage() {
       id: 'history',
       label: 'Historial',
       content: (
-        <div className="customer-history-section">
-          <CardList
-            columns={salesColumns}
-            data={sales}
-            loading={loadingSales}
-            pagination={{
-              page: salesPagination.page,
-              size: salesPagination.size,
-              total: salesPagination.total,
-              totalPages: salesPagination.totalPages,
-            }}
-            onPageChange={handleSalesPageChange}
-            onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-            emptyMessage="No hay ventas registradas para este cliente"
-            renderCard={(sale, isExpanded, onToggleExpand) => (
-              <SaleHistoryCard
-                sale={sale}
-                isExpanded={isExpanded}
-                onToggleExpand={onToggleExpand}
-                onClick={(sale) => navigate(`/sales/${sale.id}`)}
-              />
-            )}
-          />
+        <div className="customer-history-section" data-tour="purchase-history">
+          {loadingSales ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--spacing-2xl)' }}>
+              <Spinner size="lg" />
+            </div>
+          ) : hasLoadedSales && sales.length === 0 ? (
+            <EmptyState
+              message="Este socio aún no tiene pedidos registrados"
+              icon={<HiShoppingCart />}
+              action={{
+                label: 'Crear primera venta',
+                onClick: handleCreateFirstSale,
+              }}
+            />
+          ) : (
+            <CardList
+              columns={salesColumns}
+              data={sales}
+              loading={false}
+              pagination={{
+                page: salesPagination.page,
+                size: salesPagination.size,
+                total: salesPagination.total,
+                totalPages: salesPagination.totalPages,
+              }}
+              onPageChange={handleSalesPageChange}
+              onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
+              emptyMessage="No hay ventas registradas para este socio"
+              renderCard={(sale, isExpanded, onToggleExpand) => (
+                <SaleHistoryCard
+                  sale={sale}
+                  isExpanded={isExpanded}
+                  onToggleExpand={onToggleExpand}
+                  onClick={(sale) => navigate(`/sales/${sale.id}`)}
+                />
+              )}
+            />
+          )}
         </div>
       ),
     },
@@ -341,17 +565,26 @@ export function CustomerDetailPage() {
       id: 'summary',
       label: 'Resumen',
       content: (
-        <div className="customer-summary-section">
+        <div className="customer-summary-section" data-tour="customer-summary">
           <CustomerSummaryTable summary={summary} loading={loadingSummary} />
         </div>
       ),
+    },
+    {
+      id: 'balance-history',
+      label: 'Historial de Saldo',
+      content: customer ? (
+        <div className="customer-balance-history-section" data-tour="balance-history">
+          <BalanceHistoryTable customerId={customer.id} />
+        </div>
+      ) : null,
     },
   ];
 
   if (loading) {
     return (
       <>
-        <PageHeader title="Cargando cliente..." onBack={handleBack} />
+        <PageHeader title="Cargando socio..." onBack={handleBack} />
         <div className="customer-detail-container">
           <Spinner size="lg" />
         </div>
@@ -362,12 +595,12 @@ export function CustomerDetailPage() {
   if (!customer) {
     return (
       <>
-        <PageHeader title="Cliente no encontrado" onBack={handleBack} />
+        <PageHeader title="Socio no encontrado" onBack={handleBack} />
         <div className="customer-detail-container">
           <EmptyState
-            message="El cliente que buscas no existe"
+            message="El socio que buscas no existe"
             action={{
-              label: 'Volver a clientes',
+              label: 'Volver a socios',
               onClick: () => navigate('/customers'),
             }}
           />
@@ -380,10 +613,11 @@ export function CustomerDetailPage() {
     <>
       <PageHeader
         title={customer.displayName}
-        subtitle="Perfil de cliente"
+        subtitle="Perfil de socio"
         onBack={handleBack}
+        dataTourBack="back-to-customers"
       />
-      <div className="customer-detail-container">
+      <div className="customer-detail-container" data-tour="customer-detail">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -396,8 +630,8 @@ export function CustomerDetailPage() {
           isOpen={showDeleteModal}
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
-          title="Eliminar cliente"
-          message="¿Estás seguro de que deseas eliminar el cliente"
+          title="Eliminar socio"
+          message="¿Estás seguro de que deseas eliminar el socio"
           itemName={customer.displayName}
           isDeleting={isDeleting}
         />
@@ -417,6 +651,41 @@ export function CustomerDetailPage() {
           isOpen={showQRModal}
           onClose={() => setShowQRModal(false)}
           customer={customer}
+        />
+      )}
+
+      {showAdjustBalanceModal && customer && (
+        <BalanceAdjustmentModal
+          isOpen={showAdjustBalanceModal}
+          onClose={() => setShowAdjustBalanceModal(false)}
+          customer={customer}
+          onAdjusted={handleBalanceAdjusted}
+        />
+      )}
+
+      {showTransferBalanceModal && customer && (
+        <BalanceTransferModal
+          isOpen={showTransferBalanceModal}
+          onClose={() => setShowTransferBalanceModal(false)}
+          customer={customer}
+          onTransferred={handleBalanceTransferred}
+        />
+      )}
+
+      {showDniModal && customer && (
+        <ShowDniModal
+          isOpen={showDniModal}
+          onClose={() => setShowDniModal(false)}
+          customer={customer}
+        />
+      )}
+
+      {showEditModal && customer && (
+        <EditCustomerModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          customer={customer}
+          onUpdated={handleCustomerUpdated}
         />
       )}
     </>

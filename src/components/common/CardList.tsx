@@ -21,6 +21,7 @@ interface CardListProps<T> {
   onDelete?: (row: T) => void;
   emptyMessage?: string;
   renderCard: (item: T, isExpanded: boolean, onToggleExpand: () => void) => ReactNode;
+  getRowDataTour?: (row: T) => string;
 }
 
 export function CardList<T extends Record<string, any>>({
@@ -33,6 +34,7 @@ export function CardList<T extends Record<string, any>>({
   onDelete: _onDelete,
   emptyMessage = 'No hay datos disponibles',
   renderCard,
+  getRowDataTour,
 }: CardListProps<T>) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
 
@@ -68,6 +70,7 @@ export function CardList<T extends Record<string, any>>({
           onPageChange={onPageChange}
           onRowClick={onRowClick}
           emptyMessage={emptyMessage}
+          getRowDataTour={getRowDataTour}
         />
       </div>
 

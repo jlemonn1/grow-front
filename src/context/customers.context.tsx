@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, ReactNode, useEffect } from 'react';
 import { customersService, type ListCustomersParams } from '@/services/customers.service';
+import { useDemo } from './demo.context';
 import type { Customer, CreateCustomerRequest } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 
@@ -27,10 +28,12 @@ interface CustomersContextProviderProps {
 }
 
 export function CustomersContextProvider({ children }: CustomersContextProviderProps) {
+  const { isDemoMode, demoData } = useDemo();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const currentParamsRef = useRef<ListCustomersParams>({});
+  const demoDataSyncedRef = useRef<string | null>(null); // Track si ya sincronizamos estos datos
   const [pagination, setPagination] = useState({
     page: 0,
     size: 25,
@@ -38,7 +41,97 @@ export function CustomersContextProvider({ children }: CustomersContextProviderP
     totalPages: 0,
   });
 
+  // Sincronizar datos mock cuando se activa el modo demo
+  useEffect(() => {
+    if (isDemoMode && demoData) {
+      // Evitar sincronizar si ya tenemos estos datos (usar el primer ID como referencia)
+      const demoDataId = demoData.customers.length > 0 ? demoData.customers[0].id : null;
+      if (demoDataSyncedRef.current === demoDataId && customers.length > 0) {
+        return; // Ya están sincronizados
+      }
+      
+      demoDataSyncedRef.current = demoDataId;
+      
+      // Filtrar según parámetros de búsqueda si existen
+      let filteredCustomers = demoData.customers;
+      const params = currentParamsRef.current;
+      
+      if (params.q) {
+        const query = params.q.toLowerCase();
+        filteredCustomers = filteredCustomers.filter(c => 
+          c.displayName.toLowerCase().includes(query) ||
+          c.phone?.toLowerCase().includes(query) ||
+          c.pin.toLowerCase().includes(query)
+        );
+      }
+
+      // Simular paginación
+      const page = params.page || 0;
+      const size = params.size || 25;
+      const start = page * size;
+      const end = start + size;
+      const paginatedCustomers = filteredCustomers.slice(start, end);
+
+      setCustomers(paginatedCustomers);
+      setPagination({
+        page: page,
+        size: size,
+        total: filteredCustomers.length,
+        totalPages: Math.ceil(filteredCustomers.length / size),
+      });
+      setLoading(false);
+      setError(null);
+    } else if (!isDemoMode) {
+      // Si se desactiva el modo demo, limpiar referencia
+      demoDataSyncedRef.current = null;
+      if (customers.length > 0 && demoData) {
+        // Solo limpiar si había datos mock
+        setCustomers([]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemoMode, demoData?.customers.length]); // Solo depender del length para evitar re-renders innecesarios
+
   const loadCustomers = useCallback(async (params?: ListCustomersParams) => {
+    // Si estamos en modo demo, usar datos mock
+    if (isDemoMode && demoData) {
+      setLoading(true);
+      setError(null);
+      
+      const searchParams = params || currentParamsRef.current;
+      currentParamsRef.current = searchParams;
+
+      // Filtrar según parámetros de búsqueda
+      let filteredCustomers = demoData.customers;
+      
+      if (searchParams.q) {
+        const query = searchParams.q.toLowerCase();
+        filteredCustomers = filteredCustomers.filter(c => 
+          c.displayName.toLowerCase().includes(query) ||
+          c.phone?.toLowerCase().includes(query) ||
+          c.pin.toLowerCase().includes(query)
+        );
+      }
+
+      // Simular paginación
+      const page = searchParams.page || 0;
+      const size = searchParams.size || 25;
+      const start = page * size;
+      const end = start + size;
+      const paginatedCustomers = filteredCustomers.slice(start, end);
+
+      setCustomers(paginatedCustomers);
+      setPagination({
+        page: page,
+        size: size,
+        total: filteredCustomers.length,
+        totalPages: Math.ceil(filteredCustomers.length / size),
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Modo normal: llamar a la API
     setLoading(true);
     setError(null);
     
@@ -61,21 +154,52 @@ export function CustomersContextProvider({ children }: CustomersContextProviderP
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDemoMode, demoData]);
 
   const refreshCustomers = useCallback(async () => {
     await loadCustomers(currentParamsRef.current);
   }, [loadCustomers]);
 
   const createCustomer = useCallback(async (data: CreateCustomerRequest): Promise<Customer> => {
+    // Si estamos en modo demo, crear cliente mock localmente
+    if (isDemoMode && demoData) {
+      const newCustomer: Customer = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `demo-${Date.now()}`,
+        displayName: data.displayName,
+        phone: data.phone,
+        pin: data.pin,
+        subscriptionType: data.subscriptionType || 'MONTHLY',
+        subscriptionPrice: data.subscriptionPrice,
+        subscriptionStartDate: new Date().toISOString().split('T')[0],
+        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        notes: data.notes,
+        createdAt: new Date().toISOString(),
+      };
+      // Actualizar cache: agregar el nuevo cliente a la lista
+      setCustomers((prev) => [newCustomer, ...prev]);
+      return newCustomer;
+    }
+
+    // Modo normal: llamar a la API
     const newCustomer = await customersService.create(data);
     // Actualizar cache: agregar el nuevo cliente a la lista
     setCustomers((prev) => [newCustomer, ...prev]);
     return newCustomer;
-  }, []);
+  }, [isDemoMode, demoData]);
 
   const getCustomerById = useCallback(async (id: string): Promise<Customer | null> => {
-    // Primero buscar en cache
+    // Si estamos en modo demo, buscar en datos mock
+    if (isDemoMode && demoData) {
+      const mockCustomer = demoData.customers.find((c) => c.id === id);
+      if (mockCustomer) {
+        return mockCustomer;
+      }
+      // También buscar en el cache local (por si se creó uno nuevo)
+      const cachedCustomer = customers.find((c) => c.id === id);
+      return cachedCustomer || null;
+    }
+
+    // Modo normal: primero buscar en cache
     const cachedCustomer = customers.find((c) => c.id === id);
     if (cachedCustomer) {
       return cachedCustomer;
@@ -93,7 +217,7 @@ export function CustomersContextProvider({ children }: CustomersContextProviderP
     } catch (err) {
       return null;
     }
-  }, [customers]);
+  }, [customers, isDemoMode, demoData]);
 
   const addCustomer = useCallback((customer: Customer) => {
     setCustomers((prev) => {

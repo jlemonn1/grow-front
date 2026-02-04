@@ -25,6 +25,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
             className={`tabs-tab ${activeTab === tab.id ? 'tabs-tab-active' : ''}`}
             onClick={() => onTabChange(tab.id)}
             type="button"
+            data-tour={`customer-tab-${tab.id}`}
           >
             {tab.label}
           </button>

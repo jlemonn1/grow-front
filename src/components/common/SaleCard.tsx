@@ -36,6 +36,7 @@ export function SaleCard({
       role="button"
       tabIndex={0}
       aria-expanded={isExpanded}
+      data-tour={`sale-row-${sale.id}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();

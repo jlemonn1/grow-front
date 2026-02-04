@@ -38,5 +38,9 @@ export function ReportsPage() {
     return null;
   }
 
-  return <MonthlyDashboard />;
+  return (
+    <div data-tour="reports-dashboard">
+      <MonthlyDashboard />
+    </div>
+  );
 }

@@ -75,7 +75,7 @@ export function TickerCarousel() {
   }
 
   return (
-    <div className="ticker-carousel">
+    <div className="ticker-carousel" data-tour="ticker-alerts">
       <Marquee speed={50} pauseOnHover gradient={false}>
         {messages.map((msg, index) => (
           <span key={`${msg.color}-${index}`} className={`ticker-item ticker-${msg.color}`}>

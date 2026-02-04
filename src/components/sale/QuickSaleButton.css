@@ -314,10 +314,269 @@
   }
 }
 
+/* Mensaje "dispensar!!" con efecto de humo */
+.quick-sale-dispensar-message {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 16px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: dispensarFadeIn 0.6s ease-out forwards;
+}
+
+.quick-sale-dispensar-smoke {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: smokeRise 2.5s ease-out forwards;
+}
+
+.quick-sale-dispensar-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  animation: textAppear 2.5s ease-out forwards;
+  text-shadow: 
+    0 0 6px rgba(var(--color-primary-rgb, 59, 212, 32), 0.5),
+    0 0 12px rgba(var(--color-primary-rgb, 59, 212, 32), 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  opacity: 0.9;
+}
+
+/* Partículas de humo */
+.quick-sale-smoke-particle {
+  position: absolute;
+  bottom: -10px;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.35) 0%,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.2) 40%,
+    rgba(var(--color-primary-rgb, 59, 212, 32), 0.1) 70%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(10px);
+  z-index: 1;
+}
+
+.quick-sale-smoke-1 {
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.quick-sale-smoke-2 {
+  left: 35%;
+  animation-delay: 0.15s;
+  width: 20px;
+  height: 20px;
+}
+
+.quick-sale-smoke-3 {
+  right: 35%;
+  animation-delay: 0.3s;
+  width: 22px;
+  height: 22px;
+}
+
+.quick-sale-smoke-4 {
+  right: 15%;
+  animation-delay: 0.1s;
+  width: 18px;
+  height: 18px;
+}
+
+/* Animación de aparición inicial */
+@keyframes dispensarFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Animación del humo subiendo */
+@keyframes smokeRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.02);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-30px) scale(1.05);
+    opacity: 0;
+  }
+}
+
+/* Animación del texto apareciendo y desvaneciéndose */
+@keyframes textAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Animación de las partículas de humo */
+@keyframes smokePuff1 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(-4px) scale(0.8);
+  }
+  15% {
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.4;
+    transform: translateY(-12px) translateX(-6px) scale(1.1);
+  }
+  70% {
+    opacity: 0.2;
+    transform: translateY(-22px) translateX(-8px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-35px) translateX(-10px) scale(1.5);
+  }
+}
+
+@keyframes smokePuff2 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(-2px) scale(0.8);
+  }
+  15% {
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.4;
+    transform: translateY(-12px) translateX(-3px) scale(1.1);
+  }
+  70% {
+    opacity: 0.2;
+    transform: translateY(-22px) translateX(-4px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-35px) translateX(-5px) scale(1.5);
+  }
+}
+
+@keyframes smokePuff3 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(2px) scale(0.8);
+  }
+  15% {
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.4;
+    transform: translateY(-12px) translateX(3px) scale(1.1);
+  }
+  70% {
+    opacity: 0.2;
+    transform: translateY(-22px) translateX(4px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-35px) translateX(5px) scale(1.5);
+  }
+}
+
+@keyframes smokePuff4 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(4px) scale(0.8);
+  }
+  15% {
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.4;
+    transform: translateY(-12px) translateX(6px) scale(1.1);
+  }
+  70% {
+    opacity: 0.2;
+    transform: translateY(-22px) translateX(8px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-35px) translateX(10px) scale(1.5);
+  }
+}
+
+.quick-sale-smoke-1 {
+  animation: smokePuff1 2.5s ease-out forwards;
+}
+
+.quick-sale-smoke-2 {
+  animation: smokePuff2 2.5s ease-out forwards;
+}
+
+.quick-sale-smoke-3 {
+  animation: smokePuff3 2.5s ease-out forwards;
+}
+
+.quick-sale-smoke-4 {
+  animation: smokePuff4 2.5s ease-out forwards;
+}
+
+/* Media queries para móvil */
+@media (max-width: 768px) {
+  .quick-sale-dispensar-text {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .quick-sale-dispensar-message {
+    margin-bottom: 12px;
+  }
+}
+
 /* Respecto por preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   .quick-sale-button,
   .quick-sale-button::after {
     animation: none;
+  }
+
+  .quick-sale-dispensar-message,
+  .quick-sale-dispensar-smoke,
+  .quick-sale-dispensar-text {
+    animation: none;
+    opacity: 1;
   }
 }

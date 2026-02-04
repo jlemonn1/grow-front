@@ -48,7 +48,7 @@ export function SaleCardDetails({ sale, customerId }: SaleCardDetailsProps) {
             variant="secondary"
             className="sale-card-action-button"
           >
-            Ver cliente
+            Ver socio
           </Button>
         </Link>
       </div>

@@ -174,3 +174,48 @@
     width: 100%;
   }
 }
+
+.form-file-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.form-file-input:hover {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.form-file-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-image-preview {
+  margin-top: var(--spacing-sm);
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.form-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}

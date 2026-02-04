@@ -10,10 +10,11 @@ interface DispenseNumberInputProps {
   min?: number;
   step?: number;
   placeholder?: string;
+  dataTour?: string;
 }
 
 export const DispenseNumberInput = forwardRef<HTMLInputElement, DispenseNumberInputProps>(
-  ({ id, value, onChange, error, min = 0.01, step = 0.01, placeholder = '0.00' }, ref) => {
+  ({ id, value, onChange, error, min = 0.01, step = 0.01, placeholder = '0.00', dataTour }, ref) => {
     return (
       <div className="dispense-number-input">
         <NumberInput
@@ -25,6 +26,7 @@ export const DispenseNumberInput = forwardRef<HTMLInputElement, DispenseNumberIn
           step={step}
           placeholder={placeholder}
           error={error}
+          data-tour={dataTour}
         />
       </div>
     );

@@ -36,6 +36,7 @@ export function CustomerCard({
       role="button"
       tabIndex={0}
       aria-expanded={isExpanded}
+      data-tour={`customer-row-${customer.id}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();

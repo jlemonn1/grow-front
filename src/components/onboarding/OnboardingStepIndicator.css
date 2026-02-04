@@ -1,0 +1,46 @@
+.onboarding-step-indicator {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10003;
+  background: var(--bg-primary, #ffffff);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  text-align: center;
+}
+
+.onboarding-step-indicator__progress {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-secondary, #e0e0e0);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-step-indicator__progress-bar {
+  height: 100%;
+  background: var(--primary, #3bd420);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.onboarding-step-indicator__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.onboarding-step-indicator__step {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.onboarding-step-indicator__name {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666666);
+}

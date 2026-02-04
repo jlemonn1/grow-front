@@ -73,6 +73,18 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     return 'any';
   }, []);
 
+  // Easter egg: detectar búsqueda de "onboarding"
+  useEffect(() => {
+    const trimmed = searchQuery.trim().toLowerCase();
+    
+    // Si se busca "onboarding", navegar directamente al tour
+    if (trimmed === 'onboarding') {
+      onClose();
+      navigate('/onboarding/tour?force=true');
+      return;
+    }
+  }, [searchQuery, navigate, onClose]);
+
   // Búsqueda con debounce
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -219,7 +231,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
             <Input
               ref={inputRef}
               type="text"
-              placeholder="Busca productos o clientes..."
+              placeholder="Busca productos o socios..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="global-search-modal-input"
@@ -306,7 +318,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
               {customers.length > 0 && (
                 <div className="global-search-modal-section">
                   <h3 className="global-search-modal-section-title">
-                    Clientes ({customers.length})
+                    Socios ({customers.length})
                   </h3>
                   <div className="global-search-modal-results-list">
                     {customers.map((customer) => (

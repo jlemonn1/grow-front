@@ -1,0 +1,58 @@
+.cajafuerte-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.cajafuerte-page-loading,
+.cajafuerte-page-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.cajafuerte-page-error {
+  color: var(--error-color);
+}
+
+.cajafuerte-page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.cajafuerte-page-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cajafuerte-page-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cajafuerte-page-history {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cajafuerte-page-history-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .cajafuerte-page-actions {
+    flex-direction: column;
+  }
+
+  .cajafuerte-page-actions > * {
+    width: 100%;
+  }
+}

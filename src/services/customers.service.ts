@@ -1,11 +1,16 @@
-import { get, post, del } from './http';
+import { get, post, postFormData, put, putFormData, del } from './http';
 import type { 
   Customer, 
   CustomerSale, 
   CustomerSummary,
   CreateCustomerRequest,
+  UpdateCustomerRequest,
   RenewSubscriptionRequest,
-  PinCheckResponse
+  PinCheckResponse,
+  BalanceTransaction,
+  AdjustBalanceRequest,
+  TransferBalanceRequest,
+  Product
 } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 
@@ -40,8 +45,28 @@ export const customersService = {
   /**
    * Crea un nuevo cliente
    */
-  async create(data: CreateCustomerRequest): Promise<Customer> {
-    return post<Customer>('/customers', data);
+  async create(data: CreateCustomerRequest & {
+    profilePicture?: File;
+    dniPicture?: File;
+  }): Promise<Customer> {
+    // Si hay archivos, usar FormData
+    if (data.profilePicture || data.dniPicture) {
+      const formData = new FormData();
+      formData.append('displayName', data.displayName);
+      if (data.phone) formData.append('phone', data.phone);
+      if (data.notes) formData.append('notes', data.notes);
+      formData.append('pin', data.pin);
+      if (data.subscriptionType) formData.append('subscriptionType', data.subscriptionType);
+      formData.append('subscriptionPrice', data.subscriptionPrice.toString());
+      if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
+      if (data.dniPicture) formData.append('dniPicture', data.dniPicture);
+      if (data.dniNumber) formData.append('dniNumber', data.dniNumber);
+      
+      return postFormData<Customer>('/customers', formData);
+    } else {
+      // Si no hay archivos, usar JSON normal
+      return post<Customer>('/customers', data);
+    }
   },
 
   /**
@@ -71,6 +96,33 @@ export const customersService = {
    */
   async getById(customerId: string): Promise<Customer> {
     return get<Customer>(`/customers/${customerId}`);
+  },
+
+  /**
+   * Actualiza un cliente existente
+   */
+  async update(customerId: string, data: UpdateCustomerRequest & {
+    profilePicture?: File;
+    dniPicture?: File;
+  }): Promise<Customer> {
+    // Si hay archivos, usar FormData
+    if (data.profilePicture || data.dniPicture) {
+      const formData = new FormData();
+      if (data.displayName) formData.append('displayName', data.displayName);
+      if (data.phone !== undefined) formData.append('phone', data.phone || '');
+      if (data.notes !== undefined) formData.append('notes', data.notes || '');
+      if (data.pin) formData.append('pin', data.pin);
+      if (data.subscriptionType) formData.append('subscriptionType', data.subscriptionType);
+      if (data.subscriptionPrice !== undefined) formData.append('subscriptionPrice', data.subscriptionPrice.toString());
+      if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
+      if (data.dniPicture) formData.append('dniPicture', data.dniPicture);
+      if (data.dniNumber !== undefined) formData.append('dniNumber', data.dniNumber || '');
+      
+      return putFormData<Customer>(`/customers/${customerId}`, formData);
+    } else {
+      // Si no hay archivos, usar JSON normal
+      return put<Customer>(`/customers/${customerId}`, data);
+    }
   },
 
   /**
@@ -160,5 +212,45 @@ export const customersService = {
     const endpoint = `/public/customers${queryString ? `?${queryString}` : ''}`;
 
     return get<PageResponse<Customer>>(endpoint);
+  },
+
+  /**
+   * Ajusta el saldo de un cliente (agregar o quitar)
+   */
+  async adjustBalance(customerId: string, data: AdjustBalanceRequest): Promise<Customer> {
+    return post<Customer>(`/customers/${customerId}/balance/adjust`, data);
+  },
+
+  /**
+   * Transfiere saldo de un cliente a otro
+   */
+  async transferBalance(customerId: string, data: TransferBalanceRequest): Promise<void> {
+    return post<void>(`/customers/${customerId}/balance/transfer`, data);
+  },
+
+  /**
+   * Obtiene el historial de transacciones de saldo de un cliente
+   */
+  async getBalanceHistory(customerId: string, page?: number, size?: number): Promise<PageResponse<BalanceTransaction>> {
+    const queryParams = new URLSearchParams();
+    if (page !== undefined) {
+      queryParams.append('page', page.toString());
+    }
+    if (size !== undefined) {
+      queryParams.append('size', size.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = `/customers/${customerId}/balance/history${queryString ? `?${queryString}` : ''}`;
+
+    return get<PageResponse<BalanceTransaction>>(endpoint);
+  },
+
+  /**
+   * Obtiene los productos recomendados para un cliente
+   * Solo devuelve productos con stock disponible
+   */
+  async getRecommendedProducts(customerId: string): Promise<Product[]> {
+    return get<Product[]>(`/customers/${customerId}/recommended-products`);
   },
 };

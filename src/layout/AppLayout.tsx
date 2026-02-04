@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SideNav } from './SideNav';
 import { TopBar } from './TopBar';
@@ -8,7 +8,11 @@ import { QuickSaleButton } from '@/components/sale/QuickSaleButton';
 import { TickerCarousel } from '@/components/common/TickerCarousel';
 import './AppLayout.css';
 
-export function AppLayout() {
+interface AppLayoutProps {
+  children?: ReactNode;
+}
+
+export function AppLayout({ children }: AppLayoutProps = {}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const openMobileMenu = () => setIsMobileMenuOpen(true);
@@ -51,7 +55,7 @@ export function AppLayout() {
           isMenuOpen={isMobileMenuOpen}
         />
         <main id="main-content" className="app-layout-content" role="main" tabIndex={-1}>
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
       <QuickSaleButton />

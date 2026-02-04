@@ -9,6 +9,7 @@ interface NumberInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
   min?: number;
   max?: number;
   step?: number;
+  'data-tour'?: string;
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(

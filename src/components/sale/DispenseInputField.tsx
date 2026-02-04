@@ -14,6 +14,7 @@ interface DispenseInputFieldProps {
   min?: number;
   step?: number;
   placeholder?: string;
+  dataTour?: string;
 }
 
 export function DispenseInputField({
@@ -27,6 +28,7 @@ export function DispenseInputField({
   min = 0.01,
   step = 0.01,
   placeholder = '0.00',
+  dataTour,
 }: DispenseInputFieldProps) {
   return (
     <div className="dispense-input-field">
@@ -45,6 +47,7 @@ export function DispenseInputField({
           step={step}
           placeholder={placeholder}
           error={error}
+          dataTour={dataTour}
         />
       </DispenseFieldLayout>
     </div>

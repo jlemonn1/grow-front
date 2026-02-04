@@ -54,6 +54,11 @@ export function CustomerCreatePage() {
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const [pinSuggestions, setPinSuggestions] = useState<string[]>([]);
   const [isCheckingPin, setIsCheckingPin] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [dniPicture, setDniPicture] = useState<File | null>(null);
+  const [dniNumber, setDniNumber] = useState<string>('');
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const [dniPicturePreview, setDniPicturePreview] = useState<string | null>(null);
 
   // Sincronizar ref con formData
   useEffect(() => {
@@ -205,6 +210,30 @@ export function CustomerCreatePage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDniPictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDniPicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDniPicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -222,10 +251,13 @@ export function CustomerCreatePage() {
         pin: formData.pin.trim().toUpperCase(),
         subscriptionType: formData.subscriptionType,
         subscriptionPrice: formData.subscriptionPrice,
+        profilePicture: profilePicture || undefined,
+        dniPicture: dniPicture || undefined,
+        dniNumber: dniNumber.trim() || undefined,
       });
 
       addCustomer(customer);
-      showToast('Cliente creado exitosamente', 'success');
+      showToast('Socio creado exitosamente', 'success');
       navigate(`/customers/${customer.id}`);
     } catch (error) {
       // Manejo de errores de validación (422)
@@ -252,7 +284,7 @@ export function CustomerCreatePage() {
       }
 
       // Otros errores
-      showToast('Error al crear cliente. Intente nuevamente.', 'error');
+      showToast('Error al crear socio. Intente nuevamente.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -270,9 +302,12 @@ export function CustomerCreatePage() {
       formData.notes !== initialFormData.notes ||
       formData.pin !== initialFormData.pin ||
       formData.subscriptionType !== initialFormData.subscriptionType ||
-      formData.subscriptionPrice !== initialFormData.subscriptionPrice
+      formData.subscriptionPrice !== initialFormData.subscriptionPrice ||
+      profilePicture !== null ||
+      dniPicture !== null ||
+      dniNumber !== ''
     );
-  }, [formData]);
+  }, [formData, profilePicture, dniPicture, dniNumber]);
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -299,10 +334,13 @@ export function CustomerCreatePage() {
         pin: formData.pin.trim().toUpperCase(),
         subscriptionType: formData.subscriptionType,
         subscriptionPrice: formData.subscriptionPrice,
+        profilePicture: profilePicture || undefined,
+        dniPicture: dniPicture || undefined,
+        dniNumber: dniNumber.trim() || undefined,
       });
 
       addCustomer(customer);
-      showToast('Cliente creado exitosamente', 'success');
+      showToast('Socio creado exitosamente', 'success');
       navigate('/customers');
     } catch (error) {
       if (error && typeof error === 'object' && 'status' in error) {
@@ -324,7 +362,7 @@ export function CustomerCreatePage() {
           }
         }
       } else {
-        showToast('Error al crear cliente. Intente nuevamente.', 'error');
+        showToast('Error al crear socio. Intente nuevamente.', 'error');
       }
     } finally {
       setIsSubmitting(false);
@@ -338,13 +376,13 @@ export function CustomerCreatePage() {
 
   return (
     <>
-      <PageHeader title="Nuevo cliente" onBack={handleBack} />
+      <PageHeader title="Nuevo socio" onBack={handleBack} />
       <div className="customer-create-container">
         <FormCard>
           <form onSubmit={handleSubmit} className="customer-create-form">
             <FormSection
-              title="Información del cliente"
-              description="Datos principales del cliente"
+              title="Información del socio"
+              description="Datos principales del socio"
             >
               <div className="form-row">
                 <div className="form-field-with-icon">
@@ -360,6 +398,7 @@ export function CustomerCreatePage() {
                     required
                     disabled={isSubmitting}
                     placeholder="Ej: Juan Pérez"
+                    data-tour="customer-name-input"
                   />
                 </div>
 
@@ -375,6 +414,7 @@ export function CustomerCreatePage() {
                     error={errors.phone}
                     disabled={isSubmitting}
                     placeholder="Ej: +54 11 1234-5678"
+                    data-tour="customer-phone-input"
                   />
                 </div>
               </div>
@@ -382,7 +422,7 @@ export function CustomerCreatePage() {
 
             <FormSection
               title="PIN y Suscripción"
-              description="PIN único del cliente y configuración de suscripción"
+              description="PIN único del socio y configuración de suscripción"
             >
               <div className="form-row">
                 <div className="form-field-with-icon">
@@ -400,6 +440,7 @@ export function CustomerCreatePage() {
                     placeholder="Ej: 12AB"
                     maxLength={4}
                     style={{ textTransform: 'uppercase' }}
+                    data-tour="customer-pin-input"
                   />
                   {isCheckingPin && (
                     <span className="pin-checking">Verificando...</span>
@@ -436,6 +477,7 @@ export function CustomerCreatePage() {
                       { value: 'MONTHLY', label: 'Mensual' },
                       { value: 'ANNUAL', label: 'Anual' },
                     ]}
+                    data-tour="customer-subscription-type"
                   />
                 </div>
                 <div className="form-field-with-icon">
@@ -452,6 +494,71 @@ export function CustomerCreatePage() {
                     min={0.01}
                     step={0.01}
                     placeholder="0.00"
+                    data-tour="customer-subscription-price"
+                  />
+                </div>
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Foto de perfil y DNI"
+              description="Sube una foto de perfil y del DNI del socio (opcional)"
+            >
+              <div className="form-row">
+                <div className="form-field-with-icon">
+                  <HiOutlineUser className="form-field-icon" />
+                  <div>
+                    <label htmlFor="profilePicture" className="form-label">
+                      Foto de perfil
+                    </label>
+                    <input
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureChange}
+                      disabled={isSubmitting}
+                      className="form-file-input"
+                    />
+                    {profilePicturePreview && (
+                      <div className="form-image-preview">
+                        <img src={profilePicturePreview} alt="Vista previa" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-field-with-icon">
+                  <HiOutlineDocumentText className="form-field-icon" />
+                  <div>
+                    <label htmlFor="dniPicture" className="form-label">
+                      Foto del DNI
+                    </label>
+                    <input
+                      id="dniPicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleDniPictureChange}
+                      disabled={isSubmitting}
+                      className="form-file-input"
+                    />
+                    {dniPicturePreview && (
+                      <div className="form-image-preview">
+                        <img src={dniPicturePreview} alt="Vista previa DNI" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="form-field-with-icon">
+                  <HiOutlineDocumentText className="form-field-icon" />
+                  <Input
+                    id="dniNumber"
+                    label="Número de DNI"
+                    type="text"
+                    value={dniNumber}
+                    onChange={(e) => setDniNumber(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="Ej: 12345678"
                   />
                 </div>
               </div>
@@ -459,7 +566,7 @@ export function CustomerCreatePage() {
 
             <FormSection
               title="Notas adicionales"
-              description="Información adicional sobre el cliente (opcional)"
+              description="Información adicional sobre el socio (opcional)"
             >
               <div className="form-field-with-icon">
                 <HiOutlineDocumentText className="form-field-icon" />
@@ -471,8 +578,9 @@ export function CustomerCreatePage() {
                   onBlur={() => handleBlur('notes')}
                   error={errors.notes}
                   disabled={isSubmitting}
-                  placeholder="Información adicional sobre el cliente..."
+                  placeholder="Información adicional sobre el socio..."
                   rows={4}
+                  data-tour="customer-notes-input"
                 />
               </div>
             </FormSection>
@@ -483,6 +591,7 @@ export function CustomerCreatePage() {
                 variant="secondary"
                 onClick={handleCancel}
                 disabled={isSubmitting}
+                data-tour="cancel-customer"
               >
                 Cancelar
               </Button>
@@ -491,8 +600,9 @@ export function CustomerCreatePage() {
                 variant="primary"
                 loading={isSubmitting}
                 disabled={isSubmitting}
+                data-tour="save-customer"
               >
-                Guardar cliente
+                Guardar socio
               </Button>
             </div>
           </form>

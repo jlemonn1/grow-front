@@ -20,12 +20,12 @@ export function CustomerSummaryTable({ summary, loading = false }: CustomerSumma
 
   if (!summary || summary.items.length === 0) {
     return (
-      <EmptyState message="No hay compras registradas para este cliente" />
+      <EmptyState message="No hay compras registradas para este socio" />
     );
   }
 
   return (
-    <div className="customer-summary-container">
+    <div className="customer-summary-container" data-tour="customer-summary-table">
       <div className="customer-summary-total">
         <span className="customer-summary-total-label">Total gastado:</span>
         <span className="customer-summary-total-amount">{formatMoney(summary.totalSpent)}</span>

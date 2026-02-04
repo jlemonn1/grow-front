@@ -296,6 +296,60 @@
   font-size: 0.875rem;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.3), inset 0 0 8px rgba(16, 185, 129, 0.1);
   animation: selectedPulse 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.customer-picker-selected-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-picker-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.customer-picker-action-button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.customer-picker-action-button:hover {
+  color: var(--primary-color);
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-led-color);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary), 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.customer-picker-action-button:active {
+  box-shadow: 0 0 4px var(--neon-glow-primary), 0 1px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(1);
+}
+
+.customer-picker-balance {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-shadow: 0 0 4px var(--neon-glow-primary);
 }
 
 @keyframes selectedPulse {

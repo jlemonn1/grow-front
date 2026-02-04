@@ -1,0 +1,19 @@
+.onboarding-tour-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #ffffff);
+  z-index: 10004;
+}
+
+.onboarding-tour-loading p {
+  margin-top: 1rem;
+  color: var(--text-secondary, #666666);
+  font-size: 1rem;
+}

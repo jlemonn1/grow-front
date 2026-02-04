@@ -16,6 +16,27 @@
   transition: all var(--transition-base), box-shadow var(--transition-glow);
 }
 
+.customer-profile-picture-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.customer-profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-primary);
+  box-shadow: 0 0 20px var(--neon-glow-primary);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.customer-profile-picture:hover {
+  box-shadow: 0 0 30px var(--neon-glow-primary);
+  transform: scale(1.05);
+}
+
 .customer-info-section::before {
   content: '';
   position: absolute;
@@ -246,6 +267,80 @@
   font-weight: 500;
   text-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
   transition: text-shadow var(--transition-glow);
+}
+
+.customer-balance-section {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-color);
+  position: relative;
+}
+
+.customer-balance-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+}
+
+.customer-balance-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  transition: color var(--transition-base), text-shadow var(--transition-glow);
+}
+
+.customer-balance-title:hover {
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.customer-balance-value {
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: var(--font-size-lg);
+  text-shadow: 0 0 6px var(--neon-glow-primary);
+}
+
+.customer-balance-history-section {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  position: relative;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.customer-balance-history-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-led-color) 20%,
+    var(--neon-primary) 50%,
+    var(--border-led-color) 80%,
+    transparent
+  );
+  box-shadow: 0 0 4px var(--neon-glow-primary);
+  opacity: 0.6;
 }
 
 @media (max-width: 640px) {

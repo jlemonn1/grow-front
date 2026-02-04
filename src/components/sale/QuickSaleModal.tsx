@@ -16,7 +16,7 @@ import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft } from '@/ser
 import { customersService } from '@/services/customers.service';
 import { getTopProductsByMovements, type TopProduct } from '@/services/products.service';
 import { formatMoney } from '@/utils/money';
-import type { Product, SaleDraft } from '@/types/models';
+import type { Product, SaleDraft, DenominationsMap } from '@/types/models';
 import './QuickSaleModal.css';
 
 interface QuickSaleModalProps {
@@ -55,6 +55,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const [draft, setDraft] = useState<SaleDraft | null>(null);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [shouldValidateAfterLoad, setShouldValidateAfterLoad] = useState(false);
+  const [cashGivenDenominations, setCashGivenDenominations] = useState<DenominationsMap>({});
   const modalContentRef = useRef<HTMLDivElement>(null);
 
   // Validar items cuando se cargan productos después de recuperar borrador
@@ -507,7 +508,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     }
 
     if (!customer) {
-      showToast('Debes seleccionar un cliente', 'warning');
+      showToast('Debes seleccionar un socio', 'warning');
       return;
     }
 
@@ -520,9 +521,22 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
     setGlobalLoading(true);
 
     try {
+      // Validar que hay denominaciones recibidas
+      const hasCashGivenDenominations = cashGivenDenominations && 
+        Object.keys(cashGivenDenominations).length > 0 && 
+        Object.values(cashGivenDenominations).some(qty => qty > 0);
+      
+      if (cashGiven > 0 && !hasCashGivenDenominations) {
+        showToast('No se han registrado las denominaciones recibidas. Usa los botones de billetes/monedas.', 'warning');
+        setIsProcessing(false);
+        setGlobalLoading(false);
+        return;
+      }
+
       const request = {
         customerId: customer.id,
         cashGiven,
+        cashGivenDenominations: hasCashGivenDenominations ? cashGivenDenominations : undefined,
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
@@ -552,6 +566,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       setSelectedProduct(null);
       setGramsToAdd(0);
       setShowAddMore(false);
+      setCashGivenDenominations({});
 
       showToast('Venta completada exitosamente', 'success');
       onClose();
@@ -596,7 +611,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
           {/* Paso 1: Seleccionar Cliente */}
           {!customer && (
             <div className="quick-sale-step">
-              <h2 className="quick-sale-step-title">Selecciona un cliente</h2>
+              <h2 className="quick-sale-step-title">Selecciona un socio</h2>
               <CustomerPicker
                 selectedCustomer={null}
                 onSelect={setCustomer}
@@ -742,21 +757,32 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
             <div className="quick-sale-step">
               <h2 className="quick-sale-step-title">Dinero recibido</h2>
               <div className="quick-sale-cash-input">
-                <CashBillButtons onAddAmount={(amount) => setCashGiven((cashGiven || 0) + amount)} />
-                <NumberInput
-                  id="cashGiven"
-                  label="Efectivo recibido"
-                  value={cashGiven}
-                  onChange={setCashGiven}
-                  min={0}
-                  step={0.01}
-                  placeholder="0.00"
-                  autoFocus={items.length > 0 && cashGiven === 0}
+                <CashBillButtons 
+                  onAddAmount={(amount) => setCashGiven((cashGiven || 0) + amount)}
+                  onDenominationAdd={(denomination) => {
+                    const denominationKey = denomination.toString();
+                    const currentQty = cashGivenDenominations[denominationKey] || 0;
+                    setCashGivenDenominations({
+                      ...cashGivenDenominations,
+                      [denominationKey]: currentQty + 1,
+                    });
+                  }}
+                  denominations={cashGivenDenominations}
+                  onReset={() => {
+                    setCashGiven(0);
+                    setCashGivenDenominations({});
+                  }}
                 />
                 {cashGiven > 0 && (
-                  <div className="quick-sale-change">
-                    Cambio: <strong>{formatMoney(change)}</strong>
-                  </div>
+                  <>
+                    <div className="quick-sale-cash-total">
+                      <span>Efectivo recibido:</span>
+                      <strong>{formatMoney(cashGiven)}</strong>
+                    </div>
+                    <div className="quick-sale-change">
+                      Cambio: <strong>{formatMoney(change)}</strong>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

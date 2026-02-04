@@ -24,6 +24,7 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  getRowDataTour?: (row: T) => string;
 }
 
 function DataTableComponent<T extends Record<string, any>>({
@@ -34,6 +35,7 @@ function DataTableComponent<T extends Record<string, any>>({
   onPageChange,
   onRowClick,
   emptyMessage = 'No hay datos disponibles',
+  getRowDataTour,
 }: DataTableProps<T>) {
   const renderCell = useCallback((column: ColumnDef<T>, row: T) => {
     if (typeof column.accessor === 'function') {
@@ -75,6 +77,7 @@ function DataTableComponent<T extends Record<string, any>>({
               key={rowIndex} 
               className={`data-table-row ${onRowClick ? 'data-table-row-clickable' : ''}`}
               role="row"
+              data-tour={getRowDataTour ? getRowDataTour(row) : undefined}
               onClick={(e) => {
                 // No activar el click de la fila si se hace click en un botón, enlace o elemento interactivo
                 const target = e.target as HTMLElement;

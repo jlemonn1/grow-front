@@ -1,9 +1,12 @@
 import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
 import { HiQrCode } from 'react-icons/hi2';
-import { HiSearch, HiPhone, HiKey } from 'react-icons/hi';
+import { HiSearch, HiPhone, HiKey, HiPencil, HiDocumentText } from 'react-icons/hi';
 import { Input } from '@/components/forms/Input';
 import { QRScannerModal } from '@/components/common/QRScannerModal';
+import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
+import { AddNoteModal } from '@/components/customer/AddNoteModal';
 import { customersService } from '@/services/customers.service';
+import { formatMoney } from '@/utils/money';
 import type { Customer } from '@/types/models';
 import './CustomerPicker.css';
 
@@ -31,6 +34,8 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const [showResults, setShowResults] = useState(false);
   const [searchType, setSearchType] = useState<'name' | 'phone' | 'pin' | 'any' | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
 
   // Limpiar estados internos cuando selectedCustomer cambia a null
   useEffect(() => {
@@ -138,6 +143,10 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     setShowQRScanner(false);
   }, [handleSelect]);
 
+  const handleCustomerUpdated = useCallback((updatedCustomer: Customer) => {
+    onSelect(updatedCustomer);
+  }, [onSelect]);
+
   return (
     <div className="customer-picker" role="combobox" aria-expanded={showResults} aria-haspopup="listbox">
       <div className="customer-picker-input-wrapper">
@@ -146,6 +155,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
           type="text"
           placeholder="Buscar por nombre, PIN o teléfono (mín. 3 caracteres)..."
           value={searchQuery}
+          data-tour="customer-search-input"
           onChange={(e) => {
             setSearchQuery(e.target.value);
             // Si hay un cliente seleccionado y el usuario empieza a escribir, limpiar selección
@@ -169,7 +179,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
               }
             }, 200);
           }}
-          aria-label="Buscar cliente"
+          aria-label="Buscar socio"
           aria-autocomplete="list"
           aria-controls="customer-picker-list"
           aria-activedescendant={selectedCustomer ? `customer-${selectedCustomer.id}` : undefined}
@@ -236,7 +246,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
             </div>
           ) : results.length === 0 ? (
             <div className="customer-picker-empty" role="status" aria-live="polite">
-              No se encontraron clientes
+              No se encontraron socios
             </div>
           ) : (
             <ul className="customer-picker-list">
@@ -247,6 +257,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
                   className={`customer-picker-item ${
                     selectedCustomer?.id === customer.id ? 'selected' : ''
                   }`}
+                  data-tour={`customer-row-${customer.id}`}
                   onMouseDown={(e) => {
                     // Prevenir que el blur del input cierre el dropdown antes del click
                     e.preventDefault();
@@ -285,7 +296,36 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
 
       {selectedCustomer && !showResults && (
         <div className="customer-picker-selected">
-          Cliente seleccionado: <strong>{selectedCustomer.displayName}</strong>
+          <div className="customer-picker-selected-info">
+            <span>
+              Socio seleccionado: <strong>{selectedCustomer.displayName}</strong>
+              {selectedCustomer.balance !== undefined && (
+                <span className="customer-picker-balance">
+                  {' '}• Saldo: {formatMoney(selectedCustomer.balance)}
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="customer-picker-actions">
+            <button
+              type="button"
+              className="customer-picker-action-button"
+              onClick={() => setShowEditModal(true)}
+              aria-label="Editar cliente"
+              title="Editar cliente"
+            >
+              <HiPencil />
+            </button>
+            <button
+              type="button"
+              className="customer-picker-action-button"
+              onClick={() => setShowAddNoteModal(true)}
+              aria-label={selectedCustomer.notes ? "Editar nota" : "Añadir nota"}
+              title={selectedCustomer.notes ? "Editar nota" : "Añadir nota"}
+            >
+              <HiDocumentText />
+            </button>
+          </div>
         </div>
       )}
 
@@ -294,6 +334,24 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
           isOpen={showQRScanner}
           onClose={() => setShowQRScanner(false)}
           onCustomerFound={handleQRScan}
+        />
+      )}
+
+      {showEditModal && selectedCustomer && (
+        <EditCustomerModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          customer={selectedCustomer}
+          onUpdated={handleCustomerUpdated}
+        />
+      )}
+
+      {showAddNoteModal && selectedCustomer && (
+        <AddNoteModal
+          isOpen={showAddNoteModal}
+          onClose={() => setShowAddNoteModal(false)}
+          customer={selectedCustomer}
+          onNoteAdded={handleCustomerUpdated}
         />
       )}
     </div>

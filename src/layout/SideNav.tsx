@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { HiHome, HiCurrencyEuro, HiDocumentText, HiCube, HiUser, HiChartBar, HiCog, HiUsers } from 'react-icons/hi';
+import { HiHome, HiCurrencyEuro, HiDocumentText, HiCube, HiUser, HiChartBar, HiCog, HiUsers, HiLockClosed } from 'react-icons/hi';
 import { HiArrowRightOnRectangle, HiSparkles } from 'react-icons/hi2';
 import { useUI } from '@/context/ui.context';
 import { useConfig } from '@/context/config.context';
@@ -25,10 +25,19 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
   // Detectar si estamos en móvil
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 640);
+      const newIsMobile = window.innerWidth <= 640;
+      // Solo actualizar si el valor realmente cambió
+      setIsMobile(prev => {
+        if (prev !== newIsMobile) {
+          return newIsMobile;
+        }
+        return prev;
+      });
     };
     
-    checkMobile();
+    // Establecer valor inicial
+    setIsMobile(window.innerWidth <= 640);
+    
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -41,7 +50,7 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
 
     // Caja - requiere DISPENSAR
     if (hasPermission(AdminPermission.DISPENSAR)) {
-      items.push({ path: '/sales/new', label: 'Caja', icon: <HiCurrencyEuro /> });
+      items.push({ path: '/sales/new', label: 'Dispensar', icon: <HiCurrencyEuro /> });
       items.push({ path: '/sales', label: 'Ventas', icon: <HiDocumentText /> });
     }
 
@@ -49,11 +58,16 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
     items.push({ path: '/products', label: 'Productos', icon: <HiCube /> });
 
     // Clientes - siempre visible, pero solo crear/editar requiere permiso
-    items.push({ path: '/customers', label: 'Clientes', icon: <HiUser /> });
+    items.push({ path: '/customers', label: 'Socios', icon: <HiUser /> });
 
     // Reportes - requiere VER_REPORTES
     if (hasPermission(AdminPermission.VER_REPORTES)) {
       items.push({ path: '/reports', label: 'Reportes', icon: <HiChartBar /> });
+    }
+
+    // CajaFuerte - requiere GESTIONAR_CAJAFUERTE
+    if (hasPermission(AdminPermission.GESTIONAR_CAJAFUERTE)) {
+      items.push({ path: '/cajafuerte', label: 'CajaFuerte', icon: <HiLockClosed /> });
     }
 
     // Configuración - siempre visible

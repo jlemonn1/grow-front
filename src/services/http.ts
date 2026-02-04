@@ -245,12 +245,56 @@ export async function post<T>(endpoint: string, body?: unknown): Promise<T> {
 }
 
 /**
+ * POST request with FormData (for file uploads)
+ */
+export async function postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+  const baseHeaders = getHeaders(endpoint) as Record<string, string>;
+  // Create new headers object without Content-Type to let browser set it with boundary for multipart/form-data
+  const headers: Record<string, string> = {};
+  
+  // Copy all headers except Content-Type
+  Object.entries(baseHeaders).forEach(([key, value]) => {
+    if (key.toLowerCase() !== 'content-type') {
+      headers[key] = value;
+    }
+  });
+  
+  return request<T>(endpoint, {
+    method: 'POST',
+    body: formData,
+    headers,
+  });
+}
+
+/**
  * PUT request
  */
 export async function put<T>(endpoint: string, body?: unknown): Promise<T> {
   return request<T>(endpoint, {
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
+ * PUT request with FormData (for file uploads)
+ */
+export async function putFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+  const baseHeaders = getHeaders(endpoint) as Record<string, string>;
+  // Create new headers object without Content-Type to let browser set it with boundary for multipart/form-data
+  const headers: Record<string, string> = {};
+  
+  // Copy all headers except Content-Type
+  Object.entries(baseHeaders).forEach(([key, value]) => {
+    if (key.toLowerCase() !== 'content-type') {
+      headers[key] = value;
+    }
+  });
+  
+  return request<T>(endpoint, {
+    method: 'PUT',
+    body: formData,
+    headers,
   });
 }
 

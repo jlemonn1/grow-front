@@ -16,7 +16,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { refreshUser, currentUser, isLoading: authLoading } = useAuth();
-  const { refreshConfiguration } = useConfig();
+  const { refreshConfiguration, needsFunctionalOnboarding, needsOnboarding } = useConfig();
   const { activateVisitorMode, deactivateVisitorMode } = useVisitor();
   const clickCountRef = useRef(0);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,10 +35,17 @@ export function LoginPage() {
     );
   }
 
-  // Si ya está autenticado y hay un usuario válido, redirigir
+  // Si ya está autenticado y hay un usuario válido, redirigir según necesidades de onboarding
   // Esperamos a que termine de cargar la autenticación para evitar ciclos infinitos
   if (hasToken() && currentUser) {
-    return <Navigate to="/home" replace />;
+    // Verificar necesidades de onboarding y redirigir apropiadamente
+    if (needsFunctionalOnboarding) {
+      return <Navigate to="/onboarding/tour" replace />;
+    } else if (needsOnboarding) {
+      return <Navigate to="/onboarding" replace />;
+    } else {
+      return <Navigate to="/home" replace />;
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -65,7 +72,19 @@ export function LoginPage() {
       // Recargar configuración después del login para verificar si necesita onboarding
       await refreshConfiguration();
       showToast('Sesión iniciada correctamente', 'success');
-      navigate('/home', { replace: true });
+      
+      // Verificar si necesita onboarding funcional primero
+      // Esperar un momento para que el contexto se actualice después de refreshConfiguration
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verificar necesidades de onboarding y redirigir apropiadamente
+      if (needsFunctionalOnboarding) {
+        navigate('/onboarding/tour', { replace: true });
+      } else if (needsOnboarding) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (err: any) {
       // Verificar si se requiere registro
       if (err?.requiresRegistration || err?.status === 428) {

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useConfig } from '@/context/config.context';
+import { useDemo } from '@/context/demo.context';
+import { useCustomers } from '@/context/customers.context';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -16,6 +18,8 @@ export function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { config } = useConfig();
+  const { isDemoMode, demoData } = useDemo();
+  const { getCustomerById } = useCustomers();
   const showCashDetails = config?.showCashDetails ?? true;
   
   const [sale, setSale] = useState<Sale | null>(null);
@@ -31,12 +35,36 @@ export function SaleDetailPage() {
       setError(null);
 
       try {
-        const saleData = await getSaleById(id);
+        let saleData: Sale | null = null;
+
+        // Si estamos en modo demo, usar datos mock
+        if (isDemoMode && demoData) {
+          saleData = demoData.sales.find(s => s.id === id) || null;
+        } else {
+          // Modo normal: llamar a la API
+          saleData = await getSaleById(id);
+        }
+
+        if (!saleData) {
+          setError('Venta no encontrada');
+          setLoading(false);
+          return;
+        }
+
         setSale(saleData);
 
         // Cargar información del cliente
         try {
-          const customerData = await customersService.getById(saleData.customerId);
+          let customerData: Customer | null = null;
+          
+          // Si estamos en modo demo, usar datos mock
+          if (isDemoMode) {
+            customerData = await getCustomerById(saleData.customerId);
+          } else {
+            // Modo normal: llamar a la API
+            customerData = await customersService.getById(saleData.customerId);
+          }
+          
           setCustomer(customerData);
         } catch (err) {
           console.error('Error loading customer:', err);
@@ -54,7 +82,7 @@ export function SaleDetailPage() {
     };
 
     loadSale();
-  }, [id]);
+  }, [id, isDemoMode, demoData, getCustomerById]);
 
   const handleBack = () => {
     navigate('/sales');
@@ -114,9 +142,10 @@ export function SaleDetailPage() {
       <PageHeader
         title={`Venta #${sale.id.substring(0, 8)}...`}
         onBack={handleBack}
+        dataTourBack="back-to-sales"
       />
 
-      <div className="sale-detail-container">
+      <div className="sale-detail-container" data-tour="sale-detail">
         {/* Información general */}
         <div className="sale-detail-section">
           <h2 className="sale-detail-section-title">
@@ -173,7 +202,7 @@ export function SaleDetailPage() {
         {/* Información del cliente */}
         <div className="sale-detail-section">
           <h2 className="sale-detail-section-title">
-            Cliente
+            Socio
           </h2>
           
           {customer ? (
@@ -193,7 +222,7 @@ export function SaleDetailPage() {
           ) : (
             <div>
               <span className="sale-detail-info-value sale-detail-info-value-monospace">
-                Cliente ID: {sale.customerId}
+                Socio ID: {sale.customerId}
               </span>
             </div>
           )}
@@ -233,9 +262,68 @@ export function SaleDetailPage() {
                   <span className="sale-detail-info-value" style={{ fontSize: 'var(--font-size-lg)', fontWeight: 500 }}>
                     {formatMoney(sale.changeAmount)}
                   </span>
+                  {sale.changeSavedToBalance && sale.changeSavedToBalance > 0 && (
+                    <span className="sale-detail-info-label" style={{ 
+                      fontSize: 'var(--font-size-sm)', 
+                      color: 'var(--color-success)',
+                      marginTop: 'var(--spacing-xs)',
+                      display: 'block'
+                    }}>
+                      (Guardado en saldo: {formatMoney(sale.changeSavedToBalance)})
+                    </span>
+                  )}
                 </div>
               </>
             )}
+
+            {/* Información de saldo */}
+            {(sale.balanceUsed && sale.balanceUsed > 0) || (sale.changeSavedToBalance && sale.changeSavedToBalance > 0) ? (
+              <div className="sale-detail-info-item" style={{ 
+                gridColumn: '1 / -1',
+                marginTop: 'var(--spacing-md)',
+                paddingTop: 'var(--spacing-md)',
+                borderTop: '1px solid var(--border-color)'
+              }}>
+                <span className="sale-detail-info-label" style={{ 
+                  fontSize: 'var(--font-size-md)',
+                  fontWeight: 600,
+                  marginBottom: 'var(--spacing-sm)',
+                  display: 'block'
+                }}>
+                  Información de Saldo
+                </span>
+                {sale.balanceUsed && sale.balanceUsed > 0 && (
+                  <div style={{ marginBottom: 'var(--spacing-xs)' }}>
+                    <span className="sale-detail-info-label">
+                      Saldo usado:
+                    </span>
+                    <span className="sale-detail-info-value" style={{ 
+                      fontSize: 'var(--font-size-base)', 
+                      fontWeight: 500,
+                      color: 'var(--color-primary)',
+                      marginLeft: 'var(--spacing-xs)'
+                    }}>
+                      {formatMoney(sale.balanceUsed)}
+                    </span>
+                  </div>
+                )}
+                {sale.changeSavedToBalance && sale.changeSavedToBalance > 0 && (
+                  <div>
+                    <span className="sale-detail-info-label">
+                      Cambio guardado en saldo:
+                    </span>
+                    <span className="sale-detail-info-value" style={{ 
+                      fontSize: 'var(--font-size-base)', 
+                      fontWeight: 500,
+                      color: 'var(--color-success)',
+                      marginLeft: 'var(--spacing-xs)'
+                    }}>
+                      {formatMoney(sale.changeSavedToBalance)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 

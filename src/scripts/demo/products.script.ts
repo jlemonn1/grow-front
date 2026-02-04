@@ -1,0 +1,33 @@
+import type { DemoScript } from '@/types/demo.types';
+
+export const productsScript: DemoScript = {
+  name: 'Gestión de Productos',
+  description: 'Demostración de búsqueda, creación y edición de productos',
+  steps: [
+    { type: 'say', message: 'Gestionemos productos', duration: 2000 },
+    { type: 'navigate', route: '/products' },
+    { type: 'waitFor', selector: '[data-tour="product-search"]', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="product-search"]', timeout: 5000 },
+    { type: 'type', selector: '[data-tour="product-search"]', text: 'Premium', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour^="product-row-"]', timeout: 3000 },
+    { type: 'click', selector: '[data-tour^="product-row-"]', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour="recharge-stock"]', timeout: 5000 },
+    { type: 'say', message: 'Aquí puedes ver los detalles del producto', duration: 2000 },
+    { type: 'click', selector: '[data-tour="recharge-stock"]', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour="recharge-stock-grams-input"]', timeout: 5000 },
+    { type: 'type', selector: '[data-tour="recharge-stock-grams-input"]', text: '2500', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="recharge-stock-cancel"]', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour="edit-product"]', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="edit-product"]', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour="edit-product-price"]', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="edit-product-price"]', timeout: 5000 },
+    { type: 'type', selector: '[data-tour="edit-product-price"]', text: '12.50', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="cancel-edit-product"]', timeout: 5000 },
+    { type: 'navigate', route: '/products' },
+    { type: 'waitFor', selector: '[data-tour="create-product"]', timeout: 5000 },
+    { type: 'click', selector: '[data-tour="create-product"]', timeout: 5000 },
+    { type: 'waitFor', selector: '[data-tour="product-name-input"]', timeout: 5000 },
+    { type: 'type', selector: '[data-tour="product-name-input"]', text: 'Producto Demo', timeout: 5000 },
+    { type: 'say', message: 'En modo demo, este producto no se guardará realmente', duration: 2000 },
+  ],
+};

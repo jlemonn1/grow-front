@@ -17,12 +17,17 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isVisitorMode } = useVisitor();
-  const { needsOnboarding, loading: configLoading } = useConfig();
+  const { needsOnboarding, needsFunctionalOnboarding, loading: configLoading } = useConfig();
   const { isLoading: authLoading, currentUser } = useAuth();
   const location = useLocation();
   
   // Permitir acceso a /config sin token para permitir registro del admin principal
   const isConfigPage = location.pathname === '/config';
+  const isOnboardingTourPage = location.pathname === '/onboarding/tour';
+  const isOnboardingPage = location.pathname === '/onboarding';
+  
+  // Determinar si necesita tour funcional
+  const needsAnyTour = needsFunctionalOnboarding;
   
   // Si está cargando la autenticación o la configuración, mostrar spinner
   if (authLoading || configLoading) {
@@ -54,8 +59,20 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Si necesita onboarding y está autenticado (no en modo visitante), redirigir a onboarding
-  if (needsOnboarding && hasToken() && !isVisitorMode && currentUser) {
+  // Si está en modo visitante, permitir acceso
+  if (isVisitorMode) {
+    return <>{children}</>;
+  }
+
+  // Si necesita algún tour (fase 1 o fase 2) y está autenticado, redirigir al tour
+  // Pero solo si no está ya en una página de onboarding
+  if (needsAnyTour && hasToken() && currentUser && !isOnboardingTourPage && !isOnboardingPage) {
+    return <Navigate to="/onboarding/tour" replace />;
+  }
+
+  // Si necesita onboarding de configuración y está autenticado, redirigir a onboarding
+  // Pero solo si ya completó todos los tours
+  if (needsOnboarding && hasToken() && currentUser && !needsAnyTour && !isOnboardingPage && !isOnboardingTourPage) {
     return <Navigate to="/onboarding" replace />;
   }
 

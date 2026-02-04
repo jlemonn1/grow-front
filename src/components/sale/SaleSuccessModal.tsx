@@ -61,7 +61,7 @@ export function SaleSuccessModal({ isOpen, sale, onClose, onNewSale }: SaleSucce
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Venta Procesada Exitosamente">
-      <div className="sale-success-modal">
+      <div className="sale-success-modal" data-tour="sale-success-modal">
         <div className="sale-success-icon">
           <div className={`sale-success-checkmark ${showAnimation ? 'animate' : ''}`}>
             <svg viewBox="0 0 52 52">

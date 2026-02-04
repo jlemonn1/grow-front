@@ -13,11 +13,14 @@ import { svgToFile } from '@/utils/svgToImage';
 import { uploadImage } from '@/services/images.service';
 import './OnboardingPage.css';
 
+type OnboardingStep = 1 | 2;
+
 export function OnboardingPage() {
   const navigate = useNavigate();
   const { config, loading: configLoading, updateConfiguration, needsOnboarding } = useConfig();
   const { showToast } = useUI();
 
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
   const [growName, setGrowName] = useState('');
   const [selectedLogo, setSelectedLogo] = useState<LogoOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,25 +32,49 @@ export function OnboardingPage() {
     return null;
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
-    // Validaciones
+  const validateStep = (step: OnboardingStep): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!growName.trim()) {
-      newErrors.growName = 'El nombre del growshop es obligatorio';
-    } else if (growName.trim().length < 2) {
-      newErrors.growName = 'El nombre debe tener al menos 2 caracteres';
-    }
-
-    if (!selectedLogo) {
-      newErrors.logo = 'Debes seleccionar o subir un logo';
+    if (step === 1) {
+      if (!growName.trim()) {
+        newErrors.growName = 'El nombre del growshop es obligatorio';
+      } else if (growName.trim().length < 2) {
+        newErrors.growName = 'El nombre debe tener al menos 2 caracteres';
+      }
+    } else if (step === 2) {
+      if (!selectedLogo) {
+        newErrors.logo = 'Debes seleccionar o subir un logo';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      if (validateStep(1)) {
+        setCurrentStep(2);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1);
+      setErrors({});
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateStep(2)) {
       return;
     }
 
@@ -123,6 +150,21 @@ export function OnboardingPage() {
         <div className="onboarding-header">
           <h1 className="onboarding-title">¡Bienvenido!</h1>
           <p className="onboarding-subtitle">Configura tu growshop en unos simples pasos</p>
+          <div className="onboarding-progress">
+            <div 
+              className={`onboarding-progress-step ${currentStep >= 1 ? 'active' : ''} ${currentStep === 1 ? 'current' : ''}`}
+            >
+              <span className="onboarding-progress-number">1</span>
+              <span className="onboarding-progress-label">Nombre</span>
+            </div>
+            <div className={`onboarding-progress-line ${currentStep >= 2 ? 'active' : ''}`}></div>
+            <div 
+              className={`onboarding-progress-step ${currentStep >= 2 ? 'active' : ''} ${currentStep === 2 ? 'current' : ''}`}
+            >
+              <span className="onboarding-progress-number">2</span>
+              <span className="onboarding-progress-label">Logo</span>
+            </div>
+          </div>
         </div>
 
         <FormCard className="onboarding-form-card">
@@ -133,68 +175,109 @@ export function OnboardingPage() {
               </div>
             )}
 
-            <FormSection
-              title="Nombre de tu growshop"
-              description="Este nombre aparecerá en tu logo y en toda la aplicación"
-            >
-              <Input
-                label="Nombre del growshop"
-                value={growName}
-                onChange={(e) => {
-                  setGrowName(e.target.value);
-                  if (errors.growName) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.growName;
-                      return newErrors;
-                    });
-                  }
-                }}
-                error={errors.growName}
-                placeholder="Ej: Mi Growshop"
-                required
-                autoFocus
-                disabled={isSubmitting}
-              />
-            </FormSection>
+            {/* Paso 1: Nombre */}
+            {currentStep === 1 && (
+              <div className="onboarding-step" key="step-1">
+                <FormSection
+                  title="Nombre de tu growshop"
+                  description="Este nombre aparecerá en tu logo y en toda la aplicación"
+                >
+                  <Input
+                    label="Nombre del growshop"
+                    value={growName}
+                    onChange={(e) => {
+                      setGrowName(e.target.value);
+                      if (errors.growName) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.growName;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSubmitting && growName.trim().length >= 2) {
+                        e.preventDefault();
+                        handleNext();
+                      }
+                    }}
+                    error={errors.growName}
+                    placeholder="Ej: Mi Growshop"
+                    required
+                    autoFocus
+                    disabled={isSubmitting}
+                  />
+                </FormSection>
+              </div>
+            )}
 
-            <FormSection
-              title="Logo de tu growshop"
-              description={
-                !growName.trim()
-                  ? "Primero ingresa el nombre para ver los logos predefinidos"
-                  : "Selecciona uno de nuestros logos predefinidos o sube tu propio logo"
-              }
-            >
-              <LogoSelector
-                growName={growName}
-                selectedLogo={selectedLogo}
-                onSelectLogo={(logo) => {
-                  setSelectedLogo(logo);
-                  if (errors.logo) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.logo;
-                      return newErrors;
-                    });
+            {/* Paso 2: Logo */}
+            {currentStep === 2 && (
+              <div className="onboarding-step" key="step-2">
+                <FormSection
+                  className="onboarding-logo-section"
+                  title="Logo de tu growshop"
+                  description={
+                    !growName.trim()
+                      ? "Primero ingresa el nombre para ver los logos predefinidos"
+                      : "Selecciona uno de nuestros logos predefinidos o sube tu propio logo"
                   }
-                }}
-              />
-              {errors.logo && (
-                <div className="onboarding-field-error">{errors.logo}</div>
-              )}
-            </FormSection>
+                >
+                  <LogoSelector
+                    growName={growName}
+                    selectedLogo={selectedLogo}
+                    onSelectLogo={(logo) => {
+                      setSelectedLogo(logo);
+                      if (errors.logo) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.logo;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                  />
+                  {errors.logo && (
+                    <div className="onboarding-field-error">{errors.logo}</div>
+                  )}
+                </FormSection>
+              </div>
+            )}
 
             <div className="onboarding-actions">
-              <Button
-                type="submit"
-                variant="primary"
-                loading={isSubmitting}
-                disabled={!growName.trim() || !selectedLogo || isSubmitting}
-                size="large"
-              >
-                Completar configuración
-              </Button>
+              {currentStep === 1 && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  size="large"
+                >
+                  Siguiente
+                </Button>
+              )}
+              {currentStep === 2 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    size="large"
+                  >
+                    Atrás
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isSubmitting}
+                    disabled={!growName.trim() || !selectedLogo || isSubmitting}
+                    size="large"
+                  >
+                    Completar configuración
+                  </Button>
+                </>
+              )}
             </div>
           </form>
         </FormCard>

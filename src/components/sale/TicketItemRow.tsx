@@ -337,6 +337,7 @@ function TicketItemRowComponent({
                 onClick={toggleDiscount}
                 className="ticket-item-row-discount-toggle"
                 size="small"
+                data-tour={`apply-discount-${index}`}
               >
                 {showDiscount ? 'Ocultar descuento' : 'Añadir descuento'}
               </Button>
@@ -357,6 +358,7 @@ function TicketItemRowComponent({
                       step={item.discountType === 'PERCENTAGE' ? 1 : 0.01}
                       placeholder={item.discountType === 'PERCENTAGE' ? '%' : '€'}
                       className="ticket-item-row-discount-value"
+                      data-tour={`discount-input-${index}`}
                     />
                   )}
                 </div>

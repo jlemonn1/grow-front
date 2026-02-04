@@ -67,14 +67,14 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
         await stopScanning();
         onCustomerFound(customer);
         onClose();
-        showToast('Cliente encontrado', 'success');
+        showToast('Socio encontrado', 'success');
       } else {
-        setError('Cliente no encontrado');
-        showToast('Cliente no encontrado con el PIN escaneado', 'error');
+        setError('Socio no encontrado');
+        showToast('Socio no encontrado con el PIN escaneado', 'error');
       }
     } catch (err) {
-      setError('Error al buscar cliente');
-      showToast('Error al buscar cliente. Intente nuevamente.', 'error');
+      setError('Error al buscar socio');
+      showToast('Error al buscar socio. Intente nuevamente.', 'error');
     } finally {
       isProcessingRef.current = false;
     }
@@ -119,7 +119,7 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
               handleQRScan(decodedText);
             } else {
               setError('Formato de QR inválido');
-              showToast('El QR escaneado no es un código de cliente válido', 'error');
+              showToast('El QR escaneado no es un código de socio válido', 'error');
             }
           }
         },
@@ -226,7 +226,7 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
 
         <div className="qr-scanner-fullscreen-body">
           <p className="qr-scanner-fullscreen-instructions">
-            Apunta la cámara hacia el código QR del cliente para buscarlo automáticamente.
+            Apunta la cámara hacia el código QR del socio para buscarlo automáticamente.
           </p>
 
           <div className="qr-scanner-fullscreen-container">

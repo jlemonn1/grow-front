@@ -11,12 +11,14 @@ interface PageHeaderProps {
     label: string;
     onClick: () => void;
     icon?: IconType;
+    dataTour?: string;
   };
   onBack?: () => void;
   isSaving?: boolean;
+  dataTourBack?: string;
 }
 
-export function PageHeader({ title, subtitle, action, onBack, isSaving }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action, onBack, isSaving, dataTourBack }: PageHeaderProps) {
   const ActionIcon = action?.icon;
   
   return (
@@ -29,18 +31,19 @@ export function PageHeader({ title, subtitle, action, onBack, isSaving }: PageHe
               className="page-header-back-button"
               onClick={onBack}
               aria-label="Volver atrás"
+              data-tour={dataTourBack}
             >
               <HiArrowLeft className="page-header-back-icon" aria-hidden="true" />
             </button>
           )}
           <div className="page-header-title-container">
-            <h1 className="page-header-title">{title}</h1>
+            <h1 className="page-header-title" data-tour="page-header-title">{title}</h1>
             {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
           </div>
           <DraftSavingIndicator isSaving={isSaving} />
         </div>
         {action && (
-          <Button onClick={action.onClick} variant="primary">
+          <Button onClick={action.onClick} variant="primary" data-tour={action.dataTour}>
             {ActionIcon && <ActionIcon style={{ marginRight: '8px', fontSize: '18px' }} />}
             {action.label}
           </Button>

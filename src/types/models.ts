@@ -16,6 +16,7 @@ export const AdminPermission = {
   GESTIONAR_STOCK: 'GESTIONAR_STOCK',
   GESTIONAR_CLIENTES: 'GESTIONAR_CLIENTES',
   VER_REPORTES: 'VER_REPORTES',
+  GESTIONAR_CAJAFUERTE: 'GESTIONAR_CAJAFUERTE',
   GESTIONAR_ADMINS: 'GESTIONAR_ADMINS',
 } as const;
 
@@ -55,7 +56,11 @@ export interface Customer {
   subscriptionPrice: number;
   subscriptionStartDate: string;
   subscriptionEndDate: string;
+  balance?: number;
   createdAt?: string;
+  profilePictureUrl?: string;
+  dniPictureUrl?: string;
+  dniNumber?: string;
 }
 
 export interface SaleItem {
@@ -79,6 +84,8 @@ export interface Sale {
   totalAmount: number;
   cashGiven: number;
   changeAmount: number;
+  balanceUsed?: number;
+  changeSavedToBalance?: number;
   createdBy?: Admin;
   createdByUsername?: string;
   createdAt: string;
@@ -158,6 +165,11 @@ export interface CreateSaleItemRequest {
 export interface CreateSaleRequest {
   customerId: string;
   cashGiven: number;
+  cashGivenDenominations: DenominationsMap; // Denominaciones recibidas del cliente
+  changeDenominations?: DenominationsMap; // Denominaciones de cambio (solo si hay cambio)
+  useBalance?: boolean;
+  balanceToUse?: number;
+  saveChangeToBalance?: boolean;
   items: CreateSaleItemRequest[];
   createdAt?: string; // Fecha personalizada opcional (ISO 8601)
 }
@@ -175,6 +187,39 @@ export interface SaleDraft {
   items: CreateSaleItemRequest[];
   cashGiven: number;
   updatedAt: string;
+}
+
+// Tipos para pedidos pendientes
+export interface SavePendingSaleRequest {
+  customerId?: string | null;
+  cashGiven: number;
+  items: CreateSaleItemRequest[];
+  selectedProductId?: string | null;
+  gramsToAdd?: number | null;
+  cashGivenDenominations?: DenominationsMap;
+  changeDenominations?: DenominationsMap | null;
+  useBalance?: boolean;
+  balanceToUse?: number | null;
+  saveChangeToBalance?: boolean;
+}
+
+export interface PendingSale {
+  id: string;
+  customerId?: string | null;
+  customerName?: string | null;
+  items: CreateSaleItemRequest[];
+  cashGiven: number;
+  selectedProductId?: string | null;
+  gramsToAdd?: number | null;
+  cashGivenDenominations?: DenominationsMap;
+  changeDenominations?: DenominationsMap | null;
+  useBalance?: boolean;
+  balanceToUse?: number | null;
+  saveChangeToBalance?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  totalAmount?: number;
+  itemsCount?: number;
 }
 
 // Tipos para perfil de cliente
@@ -328,6 +373,18 @@ export interface DashboardTickerResponse {
 }
 
 // Tipos para gestión de clientes
+export interface UpdateCustomerRequest {
+  displayName?: string;
+  phone?: string;
+  notes?: string;
+  pin?: string;
+  subscriptionType?: 'MONTHLY' | 'ANNUAL';
+  subscriptionPrice?: number;
+  profilePictureUrl?: string;
+  dniPictureUrl?: string;
+  dniNumber?: string;
+}
+
 export interface CreateCustomerRequest {
   displayName: string;
   phone?: string;
@@ -391,4 +448,83 @@ export interface HourlyProductStatsDataPoint {
 export interface HourlyProductStatsResponse {
   period: Period;
   dataPoints: HourlyProductStatsDataPoint[];
+}
+
+// Tipos para gestión de saldo
+export type BalanceTransactionType = 
+  | 'SALE_USED'
+  | 'MANUAL_ADJUSTMENT'
+  | 'CHANGE_SAVED'
+  | 'TRANSFER_OUT'
+  | 'TRANSFER_IN';
+
+export interface BalanceTransaction {
+  id: string;
+  type: BalanceTransactionType;
+  amount: number;
+  resultingBalance: number;
+  notes?: string;
+  createdByUsername?: string;
+  createdAt: string;
+}
+
+export interface AdjustBalanceRequest {
+  amount: number;
+  notes?: string;
+}
+
+export interface TransferBalanceRequest {
+  toCustomerId: string;
+  amount: number;
+  notes: string;
+}
+
+// Tipos para CajaFuerte
+export type DenominationsMap = Record<string, number>; // Key es el valor como string (ej: "0.01", "5", "20")
+
+export type CajaFuerteTransactionType = 
+  | 'ADD'
+  | 'WITHDRAW'
+  | 'CHANGE'
+  | 'SALE_INPUT'
+  | 'SALE_OUTPUT';
+
+export interface CajaFuerte {
+  totalAmount: number;
+  denominations: DenominationsMap;
+}
+
+export interface CajaFuerteTransaction {
+  id: string;
+  type: CajaFuerteTransactionType;
+  amount: number;
+  denominations: DenominationsMap;
+  notes?: string;
+  createdByUsername?: string;
+  createdAt: string;
+  relatedSaleId?: string;
+}
+
+export interface AddMoneyRequest {
+  denominations: DenominationsMap;
+  notes?: string;
+}
+
+export interface WithdrawMoneyRequest {
+  denominations: DenominationsMap;
+  notes?: string;
+}
+
+export interface ChangeDenominationsRequest {
+  fromDenominations: DenominationsMap;
+  toDenominations: DenominationsMap;
+  notes?: string;
+}
+
+export interface CajaFuerteTransactionParams {
+  type?: CajaFuerteTransactionType;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
 }

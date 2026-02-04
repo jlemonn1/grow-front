@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/onboarding/OnboardingPage';
+import { OnboardingTourPage } from './pages/onboarding/OnboardingTourPage';
 import { HomePage } from './pages/HomePage';
 import { SaleCreatePage } from './pages/sales/SaleCreatePage';
 import { SalesPage } from './pages/sales/SalesPage';
@@ -15,6 +16,7 @@ import { CustomerDetailPage } from './pages/customers/CustomerDetailPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { ConfigPage } from './pages/config/ConfigPage';
 import { AdminsPage } from './pages/admins/AdminsPage';
+import { CajaFuertePage } from './pages/cajafuerte/CajaFuertePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { OnboardingRoute } from './components/common/OnboardingRoute';
@@ -25,7 +27,17 @@ export function AppRoutes() {
       {/* Ruta pública de login */}
       <Route path="/login" element={<LoginPage />} />
       
-      {/* Ruta de onboarding - protegida pero diferente del layout normal */}
+      {/* Ruta de onboarding funcional (tour) - protegida pero dentro del layout */}
+      <Route
+        path="/onboarding/tour"
+        element={
+          <OnboardingRoute>
+            <OnboardingTourPage />
+          </OnboardingRoute>
+        }
+      />
+      
+      {/* Ruta de onboarding de configuración - protegida pero diferente del layout normal */}
       <Route
         path="/onboarding"
         element={
@@ -57,6 +69,7 @@ export function AppRoutes() {
         <Route path="customers/new" element={<CustomerCreatePage />} />
         <Route path="customers/:id" element={<CustomerDetailPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="cajafuerte" element={<CajaFuertePage />} />
         <Route path="config" element={<ConfigPage />} />
         <Route path="admins" element={<AdminsPage />} />
         <Route path="*" element={<NotFoundPage />} />

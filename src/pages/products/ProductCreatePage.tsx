@@ -440,6 +440,7 @@ export function ProductCreatePage() {
                   required
                   disabled={isSubmitting}
                   placeholder="Ej: Amnesia Haze"
+                  data-tour="product-name-input"
                 />
 
                 <div className="category-select-wrapper">
@@ -456,6 +457,7 @@ export function ProductCreatePage() {
                     ]}
                     required
                     disabled={isSubmitting}
+                    data-tour="product-category-select"
                   />
                   <Button
                     type="button"
@@ -463,6 +465,7 @@ export function ProductCreatePage() {
                     onClick={handleOpenCreateCategoryModal}
                     disabled={isSubmitting}
                     className="create-category-button"
+                    data-tour="create-category-button"
                   >
                     + Nueva categoría
                   </Button>
@@ -489,6 +492,7 @@ export function ProductCreatePage() {
                     required
                     disabled={isSubmitting}
                     placeholder="0.00"
+                    data-tour="product-price-input"
                   />
                 </div>
 
@@ -506,6 +510,7 @@ export function ProductCreatePage() {
                     required
                     disabled={isSubmitting}
                     placeholder="0.00"
+                    data-tour="product-stock-input"
                   />
                 </div>
               </div>
@@ -533,6 +538,7 @@ export function ProductCreatePage() {
                     }}
                     disabled={isSubmitting}
                     className="form-checkbox"
+                    data-tour="product-on-sale-checkbox"
                   />
                   <label htmlFor="onSale" className="form-checkbox-label">
                     Producto en oferta
@@ -575,6 +581,7 @@ export function ProductCreatePage() {
                         { value: 'fixed', label: 'Precio fijo (€)' },
                       ]}
                       disabled={isSubmitting}
+                      data-tour="product-sale-type-select"
                     />
                   </div>
                   {(formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0) || 
@@ -603,6 +610,7 @@ export function ProductCreatePage() {
                         step={1}
                         disabled={isSubmitting}
                         placeholder="Ej: 20"
+                        data-tour="product-discount-percent-input"
                       />
                       {formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0 && formData.pricePerGram > 0 && (
                         <div style={{ 
@@ -642,6 +650,7 @@ export function ProductCreatePage() {
                           step={0.01}
                           disabled={isSubmitting}
                           placeholder="Precio especial en oferta"
+                          data-tour="product-sale-price-input"
                         />
                       </div>
                     </div>
@@ -660,6 +669,7 @@ export function ProductCreatePage() {
                 onError={(error) => {
                   setErrors((prev) => ({ ...prev, imageUrl: error }));
                 }}
+                data-tour="product-image-upload"
               />
               {errors.imageUrl && (
                 <div className="form-error" style={{ marginTop: 'var(--spacing-xs)' }}>
@@ -682,6 +692,7 @@ export function ProductCreatePage() {
                 disabled={isSubmitting}
                 placeholder="Información adicional sobre el producto..."
                 rows={4}
+                data-tour="product-description-textarea"
               />
             </FormSection>
 
@@ -691,6 +702,7 @@ export function ProductCreatePage() {
                 variant="secondary"
                 onClick={handleCancel}
                 disabled={isSubmitting}
+                data-tour="cancel-product"
               >
                 Cancelar
               </Button>
@@ -699,6 +711,7 @@ export function ProductCreatePage() {
                 variant="primary"
                 loading={isSubmitting}
                 disabled={isSubmitting}
+                data-tour="save-product"
               >
                 Guardar producto
               </Button>

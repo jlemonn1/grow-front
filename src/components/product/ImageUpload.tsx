@@ -11,9 +11,10 @@ interface ImageUploadProps {
   value?: string;
   onChange: (imageUrl: string) => void;
   onError?: (error: string) => void;
+  'data-tour'?: string;
 }
 
-export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }: ImageUploadProps) {
   const { showToast } = useUI();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
@@ -127,7 +128,7 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
   }, [value, preview]);
 
   return (
-    <div className="image-upload">
+    <div className="image-upload" data-tour={dataTour}>
       <div
         className="image-upload-preview-container"
         onDragEnter={handleDragEnter}

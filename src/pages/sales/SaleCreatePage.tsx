@@ -1,24 +1,28 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlineUser, HiOutlineCube, HiOutlineShoppingCart, HiOutlinePlus, HiOutlineRefresh } from 'react-icons/hi';
+import { HiOutlineUser, HiOutlineCube, HiOutlineShoppingCart, HiOutlinePlus, HiOutlineRefresh, HiOutlineClock } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CustomerPicker } from '@/components/sale/CustomerPicker';
 import { ProductPicker } from '@/components/sale/ProductPicker';
+import { RecommendedProductsGallery } from '@/components/sale/RecommendedProductsGallery';
 import { TicketItemsList } from '@/components/sale/TicketItemsList';
 import { TicketSummary } from '@/components/sale/TicketSummary';
+import { CashDenominationsSelector } from '@/components/sale/CashDenominationsSelector';
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
 import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
+import { PartialChangeModal } from '@/components/sale/PartialChangeModal';
 import { ProductDispenseInput } from '@/components/sale/ProductDispenseInput';
 import { Button } from '@/components/common/Button';
 import { useTicket } from '@/hooks/useTicket';
 import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
-import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft } from '@/services/sales.service';
+import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft, savePendingSale } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { login } from '@/services/auth.service';
+import { PendingSalesModal } from '@/components/sale/PendingSalesModal';
 import type { ValidationError, ApiError } from '@/types/api';
-import type { CreateSaleRequest, Product, Sale, SaleDraft } from '@/types/models';
+import type { CreateSaleRequest, Product, Sale, SaleDraft, DenominationsMap, PendingSale } from '@/types/models';
 import './SaleCreatePage.css';
 
 export function SaleCreatePage() {
@@ -35,6 +39,15 @@ export function SaleCreatePage() {
     change,
     isValid,
     isSavingDraft,
+    useBalance,
+    balanceToUse,
+    saveChangeToBalance,
+    balanceUsed,
+    balanceRemaining,
+    setUseBalance,
+    setBalanceToUse,
+    setSaveChangeToBalance,
+    saveAsPendingSale,
   } = ticketContext;
   const {
     setCustomer,
@@ -60,13 +73,21 @@ export function SaleCreatePage() {
   const [draft, setDraft] = useState<SaleDraft | null>(null);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [shouldValidateAfterLoad, setShouldValidateAfterLoad] = useState(false);
+  const [cashGivenDenominations, setCashGivenDenominations] = useState<DenominationsMap>({});
+  const [changeDenominations, setChangeDenominations] = useState<DenominationsMap | null>(null);
+  const [showPartialChangeModal, setShowPartialChangeModal] = useState(false);
+  const [partialChangeData, setPartialChangeData] = useState<{
+    changeAmount: number;
+    changeDenominations: DenominationsMap;
+    remainingAmount: number;
+  } | null>(null);
+  const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
   
   // Refs para atajos de teclado
   const gramsInputRef = useRef<HTMLInputElement>(null);
   const eurosInputRef = useRef<HTMLInputElement>(null);
   const productSearchRef = useRef<{ focus: () => void }>(null);
   const customerSearchRef = useRef<{ focus: () => void }>(null);
-  const cashGivenInputRef = useRef<HTMLInputElement>(null);
 
   // Validar items cuando se cargan productos después de recuperar borrador
   useEffect(() => {
@@ -88,6 +109,34 @@ export function SaleCreatePage() {
       }
     }
   }, [shouldValidateAfterLoad, items, products, ticket]);
+
+  // Log cuando el componente se monta
+  useEffect(() => {
+    console.log('[SaleCreatePage] Componente montado');
+    console.log('[SaleCreatePage] URL actual:', window.location.pathname);
+    
+    // Verificar que los elementos clave existen después de un breve delay
+    setTimeout(() => {
+      const pageHeader = document.querySelector('[data-tour="page-header-title"]');
+      const customerInput = document.querySelector('[data-tour="customer-search-input"]');
+      const productInput = document.querySelector('[data-tour="product-search-input"]');
+      const saleContainer = document.querySelector('.sale-create-container');
+      
+      console.log('[SaleCreatePage] Verificación de elementos después de montar:');
+      console.log('[SaleCreatePage]   - page-header-title:', !!pageHeader);
+      console.log('[SaleCreatePage]   - customer-search-input:', !!customerInput);
+      console.log('[SaleCreatePage]   - product-search-input:', !!productInput);
+      console.log('[SaleCreatePage]   - sale-create-container:', !!saleContainer);
+      
+      // Listar todos los elementos con data-tour
+      const allTourElements = document.querySelectorAll('[data-tour]');
+      console.log('[SaleCreatePage] Elementos con data-tour encontrados:', Array.from(allTourElements).map(el => ({
+        selector: el.getAttribute('data-tour'),
+        tag: el.tagName,
+        className: el.className
+      })));
+    }, 1000);
+  }, []);
 
   // Cargar borrador al montar
   useEffect(() => {
@@ -164,13 +213,107 @@ export function SaleCreatePage() {
   // Manejar descartar borrador
   const handleDiscardDraft = useCallback(async () => {
     try {
+      // Si el borrador tiene contenido (cliente o items), guardarlo como pendiente antes de eliminarlo
+      if (draft && (draft.customerId || (draft.items && draft.items.length > 0))) {
+        try {
+          // Guardar como pendiente usando la información del draft directamente
+          // El draft no tiene selectedProduct, gramsToAdd ni denominaciones, así que usamos valores por defecto
+          await savePendingSale({
+            customerId: draft.customerId || null,
+            cashGiven: draft.cashGiven || 0,
+            items: draft.items || [],
+            selectedProductId: null, // No disponible en el draft
+            gramsToAdd: null, // No disponible en el draft
+            cashGivenDenominations: undefined, // No disponible en el draft
+            changeDenominations: undefined, // No disponible en el draft
+            useBalance: false, // No disponible en el draft
+            balanceToUse: undefined, // No disponible en el draft
+            saveChangeToBalance: false, // No disponible en el draft
+          });
+          showToast('Borrador guardado como pendiente', 'success');
+        } catch (error) {
+          console.error('Error al guardar borrador como pendiente:', error);
+          // Continuar con la eliminación aunque falle el guardado como pendiente
+        }
+      }
+      
+      // Eliminar el borrador
       await deleteSaleDraft();
       setShowDraftModal(false);
       setDraft(null);
     } catch (error) {
       console.error('Error al eliminar borrador:', error);
+      showToast('Error al eliminar borrador', 'error');
     }
-  }, []);
+  }, [draft, showToast]);
+
+  // Manejar recuperación de pedido pendiente
+  const handleRecoverPendingSale = useCallback(async (pendingSale: PendingSale) => {
+    try {
+      ticketContext.setIsLoadingDraft(true);
+      setGlobalLoading(true);
+      
+      // Cargar cliente PRIMERO si existe
+      if (pendingSale.customerId) {
+        try {
+          const customerData = await customersService.getById(pendingSale.customerId);
+          ticketContext.setCustomer(customerData);
+        } catch (error) {
+          console.error('Error al cargar cliente del pendiente:', error);
+          showToast('Error al cargar el cliente del pedido pendiente', 'error');
+          return;
+        }
+      } else {
+        ticketContext.setCustomer(null);
+      }
+
+      // Pre-cargar todos los productos del pendiente
+      const productIds = pendingSale.items.map(item => item.productId);
+      if (pendingSale.selectedProductId) {
+        productIds.push(pendingSale.selectedProductId);
+      }
+      
+      // Refrescar productos ANTES de cargar
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+      
+      // Esperar a que React procese la actualización
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Cargar el pendiente completo (incluye items, denominaciones, configuración de saldo)
+      const additionalState = await ticketContext.loadPendingSale(pendingSale, getProductById);
+      
+      // Restaurar estado adicional del formulario
+      if (additionalState.selectedProductId) {
+        try {
+          const product = await getProductById(additionalState.selectedProductId);
+          if (product) {
+            setSelectedProduct(product);
+            setGramsToAdd(additionalState.gramsToAdd);
+          }
+        } catch (error) {
+          console.error('Error al cargar producto seleccionado:', error);
+        }
+      }
+      
+      // Restaurar denominaciones
+      setCashGivenDenominations(additionalState.cashGivenDenominations);
+      setChangeDenominations(additionalState.changeDenominations);
+      
+      // Refrescar productos después de cargar
+      await Promise.all(productIds.map(id => refreshProduct(id)));
+      
+      // Activar flag para validación
+      setShouldValidateAfterLoad(true);
+      
+      showToast('Pedido pendiente recuperado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al recuperar pedido pendiente:', error);
+      showToast('Error al recuperar pedido pendiente', 'error');
+    } finally {
+      ticketContext.setIsLoadingDraft(false);
+      setGlobalLoading(false);
+    }
+  }, [ticketContext, getProductById, refreshProduct, showToast, setGlobalLoading]);
 
   // Manejar selección de producto
   const handleProductSelect = useCallback(async (product: Product | null) => {
@@ -215,15 +358,15 @@ export function SaleCreatePage() {
     }
   }, [selectedProduct, gramsToAdd, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
-  // Procesar venta
-  const handleProcessSale = useCallback(async () => {
+  // Procesar venta (función interna que realmente hace el procesamiento)
+  const processSaleInternal = useCallback(async () => {
     if (!isValid) {
       showToast('El ticket no es válido. Revisa los errores.', 'warning');
       return;
     }
 
     if (!customer) {
-      showToast('Debes seleccionar un cliente', 'warning');
+      showToast('Debes seleccionar un socio', 'warning');
       return;
     }
 
@@ -237,10 +380,36 @@ export function SaleCreatePage() {
     setCashGivenError(undefined);
 
     try {
+      // Validar que hay denominaciones recibidas (deben haberse contado automáticamente)
+      const hasCashGivenDenominations = cashGivenDenominations && 
+        Object.keys(cashGivenDenominations).length > 0 && 
+        Object.values(cashGivenDenominations).some(qty => qty > 0);
+      
+      if (cashGiven > 0 && !hasCashGivenDenominations) {
+        showToast('No se han registrado las denominaciones recibidas. Usa los botones de billetes/monedas.', 'warning');
+        setIsProcessing(false);
+        setGlobalLoading(false);
+        return;
+      }
+
+      // Solo validar denominaciones de cambio si no se guarda todo en saldo
+      if (change > 0 && !saveChangeToBalance && (!changeDenominations || Object.keys(changeDenominations).length === 0)) {
+        showToast('Debes calcular las denominaciones de cambio', 'warning');
+        setIsProcessing(false);
+        setGlobalLoading(false);
+        return;
+      }
+
       // Construir request
+      // Si se guarda todo el cambio en saldo, no enviar denominaciones de cambio
       const request: CreateSaleRequest = {
         customerId: customer.id,
         cashGiven,
+        cashGivenDenominations,
+        changeDenominations: change > 0 && !saveChangeToBalance ? changeDenominations : undefined,
+        useBalance,
+        balanceToUse: useBalance ? balanceToUse : undefined,
+        saveChangeToBalance,
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
@@ -274,6 +443,8 @@ export function SaleCreatePage() {
       reset();
       setSelectedProduct(null);
       setGramsToAdd(0);
+      setCashGivenDenominations({});
+      setChangeDenominations(null);
     } catch (error) {
       // Manejo de errores específicos
       if (error && typeof error === 'object' && 'status' in error) {
@@ -371,6 +542,12 @@ export function SaleCreatePage() {
     items,
     cashGiven,
     total,
+    cashGivenDenominations,
+    changeDenominations,
+    change,
+    useBalance,
+    balanceToUse,
+    saveChangeToBalance,
     reset,
     getProductStock,
     updateProductStock,
@@ -378,6 +555,59 @@ export function SaleCreatePage() {
     findProductIdByName,
     showToast,
     setGlobalLoading,
+  ]);
+
+  // Procesar venta (función pública que verifica cambio parcial)
+  const handleProcessSale = useCallback(async () => {
+    if (!isValid) {
+      showToast('El ticket no es válido. Revisa los errores.', 'warning');
+      return;
+    }
+
+    if (!customer) {
+      showToast('Debes seleccionar un socio', 'warning');
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast('Debes agregar al menos un producto', 'warning');
+      return;
+    }
+
+    // Verificar si el cambio es parcial (solo si no se había marcado guardar en saldo)
+    if (change > 0 && !saveChangeToBalance && changeDenominations) {
+      const changeGiven = Object.entries(changeDenominations)
+        .filter(([_, qty]) => qty > 0)
+        .reduce((sum, [denomination, qty]) => sum + parseFloat(denomination) * qty, 0);
+      
+      const changeDifference = Math.abs(changeGiven - change);
+      
+      // Si hay diferencia significativa (más de 0.01), es cambio parcial
+      if (changeDifference > 0.01 && changeGiven < change) {
+        const remainingAmount = change - changeGiven;
+        // Marcar automáticamente "guardar en saldo" para el resto del cambio
+        setSaveChangeToBalance(true);
+        setPartialChangeData({
+          changeAmount: change,
+          changeDenominations,
+          remainingAmount,
+        });
+        setShowPartialChangeModal(true);
+        return;
+      }
+    }
+
+    // Si no hay cambio parcial, procesar directamente
+    await processSaleInternal();
+  }, [
+    isValid,
+    customer,
+    items,
+    change,
+    saveChangeToBalance,
+    changeDenominations,
+    processSaleInternal,
+    showToast,
   ]);
 
   // Atajos de teclado (después de definir handleProcessSale)
@@ -427,6 +657,8 @@ export function SaleCreatePage() {
   const handleReset = useCallback(() => {
     // Resetear todo el ticket (esto ya limpia customer, items, cashGiven)
     reset();
+    setCashGivenDenominations({});
+    setChangeDenominations(null);
     // Limpiar producto seleccionado y gramos
     setSelectedProduct(null);
     setGramsToAdd(0);
@@ -438,9 +670,6 @@ export function SaleCreatePage() {
     if (gramsInputRef.current) {
       gramsInputRef.current.value = '';
     }
-    if (cashGivenInputRef.current) {
-      cashGivenInputRef.current.value = '';
-    }
     // Mostrar confirmación
     showToast('Todos los campos han sido limpiados', 'success');
   }, [reset, setCashGiven, showToast]);
@@ -448,7 +677,7 @@ export function SaleCreatePage() {
   return (
     <>
       <PageHeader 
-        title="Caja" 
+        title="Dispensar" 
         onBack={handleBack}
         isSaving={isSavingDraft}
         action={{
@@ -456,19 +685,35 @@ export function SaleCreatePage() {
           onClick: handleReset,
           icon: HiOutlineRefresh,
         }}
+        dataTourBack="back-to-home"
       />
+      <div style={{ padding: '0 24px', marginBottom: '16px' }}>
+        <Button
+          variant="secondary"
+          onClick={() => setShowPendingSalesModal(true)}
+          icon={<HiOutlineClock />}
+        >
+          Pedidos Pendientes
+        </Button>
+      </div>
       <div className="sale-create-container">
         <div className="sale-create-main">
           <div className="sale-create-section">
             <div className="sale-create-section-header">
               <HiOutlineUser className="sale-create-section-icon" />
-              <h2 className="sale-create-section-title">Cliente</h2>
+              <h2 className="sale-create-section-title">Socio</h2>
             </div>
             <CustomerPicker
               ref={customerSearchRef}
               selectedCustomer={customer}
               onSelect={setCustomer}
             />
+            {customer && (
+              <RecommendedProductsGallery
+                customerId={customer.id}
+                onProductSelect={handleProductSelect}
+              />
+            )}
           </div>
 
           <div className="sale-create-section">
@@ -505,6 +750,7 @@ export function SaleCreatePage() {
                   onClick={handleAddProduct}
                   disabled={gramsToAdd <= 0}
                   style={{ minWidth: '120px' }}
+                  data-tour="add-product"
                 >
                   <HiOutlinePlus style={{ marginRight: '8px' }} />
                   Agregar
@@ -532,16 +778,39 @@ export function SaleCreatePage() {
         <div className="sale-create-sidebar">
           <TicketSummary
             customerName={customer?.displayName || null}
+            customerBalance={customer?.balance}
             items={items}
             total={total}
             cashGiven={cashGiven}
             change={change}
             isValid={isValid}
             isProcessing={isProcessing}
+            useBalance={useBalance}
+            balanceToUse={balanceToUse}
+            saveChangeToBalance={saveChangeToBalance}
+            balanceUsed={balanceUsed}
+            balanceRemaining={balanceRemaining}
             onCashGivenChange={setCashGiven}
+            onUseBalanceChange={setUseBalance}
+            onBalanceToUseChange={setBalanceToUse}
+            onSaveChangeToBalanceChange={setSaveChangeToBalance}
             onProcessSale={handleProcessSale}
             cashGivenError={cashGivenError}
+            cashGivenDenominations={cashGivenDenominations}
+            changeDenominations={changeDenominations}
+            onCashGivenDenominationsChange={setCashGivenDenominations}
           />
+
+          {change > 0 && !saveChangeToBalance && (
+            <div className="sale-create-denominations-section">
+              <CashDenominationsSelector
+                changeAmount={change}
+                changeDenominations={changeDenominations}
+                onChangeDenominationsChange={setChangeDenominations}
+                disabled={isProcessing}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -564,6 +833,35 @@ export function SaleCreatePage() {
         draft={draft}
         onRecover={handleRecoverDraft}
         onDiscard={handleDiscardDraft}
+      />
+
+      {partialChangeData && (
+        <PartialChangeModal
+          isOpen={showPartialChangeModal}
+          changeAmount={partialChangeData.changeAmount}
+          changeDenominations={partialChangeData.changeDenominations}
+          remainingAmount={partialChangeData.remainingAmount}
+          onConfirm={async () => {
+            setShowPartialChangeModal(false);
+            setPartialChangeData(null);
+            // Limpiar denominaciones de cambio ya que todo se guardará en saldo
+            setChangeDenominations(null);
+            // Continuar con el procesamiento de la venta
+            await processSaleInternal();
+          }}
+          onCancel={() => {
+            setShowPartialChangeModal(false);
+            setPartialChangeData(null);
+            setIsProcessing(false);
+            setGlobalLoading(false);
+          }}
+        />
+      )}
+
+      <PendingSalesModal
+        isOpen={showPendingSalesModal}
+        onClose={() => setShowPendingSalesModal(false)}
+        onRecover={handleRecoverPendingSale}
       />
     </>
   );

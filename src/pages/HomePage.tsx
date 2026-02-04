@@ -8,6 +8,7 @@ import { GlobalSearchInput } from '@/components/home/GlobalSearchInput';
 import { GlobalSearchModal } from '@/components/home/GlobalSearchModal';
 import { getSalesSummary, getMonthlyDashboard } from '@/services/reports.service';
 import { getPredefinedPeriod, dateToISO } from '@/utils/dates';
+import { useDemo } from '@/context/demo.context';
 import type { SalesSummaryResponse, MonthlyDashboardResponse } from '@/types/models';
 import { useUI } from '@/context/ui.context';
 import './HomePage.css';
@@ -22,6 +23,7 @@ interface HomeCard {
 export function HomePage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
+  const { isDemoMode, demoData } = useDemo();
   
   const [topProducts, setTopProducts] = useState<SalesSummaryResponse | null>(null);
   const [dashboard, setDashboard] = useState<MonthlyDashboardResponse | null>(null);
@@ -32,20 +34,119 @@ export function HomePage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Obtener rango del mes actual
-        const currentMonth = getPredefinedPeriod('this_month');
-        const from = dateToISO(currentMonth.from, false);
-        const to = dateToISO(currentMonth.to, true);
+        // Si estamos en modo demo, generar datos mock
+        if (isDemoMode && demoData) {
+          // Generar resumen de productos mock
+          const productMap = new Map<string, { name: string; totalAmount: number }>();
+          demoData.sales.forEach(sale => {
+            sale.items.forEach(item => {
+              const existing = productMap.get(item.productId) || { name: item.productName, totalAmount: 0 };
+              productMap.set(item.productId, {
+                name: item.productName,
+                totalAmount: existing.totalAmount + item.lineTotal,
+              });
+            });
+          });
 
-        // Cargar datos en paralelo
-        // Usar dashboard para obtener topCustomers (CustomerStats[]) ya que getSalesSummary solo soporta 'product'
-        const [productsData, dashboardData] = await Promise.all([
-          getSalesSummary({ from, to, groupBy: 'product' }),
-          getMonthlyDashboard(),
-        ]);
+          const productRows = Array.from(productMap.entries())
+            .map(([key, value]) => ({
+              key,
+              label: value.name,
+              totalAmount: value.totalAmount,
+            }))
+            .sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
 
-        setTopProducts(productsData);
-        setDashboard(dashboardData);
+          const currentMonth = getPredefinedPeriod('this_month');
+          const productsData: SalesSummaryResponse = {
+            period: {
+              from: dateToISO(currentMonth.from, false),
+              to: dateToISO(currentMonth.to, true),
+            },
+            groupBy: 'product',
+            totalAmount: productRows.reduce((sum, row) => sum + (row.totalAmount || 0), 0),
+            rows: productRows,
+          };
+
+          // Generar dashboard mock
+          const customerMap = new Map<string, { displayName: string; totalSpent: number; totalGrams: number; purchaseCount: number }>();
+          demoData.sales.forEach(sale => {
+            const customer = demoData.customers.find(c => c.id === sale.customerId);
+            if (customer) {
+              const existing = customerMap.get(customer.id) || {
+                displayName: customer.displayName,
+                totalSpent: 0,
+                totalGrams: 0,
+                purchaseCount: 0,
+              };
+              customerMap.set(customer.id, {
+                displayName: customer.displayName,
+                totalSpent: existing.totalSpent + sale.totalAmount,
+                totalGrams: existing.totalGrams + sale.items.reduce((sum, item) => sum + item.grams, 0),
+                purchaseCount: existing.purchaseCount + 1,
+              });
+            }
+          });
+
+          const topCustomers = Array.from(customerMap.values())
+            .map(customer => ({
+              id: demoData.customers.find(c => c.displayName === customer.displayName)?.id || '',
+              displayName: customer.displayName,
+              totalSpent: customer.totalSpent,
+              totalGrams: customer.totalGrams,
+              purchaseCount: customer.purchaseCount,
+              avgTicket: customer.totalSpent / customer.purchaseCount,
+            }))
+            .sort((a, b) => b.totalSpent - a.totalSpent)
+            .slice(0, 5);
+
+          const dashboardData: MonthlyDashboardResponse = {
+            period: {
+              from: dateToISO(currentMonth.from, false),
+              to: dateToISO(currentMonth.to, true),
+            },
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            topProduct: productRows.length > 0 ? {
+              id: productRows[0].key,
+              name: productRows[0].label,
+              totalGrams: 0,
+              totalRevenue: productRows[0].totalAmount || 0,
+            } : null,
+            mostProfitableProduct: productRows.length > 0 ? {
+              id: productRows[0].key,
+              name: productRows[0].label,
+              totalGrams: 0,
+              totalRevenue: productRows[0].totalAmount || 0,
+            } : null,
+            topCustomers,
+            fumonDelMes: topCustomers.length > 0 ? {
+              id: topCustomers[0].id,
+              displayName: topCustomers[0].displayName,
+              totalSpent: topCustomers[0].totalSpent,
+              totalGrams: topCustomers[0].totalGrams,
+              purchaseCount: topCustomers[0].purchaseCount,
+              loyaltyScore: 100,
+              reason: 'Mayor gasto del mes',
+            } : null,
+          };
+
+          setTopProducts(productsData);
+          setDashboard(dashboardData);
+        } else {
+          // Modo normal: llamar a la API
+          const currentMonth = getPredefinedPeriod('this_month');
+          const from = dateToISO(currentMonth.from, false);
+          const to = dateToISO(currentMonth.to, true);
+
+          // Cargar datos en paralelo
+          const [productsData, dashboardData] = await Promise.all([
+            getSalesSummary({ from, to, groupBy: 'product' }),
+            getMonthlyDashboard(),
+          ]);
+
+          setTopProducts(productsData);
+          setDashboard(dashboardData);
+        }
       } catch (err: any) {
         showToast(err.message || 'Error al cargar datos del dashboard', 'error');
       } finally {
@@ -54,12 +155,12 @@ export function HomePage() {
     };
 
     loadData();
-  }, [showToast]);
+  }, [showToast, isDemoMode, demoData]);
 
   const cards: HomeCard[] = [
     {
       path: '/sales/new',
-      title: 'Caja',
+      title: 'Dispensar',
       description: 'Dispensar productos y gestionar ventas rápidamente',
       icon: <HiCurrencyEuro />,
     },
@@ -71,8 +172,8 @@ export function HomePage() {
     },
     {
       path: '/customers',
-      title: 'Clientes',
-      description: 'Ver, crear y gestionar clientes y suscripciones',
+      title: 'Socios',
+      description: 'Ver, crear y gestionar socios y suscripciones',
       icon: <HiUser />,
     },
     {

@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiOutlineCurrencyEuro, HiChevronDown, HiChevronUp, HiOutlineInformationCircle } from 'react-icons/hi';
+import { HiOutlineCurrencyEuro, HiChevronDown, HiChevronUp, HiOutlineInformationCircle, HiRefresh, HiPencil } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
@@ -35,7 +35,20 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { hasPermission } = useAuth();
-  const { getProductById, updateProduct } = useProducts();
+  const { getProductById, updateProduct, products, loadProducts } = useProducts();
+  const [actualProductId, setActualProductId] = useState<string | undefined>(id);
+  
+  // Log para debugging en el tour
+  console.log(`[ProductDetailPage] 🎯 Componente montado`);
+  console.log(`[ProductDetailPage] 📍 ID recibido de useParams:`, id);
+  console.log(`[ProductDetailPage] 🔍 URL actual (window.location):`, window.location.pathname);
+  console.log(`[ProductDetailPage] 📊 Estado del ID:`, {
+    hasId: !!id,
+    idValue: id,
+    idType: typeof id,
+    idLength: id?.length,
+    actualProductId: actualProductId
+  });
 
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -54,17 +67,56 @@ export function ProductDetailPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
 
+  // Detectar si estamos en onboarding y cargar productos si no hay ID
+  useEffect(() => {
+    const isOnboarding = window.location.pathname.includes('/onboarding/tour');
+    
+    if (!id && isOnboarding) {
+      console.log(`[ProductDetailPage] 🎓 Detectado modo onboarding sin ID, cargando productos...`);
+      loadProducts()
+        .then(() => {
+          if (products.length > 0 && products[0]?.id) {
+            const firstProductId = products[0].id;
+            console.log(`[ProductDetailPage] ✅ Productos cargados, usando el primero: ${firstProductId}`);
+            setActualProductId(firstProductId);
+          } else {
+            console.warn(`[ProductDetailPage] ⚠️ No hay productos disponibles después de cargar`);
+          }
+        })
+        .catch((error) => {
+          console.error(`[ProductDetailPage] ❌ Error cargando productos:`, error);
+        });
+    } else if (id) {
+      setActualProductId(id);
+    }
+  }, [id, loadProducts, products.length]);
+
   // Cargar producto y categorías
   useEffect(() => {
     const loadData = async () => {
-      if (!id) return;
+      console.log(`[ProductDetailPage] 🔄 useEffect loadData ejecutado`);
+      console.log(`[ProductDetailPage] 📍 ID en useEffect:`, actualProductId);
+      
+      if (!actualProductId) {
+        console.warn(`[ProductDetailPage] ⚠️ No hay ID, cancelando carga`);
+        setLoading(false);
+        return;
+      }
 
+      console.log(`[ProductDetailPage] ✅ Iniciando carga de producto con ID: ${actualProductId}`);
       setLoading(true);
       try {
         const [productData, categoriesData] = await Promise.all([
-          getProductById(id),
+          getProductById(actualProductId),
           listCategories(),
         ]);
+        
+        console.log(`[ProductDetailPage] 📦 Datos recibidos:`, {
+          hasProductData: !!productData,
+          productId: productData?.id,
+          productName: productData?.name,
+          categoriesCount: categoriesData?.length
+        });
 
         if (!productData) {
           showToast('Producto no encontrado', 'error');
@@ -90,7 +142,7 @@ export function ProductDetailPage() {
     };
 
     loadData();
-  }, [id, getProductById, navigate, showToast]);
+  }, [actualProductId, getProductById, navigate, showToast]);
 
   // Sincronizar editData cuando el producto cambia (solo si no estamos editando)
   useEffect(() => {
@@ -121,11 +173,11 @@ export function ProductDetailPage() {
   // Cargar movimientos
   useEffect(() => {
     const loadMovements = async () => {
-      if (!id) return;
+      if (!actualProductId) return;
 
       setLoadingMovements(true);
       try {
-        const response: PageResponse<StockMovement> = await getStockMovements(id, {
+        const response: PageResponse<StockMovement> = await getStockMovements(actualProductId, {
           page: 0,
           size: 50,
         });
@@ -140,7 +192,7 @@ export function ProductDetailPage() {
     if (product) {
       loadMovements();
     }
-  }, [id, product, showToast]);
+  }, [actualProductId, product, showToast]);
 
   const handleEdit = () => {
     if (!product) return;
@@ -177,7 +229,7 @@ export function ProductDetailPage() {
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!id || !product) return;
+    if (!actualProductId || !product) return;
 
     // Validación básica
     const newErrors: Record<string, string> = {};
@@ -220,7 +272,7 @@ export function ProductDetailPage() {
         updateData.saleDiscountPercent = editData.saleDiscountPercent;
       }
 
-      const updatedProduct = await updateProduct(id, updateData);
+      const updatedProduct = await updateProduct(actualProductId, updateData);
       setProduct(updatedProduct);
       // Actualizar editData con los valores del producto actualizado
       setEditData({
@@ -255,15 +307,15 @@ export function ProductDetailPage() {
 
   const handleRechargeSuccess = async () => {
     // Refrescar producto y movimientos
-    if (!id) return;
-    const updatedProduct = await getProductById(id);
+    if (!actualProductId) return;
+    const updatedProduct = await getProductById(actualProductId);
     if (updatedProduct) {
       setProduct(updatedProduct);
     }
 
     // Recargar movimientos
     try {
-      const response: PageResponse<StockMovement> = await getStockMovements(id, {
+      const response: PageResponse<StockMovement> = await getStockMovements(actualProductId, {
         page: 0,
         size: 50,
       });
@@ -314,7 +366,7 @@ export function ProductDetailPage() {
   };
 
   const handleSaveAndExit = async () => {
-    if (!id || !product) return;
+    if (!actualProductId || !product) return;
 
     // Validación básica
     const newErrors: Record<string, string> = {};
@@ -361,7 +413,7 @@ export function ProductDetailPage() {
         updateData.saleDiscountPercent = editData.saleDiscountPercent;
       }
 
-      const updatedProduct = await updateProduct(id, updateData);
+      const updatedProduct = await updateProduct(actualProductId, updateData);
       // Actualizar editData con los valores del producto actualizado
       setEditData({
         name: updatedProduct.name,
@@ -408,11 +460,11 @@ export function ProductDetailPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!id || !product) return;
+    if (!actualProductId || !product) return;
 
     setIsDeleting(true);
     try {
-      await deleteProduct(id);
+      await deleteProduct(actualProductId);
       showToast('Producto eliminado exitosamente', 'success');
       navigate('/products');
     } catch (err) {
@@ -467,6 +519,7 @@ export function ProductDetailPage() {
             ? {
                 label: 'Editar',
                 onClick: handleEdit,
+                dataTour: 'edit-product',
               }
             : undefined
         }
@@ -474,7 +527,7 @@ export function ProductDetailPage() {
 
       <div className="product-detail-container">
         {/* Sección de información/edición */}
-        <div className="product-detail-section">
+        <div className="product-detail-section" data-tour="product-detail-section">
           {isEditing ? (
             <FormCard>
               <form onSubmit={handleSave} className="product-edit-form">
@@ -491,6 +544,7 @@ export function ProductDetailPage() {
                       error={errors.name}
                       required
                       disabled={isSubmitting}
+                      data-tour="edit-product-name"
                     />
 
                     <Select
@@ -504,6 +558,7 @@ export function ProductDetailPage() {
                       ]}
                       required
                       disabled={isSubmitting}
+                      data-tour="edit-product-category"
                     />
                   </div>
                 </FormSection>
@@ -526,6 +581,7 @@ export function ProductDetailPage() {
                         step={0.01}
                         required
                         disabled={isSubmitting}
+                        data-tour="edit-product-price"
                       />
                     </div>
                   </div>
@@ -669,6 +725,7 @@ export function ProductDetailPage() {
                     onError={(error) => {
                       setErrors((prev) => ({ ...prev, imageUrl: error }));
                     }}
+                    data-tour="edit-product-image"
                   />
                   {errors.imageUrl && (
                     <div className="form-error" style={{ marginTop: 'var(--spacing-xs)' }}>
@@ -688,6 +745,7 @@ export function ProductDetailPage() {
                     onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                     disabled={isSubmitting}
                     rows={4}
+                    data-tour="edit-product-description"
                   />
                 </FormSection>
 
@@ -697,10 +755,11 @@ export function ProductDetailPage() {
                     variant="secondary"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
+                    data-tour="cancel-edit-product"
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" variant="primary" loading={isSubmitting}>
+                  <Button type="submit" variant="primary" loading={isSubmitting} data-tour="save-product-changes">
                     Guardar cambios
                   </Button>
                 </div>
@@ -713,49 +772,87 @@ export function ProductDetailPage() {
                 {!isProductExpanded && (
                   <div 
                     className="product-summary-view"
-                    onClick={() => setIsProductExpanded(true)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsProductExpanded(true);
-                      }
-                    }}
-                    aria-label="Expandir detalles del producto"
+                    data-tour="product-summary-view"
                   >
-                    <button
-                      type="button"
-                      className="product-expand-button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsProductExpanded(true);
+                    <div 
+                      className="product-summary-clickable"
+                      onClick={() => setIsProductExpanded(true)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setIsProductExpanded(true);
+                        }
                       }}
-                      aria-label="Expandir detalles"
-                      aria-expanded={false}
+                      aria-label="Expandir detalles del producto"
                     >
-                      <HiChevronDown className="product-expand-icon" aria-hidden="true" />
-                    </button>
-                    <div className="product-summary-content">
-                      <ProductImage 
-                        imageUrl={product.imageUrl} 
-                        alt={product.name}
-                        size="medium"
-                        className="product-summary-image"
-                      />
-                      <div className="product-summary-info">
-                        <h3 className="product-summary-name">{product.name}</h3>
-                        <div className="product-summary-stats">
-                          <div className="product-summary-stat">
-                            <span className="product-summary-stat-label">Stock:</span>
-                            <span className="product-summary-stat-value">{product.stockGrams.toFixed(2)}g</span>
-                          </div>
-                          <div className="product-summary-stat">
-                            <span className="product-summary-stat-label">Precio:</span>
-                            <span className="product-summary-stat-value">{formatMoney(product.pricePerGram)}/g</span>
+                      <button
+                        type="button"
+                        className="product-expand-button"
+                        data-tour="product-expand-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsProductExpanded(true);
+                        }}
+                        aria-label="Expandir detalles"
+                        aria-expanded={false}
+                      >
+                        <HiChevronDown className="product-expand-icon" aria-hidden="true" />
+                      </button>
+                      <div className="product-summary-content">
+                        <ProductImage 
+                          imageUrl={product.imageUrl} 
+                          alt={product.name}
+                          size="medium"
+                          className="product-summary-image"
+                        />
+                        <div className="product-summary-info">
+                          <h3 className="product-summary-name">{product.name}</h3>
+                          <div className="product-summary-stats">
+                            <div className="product-summary-stat">
+                              <span className="product-summary-stat-label">Stock:</span>
+                              <span className="product-summary-stat-value">{product.stockGrams.toFixed(2)}g</span>
+                            </div>
+                            <div className="product-summary-stat">
+                              <span className="product-summary-stat-label">Precio:</span>
+                              <span className="product-summary-stat-value">{formatMoney(product.pricePerGram)}/g</span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div className="product-summary-actions">
+                      {hasPermission(AdminPermission.GESTIONAR_STOCK) && (
+                        <button
+                          type="button"
+                          className="product-quick-action product-quick-action-recharge"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowRechargeModal(true);
+                          }}
+                          aria-label="Recargar stock"
+                          data-tour="quick-recharge-stock"
+                          title="Recargar stock"
+                        >
+                          <HiRefresh className="product-quick-action-icon" aria-hidden="true" />
+                        </button>
+                      )}
+                      {hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) && (
+                        <button
+                          type="button"
+                          className="product-quick-action product-quick-action-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit();
+                          }}
+                          aria-label="Editar producto"
+                          data-tour="quick-edit-product"
+                          title="Editar producto"
+                        >
+                          <HiPencil className="product-quick-action-icon" aria-hidden="true" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -835,18 +932,18 @@ export function ProductDetailPage() {
                       </button>
                     </div>
 
-                    <div className="product-actions">
+                    <div className="product-actions" data-tour="product-actions">
                       {hasPermission(AdminPermission.GESTIONAR_STOCK) && (
-                        <Button variant="primary" onClick={() => setShowRechargeModal(true)}>
+                        <Button variant="primary" onClick={() => setShowRechargeModal(true)} data-tour="recharge-stock">
                           Recargar Stock
                         </Button>
                       )}
                       {hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) && (
                         <>
-                          <Button variant="secondary" onClick={handleEdit}>
+                          <Button variant="secondary" onClick={handleEdit} data-tour="edit-product">
                             Editar
                           </Button>
-                          <Button variant="danger" onClick={handleDelete}>
+                          <Button variant="danger" onClick={handleDelete} data-tour="delete-product">
                             Eliminar
                           </Button>
                         </>

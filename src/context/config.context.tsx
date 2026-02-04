@@ -3,19 +3,26 @@ import { configService, type GrowConfiguration, type UpdateGrowConfigurationRequ
 import { generateColorPalette, applyColorSystem } from '@/utils/colorSystem';
 import { hasToken } from '@/services/auth.service';
 
+type QuickSaleMode = 'modal' | 'redirect';
+
 interface ConfigContextValue {
   config: GrowConfiguration | null;
   loading: boolean;
   error: string | null;
   themeMode: 'light' | 'dark';
+  quickSaleMode: QuickSaleMode;
   needsOnboarding: boolean;
+  needsFunctionalOnboarding: boolean;
+  completeFunctionalOnboarding: () => void;
   updateConfiguration: (data: UpdateGrowConfigurationRequest) => Promise<void>;
   refreshConfiguration: () => Promise<void>;
   applyColorTheme: () => void;
   setThemeMode: (mode: 'light' | 'dark') => void;
+  setQuickSaleMode: (mode: QuickSaleMode) => void;
 }
 
 const ConfigContext = createContext<ConfigContextValue | undefined>(undefined);
+const QUICK_SALE_MODE_KEY = 'growshop_quick_sale_mode';
 
 interface ConfigProviderProps {
   children: ReactNode;
@@ -41,6 +48,14 @@ function getInitialTheme(): 'light' | 'dark' {
 }
 
 /**
+ * Obtiene el modo de venta rápida desde localStorage
+ */
+function getInitialQuickSaleMode(): QuickSaleMode {
+  const saved = localStorage.getItem(QUICK_SALE_MODE_KEY);
+  return (saved === 'redirect' || saved === 'modal') ? saved : 'modal';
+}
+
+/**
  * Establece el tema en el documento HTML
  */
 function setThemeMode(mode: 'light' | 'dark'): void {
@@ -53,6 +68,10 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(getInitialTheme);
+  const [quickSaleMode, setQuickSaleModeState] = useState<QuickSaleMode>(getInitialQuickSaleMode);
+  const [functionalOnboardingCompleted, setFunctionalOnboardingCompleted] = useState<boolean>(() => {
+    return localStorage.getItem('functional-onboarding-completed') === 'true';
+  });
 
   const loadConfiguration = useCallback(async () => {
     // Solo cargar configuración si hay token
@@ -125,6 +144,11 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
   const handleSetThemeMode = useCallback((mode: 'light' | 'dark') => {
     setThemeModeState(mode);
     setThemeMode(mode);
+  }, []);
+
+  const handleSetQuickSaleMode = useCallback((mode: QuickSaleMode) => {
+    localStorage.setItem(QUICK_SALE_MODE_KEY, mode);
+    setQuickSaleModeState(mode);
   }, []);
 
   // Establecer tema inicial al montar
@@ -202,7 +226,36 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     }
   }, []);
 
-  // Función para determinar si se necesita onboarding
+  // Escuchar cambios en el modo de venta rápida desde localStorage (otras pestañas o cambios directos)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === QUICK_SALE_MODE_KEY && e.newValue) {
+        const newMode = (e.newValue === 'redirect' || e.newValue === 'modal') ? e.newValue : 'modal';
+        setQuickSaleModeState(newMode);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Función para determinar si se necesita onboarding funcional (tour)
+  const needsFunctionalOnboarding = useCallback((): boolean => {
+    // Si no hay token, no se necesita onboarding
+    if (!hasToken()) return false;
+    
+    // Usar el estado local en lugar de leer directamente del localStorage
+    return !functionalOnboardingCompleted;
+  }, [functionalOnboardingCompleted]);
+
+  // Función para marcar el onboarding funcional como completado
+  const completeFunctionalOnboarding = useCallback(() => {
+    localStorage.setItem('functional-onboarding-completed', 'true');
+    setFunctionalOnboardingCompleted(true);
+  }, []);
+
+
+  // Función para determinar si se necesita onboarding de configuración
   // Solo se evalúa si hay token (usuario autenticado)
   const needsOnboarding = useCallback((): boolean => {
     // Si no hay token, no se necesita onboarding
@@ -225,11 +278,15 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     loading,
     error,
     themeMode,
+    quickSaleMode,
     needsOnboarding: needsOnboarding(),
+    needsFunctionalOnboarding: needsFunctionalOnboarding(),
+    completeFunctionalOnboarding,
     updateConfiguration,
     refreshConfiguration,
     applyColorTheme,
     setThemeMode: handleSetThemeMode,
+    setQuickSaleMode: handleSetQuickSaleMode,
   };
 
   return (

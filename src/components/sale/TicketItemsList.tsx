@@ -44,16 +44,17 @@ export function TicketItemsList({
       </div>
       <div className="ticket-items-list-items">
         {items.map((item, index) => (
-          <TicketItemRow
-            key={`${item.productId}-${index}`}
-            item={item}
-            index={index}
-            onUpdate={onUpdate}
-            onUpdateDiscount={onUpdateDiscount}
-            onRemove={onRemove}
-            onValidate={handleValidate}
-            availableStock={getProductStock(item.productId, index)}
-          />
+          <div key={`${item.productId}-${index}`} data-tour={`ticket-item-${index}`}>
+            <TicketItemRow
+              item={item}
+              index={index}
+              onUpdate={onUpdate}
+              onUpdateDiscount={onUpdateDiscount}
+              onRemove={onRemove}
+              onValidate={handleValidate}
+              availableStock={getProductStock(item.productId, index)}
+            />
+          </div>
         ))}
       </div>
     </div>
