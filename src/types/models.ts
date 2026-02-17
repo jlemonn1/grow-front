@@ -7,6 +7,7 @@ export interface Admin {
   isActive: boolean;
   createdAt?: string;
   permissions?: Record<string, boolean>;
+  colorAccessibility?: 'normal' | 'protanopia' | 'high-contrast';
 }
 
 // Constantes de permisos
@@ -18,6 +19,7 @@ export const AdminPermission = {
   VER_REPORTES: 'VER_REPORTES',
   GESTIONAR_CAJAFUERTE: 'GESTIONAR_CAJAFUERTE',
   GESTIONAR_ADMINS: 'GESTIONAR_ADMINS',
+  GESTIONAR_CUPONES: 'GESTIONAR_CUPONES',
 } as const;
 
 export type AdminPermissionType = typeof AdminPermission[keyof typeof AdminPermission];
@@ -32,6 +34,8 @@ export interface Category {
   createdAt?: string;
 }
 
+export type ProductMeasurementType = 'WEIGHT' | 'UNIT';
+
 export interface Product {
   id: string;
   name: string;
@@ -40,9 +44,7 @@ export interface Product {
   stockGrams: number;
   description?: string;
   imageUrl: string;
-  onSale?: boolean;
-  salePricePerGram?: number;
-  saleDiscountPercent?: number;
+  measurementType: ProductMeasurementType;
   createdAt?: string;
 }
 
@@ -57,10 +59,19 @@ export interface Customer {
   subscriptionStartDate: string;
   subscriptionEndDate: string;
   balance?: number;
+  balanceLocked?: boolean;
   createdAt?: string;
   profilePictureUrl?: string;
   dniPictureUrl?: string;
   dniNumber?: string;
+  address?: string;
+  estimatedMonthlyConsumptionGrams?: number;
+  guarantorId?: string;
+  guarantorDisplayName?: string;
+  guarantorStatus?: 'AVAILABLE' | 'UNAVAILABLE';
+  contractSignedAt?: string;
+  contractSignatureUrl?: string;
+  customerType: 'LUDICO' | 'TERAPEUTICO';
 }
 
 export interface SaleItem {
@@ -70,10 +81,8 @@ export interface SaleItem {
   imageUrl?: string;
   grams: number;
   pricePerGram: number;
+  measurementType?: ProductMeasurementType;
   lineTotal: number;
-  discount?: number;
-  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
-  subtotalBeforeDiscount?: number;
 }
 
 export interface Sale {
@@ -86,6 +95,10 @@ export interface Sale {
   changeAmount: number;
   balanceUsed?: number;
   changeSavedToBalance?: number;
+  couponCode?: string;
+  manualDiscountPercent?: number;
+  totalBeforeDiscount?: number;
+  discountAmount?: number;
   createdBy?: Admin;
   createdByUsername?: string;
   createdAt: string;
@@ -97,11 +110,9 @@ export interface CreateProductRequest {
   categoryId: string;
   pricePerGram: number;
   description?: string;
-  imageUrl: string;
+  imageUrl?: string;
   initialStockGrams: number;
-  onSale?: boolean;
-  salePricePerGram?: number;
-  saleDiscountPercent?: number;
+  measurementType: ProductMeasurementType;
 }
 
 export interface UpdateProductRequest {
@@ -110,9 +121,7 @@ export interface UpdateProductRequest {
   pricePerGram?: number;
   description?: string;
   imageUrl?: string;
-  onSale?: boolean;
-  salePricePerGram?: number;
-  saleDiscountPercent?: number;
+  measurementType?: ProductMeasurementType;
 }
 
 export interface StockMovement {
@@ -126,6 +135,16 @@ export interface StockMovement {
   createdBy?: Admin;
   createdByUsername?: string;
   createdAt: string;
+}
+
+export interface BatchRechargeStockItem {
+  productId: string;
+  grams: number;
+  note?: string;
+}
+
+export interface BatchRechargeStockRequest {
+  items: BatchRechargeStockItem[];
 }
 
 export interface RechargeStockRequest {
@@ -147,10 +166,7 @@ export interface TicketItem {
   product: Product | null; // Snapshot del producto al agregar
   grams: number;
   pricePerGram: number; // Snapshot del precio
-  subtotal: number;
-  discount?: number;
-  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
-  subtotalBeforeDiscount?: number;
+  subtotal: number; // grams × pricePerGram
   validationState: 'valid' | 'invalid' | 'checking';
   errorMessage?: string;
 }
@@ -158,19 +174,21 @@ export interface TicketItem {
 export interface CreateSaleItemRequest {
   productId: string;
   grams: number;
-  discount?: number;
-  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
 }
+
+// Mapa de denominaciones (ej: { "50": 1, "20": 2, "0.5": 3 })
+export type DenominationsMap = Record<string, number>;
 
 export interface CreateSaleRequest {
   customerId: string;
   cashGiven: number;
-  cashGivenDenominations: DenominationsMap; // Denominaciones recibidas del cliente
-  changeDenominations?: DenominationsMap; // Denominaciones de cambio (solo si hay cambio)
+  cashGivenDenominations?: DenominationsMap;
   useBalance?: boolean;
   balanceToUse?: number;
   saveChangeToBalance?: boolean;
   items: CreateSaleItemRequest[];
+  couponCode?: string;
+  manualDiscountPercent?: number;
   createdAt?: string; // Fecha personalizada opcional (ISO 8601)
 }
 
@@ -178,6 +196,7 @@ export interface CreateSaleRequest {
 export interface SaveSaleDraftRequest {
   customerId?: string | null;
   cashGiven: number;
+  cashGivenDenominations?: DenominationsMap;
   items: CreateSaleItemRequest[];
 }
 
@@ -193,11 +212,10 @@ export interface SaleDraft {
 export interface SavePendingSaleRequest {
   customerId?: string | null;
   cashGiven: number;
+  cashGivenDenominations?: DenominationsMap;
   items: CreateSaleItemRequest[];
   selectedProductId?: string | null;
   gramsToAdd?: number | null;
-  cashGivenDenominations?: DenominationsMap;
-  changeDenominations?: DenominationsMap | null;
   useBalance?: boolean;
   balanceToUse?: number | null;
   saveChangeToBalance?: boolean;
@@ -209,10 +227,9 @@ export interface PendingSale {
   customerName?: string | null;
   items: CreateSaleItemRequest[];
   cashGiven: number;
+  cashGivenDenominations?: DenominationsMap;
   selectedProductId?: string | null;
   gramsToAdd?: number | null;
-  cashGivenDenominations?: DenominationsMap;
-  changeDenominations?: DenominationsMap | null;
   useBalance?: boolean;
   balanceToUse?: number | null;
   saveChangeToBalance?: boolean;
@@ -347,6 +364,7 @@ export interface LowStockProduct {
   id: string;
   name: string;
   stockGrams: number;
+  measurementType: ProductMeasurementType;
 }
 
 export interface ExpiringSubscription {
@@ -377,12 +395,19 @@ export interface UpdateCustomerRequest {
   displayName?: string;
   phone?: string;
   notes?: string;
+  // Note: PIN is not editable (only verifiable), kept for compatibility
+  // @deprecated Use PIN verification instead of updating
   pin?: string;
   subscriptionType?: 'MONTHLY' | 'ANNUAL';
   subscriptionPrice?: number;
   profilePictureUrl?: string;
   dniPictureUrl?: string;
   dniNumber?: string;
+  address?: string | null;
+  estimatedMonthlyConsumptionGrams?: number;
+  guarantorId?: string | null;
+  contractSignatureDataUrl?: string;
+  customerType?: 'LUDICO' | 'TERAPEUTICO';
 }
 
 export interface CreateCustomerRequest {
@@ -393,6 +418,11 @@ export interface CreateCustomerRequest {
   subscriptionType?: 'MONTHLY' | 'ANNUAL';
   subscriptionPrice: number;
   dniNumber?: string;
+  address?: string;
+  estimatedMonthlyConsumptionGrams?: number;
+  guarantorId?: string | null;
+  contractSignatureDataUrl?: string;
+  customerType: 'LUDICO' | 'TERAPEUTICO';
 }
 
 export interface RenewSubscriptionRequest {
@@ -481,25 +511,20 @@ export interface TransferBalanceRequest {
 }
 
 // Tipos para CajaFuerte
-export type DenominationsMap = Record<string, number>; // Key es el valor como string (ej: "0.01", "5", "20")
-
 export type CajaFuerteTransactionType = 
   | 'ADD'
   | 'WITHDRAW'
-  | 'CHANGE'
   | 'SALE_INPUT'
   | 'SALE_OUTPUT';
 
 export interface CajaFuerte {
   totalAmount: number;
-  denominations: DenominationsMap;
 }
 
 export interface CajaFuerteTransaction {
   id: string;
   type: CajaFuerteTransactionType;
   amount: number;
-  denominations: DenominationsMap;
   notes?: string;
   createdByUsername?: string;
   createdAt: string;
@@ -507,18 +532,12 @@ export interface CajaFuerteTransaction {
 }
 
 export interface AddMoneyRequest {
-  denominations: DenominationsMap;
+  amount: number;
   notes?: string;
 }
 
 export interface WithdrawMoneyRequest {
-  denominations: DenominationsMap;
-  notes?: string;
-}
-
-export interface ChangeDenominationsRequest {
-  fromDenominations: DenominationsMap;
-  toDenominations: DenominationsMap;
+  amount: number;
   notes?: string;
 }
 
@@ -528,4 +547,76 @@ export interface CajaFuerteTransactionParams {
   to?: string;
   page?: number;
   size?: number;
+}
+
+// Nuevos tipos para resumen diario
+export interface DailySummary {
+  date: string;
+  openingBalance: number;
+  closingBalance: number;
+  totalAdditions: number;
+  totalWithdrawals: number;
+  totalSaleInputs: number;
+  totalSaleOutputs: number;
+  isAutoClosed: boolean;
+  closedByUsername?: string;
+  closedAt?: string;
+  transactions: CajaFuerteTransaction[];
+}
+
+export interface TodayStatus {
+  isClosed: boolean;
+  closedAt?: string;
+  closedByUsername?: string;
+  isAutoClosed: boolean;
+  currentBalance: number;
+}
+
+export interface CloseDayRequest {
+  date: string;
+}
+
+// Tipos para cupones de descuento
+export type CouponDiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export interface Coupon {
+  id: string;
+  code: string;
+  name: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  expiresAt?: string;
+  isActive: boolean;
+  isValid: boolean;
+  createdByUsername?: string;
+  createdAt: string;
+}
+
+export interface CreateCouponRequest {
+  code: string;
+  name: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  expiresAt?: string;
+}
+
+export interface UpdateCouponRequest {
+  name?: string;
+  discountType?: CouponDiscountType;
+  discountValue?: number;
+  expiresAt?: string;
+  isActive?: boolean;
+}
+
+export interface ValidateCouponRequest {
+  code: string;
+}
+
+export interface ValidateCouponResponse {
+  valid: boolean;
+  code?: string;
+  name?: string;
+  discountType?: CouponDiscountType;
+  discountValue?: number;
+  message: string;
 }

@@ -222,6 +222,90 @@
   }
 }
 
+/* Layout de checkout con dos columnas: Resumen | Teclado */
+.sale-create-checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--spacing-lg, 24px);
+  align-items: start;
+}
+
+.sale-create-summary-section {
+  min-width: 0;
+}
+
+.sale-create-keypad-section {
+  position: sticky;
+  top: var(--spacing-lg, 24px);
+}
+
+.sale-create-keypad-container {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: var(--border-radius-lg, 12px);
+  padding: var(--spacing-lg, 20px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sale-create-keypad-title {
+  margin: 0 0 var(--spacing-md, 16px) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  text-align: center;
+}
+
+.sale-create-keypad-container .numeric-keypad {
+  max-width: 100%;
+  margin: 0;
+  padding: var(--spacing-sm);
+}
+
+.sale-create-keypad-container .keypad-display {
+  min-height: 50px;
+  padding: var(--spacing-sm);
+}
+
+.sale-create-keypad-container .keypad-display-value {
+  font-size: 1.6rem;
+  min-width: 140px;
+}
+
+.sale-create-keypad-container .keypad-button {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1200px) {
+  .sale-create-container {
+    flex-direction: column;
+  }
+
+  .sale-create-sidebar {
+    width: 100%;
+  }
+  
+  .sale-create-checkout-layout {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sale-create-checkout-layout {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md, 16px);
+  }
+  
+  .sale-create-keypad-section {
+    position: static;
+    order: -1;
+  }
+  
+  .sale-create-keypad-container {
+    max-width: 320px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 768px) {
   .sale-create-container {
     padding: 0 var(--spacing-sm, 12px);
@@ -249,5 +333,312 @@
 
   .sale-create-product-form button {
     width: 100%;
+  }
+}
+
+/* Wizard Top Bar - Contains Progress Bar + Navigation + Actions */
+.wizard-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg, 24px);
+  padding: var(--spacing-md, 16px) var(--spacing-lg, 24px);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: var(--header-height);
+  z-index: 100;
+  flex-wrap: wrap;
+}
+
+/* Wizard Progress Bar */
+.wizard-progress-bar {
+  flex: 1;
+  max-width: 500px;
+  min-width: 0;
+}
+
+.wizard-progress-track {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.wizard-progress-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 200px;
+}
+
+.wizard-progress-step:last-child {
+  flex: 0;
+}
+
+.wizard-step-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius, 8px);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+  min-width: 100px;
+}
+
+.wizard-step-button:disabled,
+.wizard-step-button.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.wizard-step-button:hover:not(:disabled) {
+  background: var(--bg-tertiary, #f1f5f9);
+}
+
+.wizard-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #e2e8f0);
+  color: var(--text-secondary, #64748b);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.wizard-step-button.active .wizard-step-indicator {
+  background: var(--neon-primary, #22c55e);
+  color: white;
+  box-shadow: 0 0 12px var(--neon-glow-primary, rgba(34, 197, 94, 0.4));
+}
+
+.wizard-step-button.completed .wizard-step-indicator {
+  background: var(--color-success, #10b981);
+  color: white;
+}
+
+.wizard-step-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  transition: color var(--transition-fast, 0.2s);
+  white-space: nowrap;
+}
+
+.wizard-step-button.active .wizard-step-label {
+  color: var(--neon-primary, #22c55e);
+  font-weight: 600;
+}
+
+.wizard-step-button.completed .wizard-step-label {
+  color: var(--color-success, #10b981);
+}
+
+.wizard-step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--border-color, #e2e8f0);
+  min-width: 20px;
+  margin: 0 var(--spacing-xs, 4px);
+  transition: background var(--transition-fast, 0.2s);
+}
+
+.wizard-step-connector.completed {
+  background: var(--color-success, #10b981);
+}
+
+/* Wizard Navigation - Now inline with progress bar */
+.wizard-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.wizard-navigation .button {
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Wizard Actions - Buttons on the right */
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.wizard-actions .button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 6px);
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+  white-space: nowrap;
+}
+
+.wizard-actions .wizard-btn-clean {
+  background: var(--color-error);
+  color: white;
+  border-color: var(--color-error);
+}
+
+.wizard-actions .wizard-btn-clean:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Wizard Step Content */
+.wizard-step-content {
+  width: 100%;
+}
+
+.wizard-step-content.wizard-step-0 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+}
+
+.wizard-step-content.wizard-step-1 .sale-create-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+}
+
+/* Wizard Step 2 Grid - Optimizado para iPad horizontal */
+.wizard-step-2-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--spacing-lg, 24px);
+  align-items: start;
+  min-height: 0;
+}
+
+.wizard-step-2-col1 {
+  display: flex;
+  flex-direction: column;
+}
+
+.wizard-step-2-col2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 16px);
+  position: sticky;
+  top: var(--spacing-lg, 24px);
+}
+
+.wizard-keypad {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg, 12px);
+  padding: var(--spacing-md, 16px);
+}
+
+.wizard-keypad-title {
+  margin: 0 0 var(--spacing-sm, 12px) 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* Resumen ticket discreto */
+.wizard-summary {
+  display: flex;
+  gap: var(--spacing-lg, 24px);
+  padding: var(--spacing-md, 16px);
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: var(--border-radius, 8px);
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.wizard-summary-customer,
+.wizard-summary-items {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.wizard-summary-customer strong,
+.wizard-summary-items strong {
+  color: var(--text-primary, #1e293b);
+}
+
+/* Responsive - Tablet iPad horizontal (1024px) */
+@media (max-width: 1024px) {
+  .wizard-step-2-grid {
+    grid-template-columns: 1fr 400px;
+    gap: var(--spacing-md, 16px);
+  }
+}
+
+/* Responsive - Tablet iPad vertical / Landscape phones (768px) */
+@media (max-width: 768px) {
+  .wizard-top-bar {
+    flex-direction: column;
+    gap: var(--spacing-sm, 8px);
+    padding: var(--spacing-sm, 12px);
+  }
+
+  .wizard-progress-bar {
+    width: 100%;
+    max-width: none;
+  }
+
+  .wizard-navigation,
+  .wizard-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .wizard-progress-track {
+    gap: 0;
+  }
+
+  .wizard-step-button {
+    padding: var(--spacing-xs, 6px);
+    min-width: auto;
+  }
+
+  .wizard-step-indicator {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .wizard-step-label {
+    display: none;
+  }
+
+  .wizard-step-connector {
+    min-width: 10px;
+    margin: 0 var(--spacing-xs, 2px);
+  }
+
+  .wizard-navigation {
+    padding: var(--spacing-md, 16px);
+  }
+
+  .wizard-navigation .button {
+    min-width: 100px;
+    padding: var(--spacing-sm, 10px) var(--spacing-md, 16px);
+  }
+
+  /* Wizard Step 2 - Móvil */
+  .wizard-step-2-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-step-2-col2 {
+    position: static;
+  }
+
+  .wizard-summary {
+    flex-direction: column;
+    gap: var(--spacing-sm, 8px);
   }
 }

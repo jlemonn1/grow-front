@@ -36,7 +36,7 @@ export function CustomerSummaryTable({ summary, loading = false }: CustomerSumma
           <thead>
             <tr>
               <th className="customer-summary-header">Producto</th>
-              <th className="customer-summary-header customer-summary-header-right">Gramos totales</th>
+              <th className="customer-summary-header customer-summary-header-right">Cantidad</th>
               <th className="customer-summary-header customer-summary-header-right">Monto total</th>
             </tr>
           </thead>

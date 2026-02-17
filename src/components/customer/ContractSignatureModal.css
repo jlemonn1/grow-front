@@ -1,0 +1,148 @@
+.contract-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.contract-text {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.contract-text h1 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0 0 var(--spacing-sm);
+  line-height: 1.3;
+}
+
+.contract-text h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0 0 var(--spacing-md);
+  line-height: 1.3;
+}
+
+.contract-text h3 {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+  line-height: 1.3;
+}
+
+.contract-text p {
+  margin: 0 0 var(--spacing-sm);
+}
+
+.contract-text ul,
+.contract-text ol {
+  margin: var(--spacing-xs) 0 var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+}
+
+.contract-text li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.contract-text .article-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: var(--spacing-sm);
+}
+
+.contract-text .article-text {
+  font-style: italic;
+}
+
+.contract-text .contract-footer {
+  margin-top: var(--spacing-md);
+}
+
+.contract-text .signature-label-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.signature-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.signature-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.canvas-wrapper {
+  position: relative;
+}
+
+.signature-svg {
+  width: 100%;
+  height: 180px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none;
+  transition: border-color 0.2s ease;
+  display: block;
+}
+
+.signature-svg:hover {
+  border-color: var(--primary-color);
+}
+
+.signature-canvas:hover {
+  border-color: var(--primary-color);
+}
+
+.signature-canvas:active {
+  border-color: var(--primary-color);
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') 0 20,
+    auto;
+}
+
+.canvas-guide-line {
+  position: absolute;
+  bottom: 30px;
+  left: var(--spacing-md);
+  right: var(--spacing-md);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.signature-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .contract-text {
+    max-height: 200px;
+  }
+
+  .signature-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

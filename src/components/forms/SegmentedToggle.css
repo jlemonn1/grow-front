@@ -1,0 +1,130 @@
+.segmented-toggle-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.segmented-toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.segmented-toggle-required {
+  color: #ef4444;
+}
+
+.segmented-toggle-container {
+  display: flex;
+  position: relative;
+  background: #f3f4f6;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  border: 1px solid #e5e7eb;
+  gap: 0.25rem;
+}
+
+.segmented-toggle-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.segmented-toggle-option:hover:not(.disabled) {
+  color: #374151;
+}
+
+.segmented-toggle-option.active {
+  color: #ffffff;
+  background: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.segmented-toggle-option.active:hover {
+  background: #2563eb;
+}
+
+.segmented-toggle-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.segmented-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.segmented-toggle-text {
+  white-space: nowrap;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .segmented-toggle-label {
+    color: #d1d5db;
+  }
+
+  .segmented-toggle-container {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .segmented-toggle-option {
+    color: #9ca3af;
+  }
+
+  .segmented-toggle-option:hover:not(.disabled) {
+    color: #f3f4f6;
+  }
+
+  .segmented-toggle-option.active {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+
+  .segmented-toggle-option.active:hover {
+    background: #2563eb;
+  }
+}
+
+/* Focus styles for accessibility */
+.segmented-toggle-option:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Animation */
+@keyframes segmented-toggle-active {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.segmented-toggle-option.active {
+  animation: segmented-toggle-active 0.2s ease-out;
+}

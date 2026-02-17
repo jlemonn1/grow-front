@@ -1,24 +1,50 @@
-.add-money-modal-form {
+/* Layout principal - sin scroll */
+.add-money-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* Sección del teclado */
+.add-money-keypad-section {
+  flex: 0 0 auto;
+}
+
+/* Sección de notas */
+.add-money-notes-section {
+  flex: 1 1 200px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.add-money-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.add-money-modal-description {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.add-money-modal-actions {
-  display: flex;
-  justify-content: flex-end;
   gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
+  min-width: 200px;
+}
+
+.add-money-notes-section textarea {
+  resize: none;
+}
+
+.add-money-cancel-btn {
+  width: 100%;
+}
+
+/* Responsive: Tablet y móvil - layout vertical */
+@media (max-width: 640px) {
+  .add-money-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .add-money-keypad-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .add-money-notes-section {
+    width: 100%;
+    flex: none;
+    min-width: unset;
+  }
 }

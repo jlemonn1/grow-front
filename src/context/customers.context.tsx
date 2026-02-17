@@ -174,6 +174,7 @@ export function CustomersContextProvider({ children }: CustomersContextProviderP
         subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: data.notes,
         createdAt: new Date().toISOString(),
+        customerType: (data as any).customerType || 'LUDICO',
       };
       // Actualizar cache: agregar el nuevo cliente a la lista
       setCustomers((prev) => [newCustomer, ...prev]);

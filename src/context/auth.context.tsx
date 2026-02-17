@@ -77,6 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (user) {
         try {
           const admin = await getCurrentAdmin();
+          console.log('[AuthContext] Admin cargado:', admin.username, 'colorAccessibility:', admin.colorAccessibility);
           setCurrentAdmin(admin);
           // Actualizar currentUser con la información del admin obtenido del backend
           setCurrentUser({

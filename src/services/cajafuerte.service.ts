@@ -6,8 +6,9 @@ import type {
   CajaFuerteTransactionParams,
   AddMoneyRequest,
   WithdrawMoneyRequest,
-  ChangeDenominationsRequest,
-  DenominationsMap
+  DailySummary,
+  TodayStatus,
+  CloseDayRequest
 } from '@/types/models';
 
 /**
@@ -29,30 +30,6 @@ export async function addMoney(request: AddMoneyRequest): Promise<CajaFuerte> {
  */
 export async function withdrawMoney(request: WithdrawMoneyRequest): Promise<CajaFuerte> {
   return post<CajaFuerte>('/cajafuerte/withdraw', request);
-}
-
-/**
- * Cambia denominaciones (intercambio de billetes/monedas)
- */
-export async function changeDenominations(request: ChangeDenominationsRequest): Promise<CajaFuerte> {
-  return post<CajaFuerte>('/cajafuerte/change', request);
-}
-
-/**
- * Calcula el cambio óptimo usando las denominaciones disponibles en CajaFuerte
- */
-export async function calculateOptimalChange(amount: number): Promise<{ 
-  denominations: DenominationsMap; 
-  total: number;
-  remaining?: number;
-  isPartial?: boolean;
-}> {
-  return post<{ 
-    denominations: DenominationsMap; 
-    total: number;
-    remaining?: number;
-    isPartial?: boolean;
-  }>('/cajafuerte/calculate-change', { amount });
 }
 
 /**
@@ -83,4 +60,36 @@ export async function getTransactions(
   const endpoint = `/cajafuerte/transactions${queryString ? `?${queryString}` : ''}`;
 
   return get<PageResponse<CajaFuerteTransaction>>(endpoint);
+}
+
+/**
+ * Obtiene el resumen diario de CajaFuerte
+ */
+export async function getDailySummary(from: string, to: string): Promise<DailySummary[]> {
+  const queryParams = new URLSearchParams();
+  queryParams.append('from', from);
+  queryParams.append('to', to);
+  
+  return get<DailySummary[]>(`/cajafuerte/daily-summary?${queryParams.toString()}`);
+}
+
+/**
+ * Cierra un día manualmente
+ */
+export async function closeDay(request: CloseDayRequest): Promise<void> {
+  return post<void>('/cajafuerte/close-day', request);
+}
+
+/**
+ * Reabre un día cerrado
+ */
+export async function reopenDay(request: CloseDayRequest): Promise<void> {
+  return post<void>('/cajafuerte/reopen-day', request);
+}
+
+/**
+ * Obtiene el estado de cierre del día actual
+ */
+export async function getTodayStatus(): Promise<TodayStatus> {
+  return get<TodayStatus>('/cajafuerte/today-status');
 }

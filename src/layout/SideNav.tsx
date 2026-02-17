@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { HiHome, HiCurrencyEuro, HiDocumentText, HiCube, HiUser, HiChartBar, HiCog, HiUsers, HiLockClosed } from 'react-icons/hi';
+import { HiHome, HiCurrencyEuro, HiDocumentText, HiCube, HiUser, HiChartBar, HiCog, HiUsers, HiLockClosed, HiTicket } from 'react-icons/hi';
 import { HiArrowRightOnRectangle, HiSparkles } from 'react-icons/hi2';
 import { useUI } from '@/context/ui.context';
 import { useConfig } from '@/context/config.context';
@@ -68,6 +68,11 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
     // CajaFuerte - requiere GESTIONAR_CAJAFUERTE
     if (hasPermission(AdminPermission.GESTIONAR_CAJAFUERTE)) {
       items.push({ path: '/cajafuerte', label: 'CajaFuerte', icon: <HiLockClosed /> });
+    }
+
+    // Cupones - requiere GESTIONAR_CUPONES
+    if (hasPermission(AdminPermission.GESTIONAR_CUPONES)) {
+      items.push({ path: '/coupons', label: 'Cupones', icon: <HiTicket /> });
     }
 
     // Configuración - siempre visible

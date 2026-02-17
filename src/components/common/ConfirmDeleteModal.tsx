@@ -10,6 +10,8 @@ interface ConfirmDeleteModalProps {
   message: string;
   itemName?: string;
   isDeleting?: boolean;
+  confirmLabel?: string;
+  variant?: 'primary' | 'secondary' | 'danger';
 }
 
 export function ConfirmDeleteModal({
@@ -20,6 +22,8 @@ export function ConfirmDeleteModal({
   message,
   itemName,
   isDeleting = false,
+  confirmLabel,
+  variant = 'danger',
 }: ConfirmDeleteModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -37,12 +41,12 @@ export function ConfirmDeleteModal({
         <div className="confirm-delete-actions">
           <Button
             type="button"
-            variant="danger"
+            variant={variant}
             onClick={onConfirm}
             loading={isDeleting}
             disabled={isDeleting}
           >
-            Eliminar
+            {confirmLabel || 'Eliminar'}
           </Button>
           <Button
             type="button"

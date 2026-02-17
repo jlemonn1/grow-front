@@ -2,6 +2,7 @@ import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import { ProductImage } from '@/components/common/ProductImage';
 import type { Product } from '@/types/models';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './ProductCardSummary.css';
 
 interface ProductCardSummaryProps {
@@ -11,26 +12,12 @@ interface ProductCardSummaryProps {
 }
 
 export function ProductCardSummary({ product, isExpanded, onToggleExpand }: ProductCardSummaryProps) {
-  const isOnSale = product.onSale === true;
-  
-  // Calcular precio de oferta: si hay porcentaje, calcularlo; si no, usar precio fijo
-  let displayPrice = product.pricePerGram;
-  let originalPrice: number | null = null;
-  
-  if (isOnSale) {
-    if (product.saleDiscountPercent !== undefined && product.saleDiscountPercent > 0) {
-      // Calcular precio con porcentaje de descuento
-      displayPrice = product.pricePerGram * (1 - product.saleDiscountPercent / 100);
-      originalPrice = product.pricePerGram;
-    } else if (product.salePricePerGram !== undefined) {
-      // Usar precio fijo de oferta
-      displayPrice = product.salePricePerGram;
-      originalPrice = product.pricePerGram;
-    }
-  }
+  const displayPrice = product.pricePerGram;
+
+  const measurementSuffix = getMeasurementShortLabel(product.measurementType);
 
   return (
-    <div className={`product-card-summary ${isOnSale ? 'product-card-on-sale' : ''}`}>
+    <div className="product-card-summary">
       <div className="product-card-main-info">
         <ProductImage 
           imageUrl={product.imageUrl} 
@@ -43,11 +30,6 @@ export function ProductCardSummary({ product, isExpanded, onToggleExpand }: Prod
             <h3 className="product-card-name" title={product.name}>
               {product.name}
             </h3>
-            {isOnSale && (
-              <span className="product-card-sale-badge" title="En oferta">
-                OFERTA
-              </span>
-            )}
           </div>
           {product.category && (
             <span className="product-card-category-badge" title={product.category.name}>
@@ -59,19 +41,14 @@ export function ProductCardSummary({ product, isExpanded, onToggleExpand }: Prod
           <div className="product-card-stat">
             <span className="product-card-stat-label">Precio:</span>
             <div className="product-card-price-container">
-              {originalPrice && (
-                <span className="product-card-price-original">
-                  {formatMoney(originalPrice)}
-                </span>
-              )}
-              <span className={`product-card-stat-value ${isOnSale ? 'product-card-price-sale' : ''}`}>
-                {formatMoney(displayPrice)}/g
+              <span className="product-card-stat-value">
+                {formatMoney(displayPrice)}/{measurementSuffix}
               </span>
             </div>
           </div>
           <div className="product-card-stat">
             <span className="product-card-stat-label">Stock:</span>
-            <span className="product-card-stat-value">{product.stockGrams.toFixed(2)}g</span>
+            <span className="product-card-stat-value">{product.stockGrams.toFixed(2)}{measurementSuffix}</span>
           </div>
         </div>
       </div>

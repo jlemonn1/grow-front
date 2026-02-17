@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useProductDispense } from '@/hooks/useProductDispense';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementLongLabel, getMeasurementShortLabel } from '@/utils/measurement';
 import { DispenseInputField } from './DispenseInputField';
 import { ShortcutButtons } from './ShortcutButtons';
 import { DispenseInfoCompact } from './DispenseInfoCompact';
@@ -48,6 +49,9 @@ export function ProductDispenseInput({
     return null;
   }
 
+  const measurementLongLabel = getMeasurementLongLabel(product.measurementType);
+  const measurementSuffix = getMeasurementShortLabel(product.measurementType);
+
   const gramsShortcuts = [1, 2, 3, 4, 5, 10];
   const eurosShortcuts = [5, 10, 15, 20, 50];
 
@@ -65,20 +69,20 @@ export function ProductDispenseInput({
       <div className="product-dispense-input-row">
         <DispenseInputField
           id="dispense-grams"
-          label="Gramos"
+          label={measurementLongLabel}
           value={grams}
           onChange={setGrams}
           error={error && grams > availableStock ? error : undefined}
           inputRef={gramsInputRef}
           dataTour="grams-input"
           shortcuts={
-            <ShortcutButtons
-              shortcuts={gramsShortcuts}
-              onShortcutClick={handleGramsShortcut}
-              isDisabled={(value) => value > availableStock}
-              getTitle={(value) => `${value}g`}
-              activeValue={grams}
-            />
+              <ShortcutButtons
+                shortcuts={gramsShortcuts}
+                onShortcutClick={handleGramsShortcut}
+                isDisabled={(value) => value > availableStock}
+                getTitle={(value) => `${value}${measurementSuffix}`}
+                activeValue={grams}
+              />
           }
         />
         <DispenseInputField
@@ -103,6 +107,7 @@ export function ProductDispenseInput({
       <DispenseInfoCompact 
         pricePerGram={effectivePricePerGram}
         availableStock={availableStock}
+        measurementType={product.measurementType}
       />
       
       {error && (

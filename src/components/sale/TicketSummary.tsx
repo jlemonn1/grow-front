@@ -1,12 +1,13 @@
-import { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { memo, useMemo } from 'react';
 import { HiExclamationTriangle } from 'react-icons/hi2';
 import { Button } from '@/components/common/Button';
 import { NumberInput } from '@/components/forms/NumberInput';
-import { CashBillButtons } from './CashBillButtons';
 import { formatMoney } from '@/utils/money';
-import { getDenominationLabel } from '@/utils/denominations';
 import { useConfig } from '@/context/config.context';
-import type { TicketItem, DenominationsMap } from '@/types/models';
+import { CouponInput } from './CouponInput';
+import { ManualDiscountInput } from './ManualDiscountInput';
+import type { TicketItem } from '@/types/models';
+import type { AppliedCoupon } from '@/context/ticket.context';
 import './TicketSummary.css';
 
 interface TicketSummaryProps {
@@ -14,6 +15,8 @@ interface TicketSummaryProps {
   customerBalance?: number;
   items: TicketItem[];
   total: number;
+  subtotalBeforeDiscount: number;
+  discountAmount: number;
   cashGiven: number;
   change: number;
   isValid: boolean;
@@ -23,15 +26,17 @@ interface TicketSummaryProps {
   saveChangeToBalance: boolean;
   balanceUsed: number;
   balanceRemaining: number;
+  appliedCoupon: AppliedCoupon | null;
+  manualDiscountPercent: number | null;
   onCashGivenChange: (amount: number) => void;
   onUseBalanceChange: (use: boolean) => void;
   onBalanceToUseChange: (amount: number) => void;
   onSaveChangeToBalanceChange: (save: boolean) => void;
+  onApplyCoupon: (coupon: AppliedCoupon) => void;
+  onRemoveCoupon: () => void;
+  onSetManualDiscount: (percent: number | null) => void;
   onProcessSale: () => void;
   cashGivenError?: string;
-  cashGivenDenominations?: DenominationsMap;
-  changeDenominations?: DenominationsMap | null;
-  onCashGivenDenominationsChange?: (denominations: DenominationsMap) => void;
 }
 
 function TicketSummaryComponent({
@@ -39,6 +44,8 @@ function TicketSummaryComponent({
   customerBalance = 0,
   items,
   total,
+  subtotalBeforeDiscount,
+  discountAmount,
   cashGiven,
   change,
   isValid,
@@ -48,51 +55,22 @@ function TicketSummaryComponent({
   saveChangeToBalance,
   balanceUsed,
   balanceRemaining,
-  onCashGivenChange,
+  appliedCoupon,
+  manualDiscountPercent,
+  onCashGivenChange: _onCashGivenChange,
   onUseBalanceChange,
   onBalanceToUseChange,
   onSaveChangeToBalanceChange,
+  onApplyCoupon,
+  onRemoveCoupon,
+  onSetManualDiscount,
   onProcessSale,
   cashGivenError,
-  cashGivenDenominations,
-  changeDenominations,
-  onCashGivenDenominationsChange,
 }: TicketSummaryProps) {
   const { config } = useConfig();
   const showCashDetails = config?.showCashDetails ?? true;
-  const [localCashGiven, setLocalCashGiven] = useState(cashGiven);
-
-  // Sincronizar el estado local cuando cashGiven cambia externamente (por ejemplo, al resetear)
-  useEffect(() => {
-    setLocalCashGiven(cashGiven);
-  }, [cashGiven]);
-
-
-  const handleAddAmount = useCallback((amount: number) => {
-    const newValue = (localCashGiven || 0) + amount;
-    setLocalCashGiven(newValue);
-    onCashGivenChange(newValue);
-  }, [localCashGiven, onCashGivenChange]);
-
-  const handleDenominationAdd = useCallback((denomination: number) => {
-    if (onCashGivenDenominationsChange) {
-      const current = cashGivenDenominations || {};
-      const denominationKey = denomination.toString();
-      const currentQty = current[denominationKey] || 0;
-      onCashGivenDenominationsChange({
-        ...current,
-        [denominationKey]: currentQty + 1,
-      });
-    }
-  }, [cashGivenDenominations, onCashGivenDenominationsChange]);
-
-  const handleResetCash = useCallback(() => {
-    setLocalCashGiven(0);
-    onCashGivenChange(0);
-    if (onCashGivenDenominationsChange) {
-      onCashGivenDenominationsChange({});
-    }
-  }, [onCashGivenChange, onCashGivenDenominationsChange]);
+  const enableCustomerBalance = config?.enableCustomerBalance ?? true;
+  // cashGiven se controla desde la página (teclado numérico), no mantenemos estado local aquí
 
   const hasItems = useMemo(() => items.length > 0, [items.length]);
   const hasInvalidItems = useMemo(
@@ -100,8 +78,15 @@ function TicketSummaryComponent({
     [items]
   );
   const cashInsufficient = useMemo(
-    () => cashGiven > 0 && cashGiven < total,
-    [cashGiven, total]
+    () => {
+      if (useBalance) {
+        // Cuando se usa saldo: verificar que efectivo + saldo cubra el total
+        return cashGiven > 0 && (cashGiven + balanceUsed) < total;
+      }
+      // Sin saldo: validación normal
+      return cashGiven > 0 && cashGiven < total;
+    },
+    [cashGiven, total, useBalance, balanceUsed]
   );
 
   return (
@@ -134,13 +119,67 @@ function TicketSummaryComponent({
 
             <div className="ticket-summary-divider" />
 
-            <div className="ticket-summary-row ticket-summary-total">
-              <span>Total:</span>
-              <span>{formatMoney(total)}</span>
+            {/* Sección de cupones y descuentos */}
+            <div className="ticket-summary-discount-section">
+              <CouponInput
+                appliedCoupon={appliedCoupon}
+                onApplyCoupon={onApplyCoupon}
+                onRemoveCoupon={onRemoveCoupon}
+              />
+              
+              {!appliedCoupon && (
+                <ManualDiscountInput
+                  discountPercent={manualDiscountPercent}
+                  onApplyDiscount={onSetManualDiscount}
+                />
+              )}
             </div>
 
-            {/* Toggle para usar saldo */}
-            {customerBalance > 0 && (
+            {/* Desglose de totales */}
+            <div className="ticket-summary-breakdown">
+              <div className="ticket-summary-row">
+                <span>Subtotal:</span>
+                <span>{formatMoney(subtotalBeforeDiscount)}</span>
+              </div>
+              
+              {discountAmount > 0 && (
+                <>
+                  {appliedCoupon && (
+                    <div className="ticket-summary-row ticket-summary-coupon-info">
+                      <span>Cupón ({appliedCoupon.code}):</span>
+                      <span>
+                        {appliedCoupon.discountType === 'PERCENTAGE' 
+                          ? `-${appliedCoupon.discountValue}%` 
+                          : `-${formatMoney(appliedCoupon.discountValue)}`
+                        }
+                      </span>
+                    </div>
+                  )}
+                  
+                  {manualDiscountPercent && manualDiscountPercent > 0 && (
+                    <div className="ticket-summary-row ticket-summary-manual-discount">
+                      <span>Descuento manual:</span>
+                      <span>-{manualDiscountPercent}%</span>
+                    </div>
+                  )}
+                  
+                  <div className="ticket-summary-row ticket-summary-discount-amount">
+                    <span>Descuento total:</span>
+                    <span className="discount-value">-{formatMoney(discountAmount)}</span>
+                  </div>
+                  
+                  <div className="ticket-summary-divider" />
+                </>
+              )}
+              
+              <div className="ticket-summary-row ticket-summary-total">
+                <span>Total:</span>
+                <span className="total-value">{formatMoney(total)}</span>
+              </div>
+            </div>
+
+{/* Toggle para usar saldo */}
+            {enableCustomerBalance && customerBalance > 0 && (
               <div className="ticket-summary-balance-section">
                 <label className="ticket-summary-balance-toggle">
                   <input
@@ -189,32 +228,27 @@ function TicketSummaryComponent({
             {/* Campo de efectivo - solo mostrar si el saldo no cubre todo o no se usa saldo */}
             {(!useBalance || balanceUsed < total) && (
               <div className="ticket-summary-cash-input">
-                <CashBillButtons 
-                  onAddAmount={handleAddAmount} 
-                  onDenominationAdd={handleDenominationAdd}
-                  denominations={cashGivenDenominations}
-                  onReset={handleResetCash}
-                />
                 {cashGivenError && (
                   <div className="ticket-summary-cash-error">
                     {cashGivenError}
                   </div>
                 )}
-                {localCashGiven > 0 && (
+                
+                {cashGiven > 0 && (
                   <div className="ticket-summary-cash-total">
                     <span className="ticket-summary-cash-total-label">
-                      {useBalance ? "Efectivo necesario" : "Efectivo recibido"}:
+                      {useBalance ? "Efectivo total" : "Efectivo recibido"}:
                     </span>
-                    <span className="ticket-summary-cash-total-value">
-                      {formatMoney(localCashGiven)}
-                    </span>
+                     <span className="ticket-summary-cash-total-value">
+                       {formatMoney(cashGiven)}
+                     </span>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Checkbox para guardar cambio en saldo */}
-            {change > 0 && (
+{/* Checkbox para guardar cambio en saldo */}
+            {enableCustomerBalance && change > 0 && (
               <div className="ticket-summary-save-change">
                 <label className="ticket-summary-save-change-toggle">
                   <input
@@ -235,48 +269,11 @@ function TicketSummaryComponent({
               </div>
             )}
 
-            {/* Resumen de denominaciones recibidas */}
-            {cashGivenDenominations && Object.keys(cashGivenDenominations).length > 0 && (
-              <div className="ticket-summary-denominations">
-                <div className="ticket-summary-denominations-title">Denominaciones recibidas:</div>
-                <div className="ticket-summary-denominations-list">
-                  {Object.entries(cashGivenDenominations)
-                    .filter(([_, qty]) => qty > 0)
-                    .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
-                    .map(([denomination, qty]) => (
-                      <span key={denomination} className="ticket-summary-denomination-item">
-                        {qty}x {getDenominationLabel(parseFloat(denomination))}
-                      </span>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Resumen de denominaciones de cambio - Mostrar de forma prominente */}
-            {changeDenominations && Object.keys(changeDenominations).length > 0 && change > 0 && !saveChangeToBalance && (
-              <div className="ticket-summary-change-display">
-                <div className="ticket-summary-change-header">
-                  <strong>Cambio a dar: {formatMoney(change)}</strong>
-                </div>
-                <div className="ticket-summary-change-denominations">
-                  {Object.entries(changeDenominations)
-                    .filter(([_, qty]) => qty > 0)
-                    .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
-                    .map(([denomination, qty]) => (
-                      <div key={denomination} className="ticket-summary-change-item">
-                        <span className="ticket-summary-change-quantity">{qty}x</span>
-                        <span className="ticket-summary-change-label">{getDenominationLabel(parseFloat(denomination))}</span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
             {cashInsufficient && (
               <div className="ticket-summary-error">
                 <HiExclamationTriangle className="ticket-summary-error-icon" />
                 {useBalance 
-                  ? `El efectivo más el saldo no cubren el total. Faltan: ${formatMoney(total - balanceUsed - cashGiven)}`
+                  ? `El efectivo más el saldo no cubren el total. Faltan: ${formatMoney(Math.max(0, total - balanceUsed - cashGiven))}`
                   : 'El efectivo debe ser mayor o igual al total'}
               </div>
             )}

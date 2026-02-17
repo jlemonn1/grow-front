@@ -1,6 +1,7 @@
 import { Product, Customer } from '@/types/models';
 import { Button } from '@/components/common/Button';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './GlobalSearchResultItem.css';
 
 interface GlobalSearchResultItemProps {
@@ -19,6 +20,7 @@ export function GlobalSearchResultItem({
   onDispense,
 }: GlobalSearchResultItemProps) {
   if (type === 'product' && product) {
+    const measurementSuffix = getMeasurementShortLabel(product.measurementType);
     return (
       <div className="global-search-result-item" onClick={onViewDetails}>
         <div className="global-search-result-content">
@@ -31,15 +33,15 @@ export function GlobalSearchResultItem({
           <div className="global-search-result-details">
             <div className="global-search-result-detail">
               <span className="global-search-result-label">Precio:</span>
-              <span className="global-search-result-value">
-                {formatMoney(product.pricePerGram)}/g
-              </span>
+               <span className="global-search-result-value">
+                 {formatMoney(product.pricePerGram)}/{measurementSuffix}
+               </span>
             </div>
             <div className="global-search-result-detail">
               <span className="global-search-result-label">Stock:</span>
-              <span className="global-search-result-value">
-                {product.stockGrams.toFixed(2)}g
-              </span>
+               <span className="global-search-result-value">
+                 {product.stockGrams.toFixed(2)}{measurementSuffix}
+               </span>
             </div>
           </div>
         </div>

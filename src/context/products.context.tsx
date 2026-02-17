@@ -179,8 +179,9 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
         pricePerGram: data.pricePerGram,
         stockGrams: data.initialStockGrams || 0,
         description: data.description,
-        imageUrl: data.imageUrl,
+        imageUrl: data.imageUrl || '',
         createdAt: new Date().toISOString(),
+        measurementType: data.measurementType,
       };
       // Actualizar cache: agregar el nuevo producto a la lista
       setProducts((prev) => [newProduct, ...prev]);

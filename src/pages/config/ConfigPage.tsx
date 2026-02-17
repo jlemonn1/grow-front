@@ -5,12 +5,14 @@ import { Input } from '@/components/forms/Input';
 import { FormCard } from '@/components/forms/FormCard';
 import { FormSection } from '@/components/forms/FormSection';
 import { Spinner } from '@/components/common/Spinner';
+import { Modal } from '@/components/common/Modal';
 import { ImageUpload } from '@/components/product/ImageUpload';
 import { useConfig } from '@/context/config.context';
 import { useUI } from '@/context/ui.context';
 import type { UpdateGrowConfigurationRequest } from '@/services/config.service';
 import type { ValidationError } from '@/types/api';
 import { generateColorPalette } from '@/utils/colorSystem';
+import { useColorAccessibility } from '@/hooks/useColorAccessibility';
 import { loadTestDataForOnboarding } from '@/services/testData.service';
 import { useAuth } from '@/context/auth.context';
 import { registerMainAdmin, hasToken } from '@/services/auth.service';
@@ -21,6 +23,7 @@ export function ConfigPage() {
   const { config, loading, updateConfiguration, refreshConfiguration, needsFunctionalOnboarding, needsOnboarding, quickSaleMode, setQuickSaleMode } = useConfig();
   const { showToast } = useUI();
   const { currentAdmin, refreshUser, logout } = useAuth();
+  const { mode: colorAccessibilityMode, isAccessibilityMode } = useColorAccessibility();
   const navigate = useNavigate();
   
   // Estados para el formulario de registro del admin principal
@@ -40,6 +43,7 @@ export function ConfigPage() {
     logoUrl: null,
     primaryColor: '#3bd420',
     showCashDetails: true,
+    enableCustomerBalance: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -57,6 +61,10 @@ export function ConfigPage() {
   const [colorSequence, setColorSequence] = useState<string[]>([]);
   const sequenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Estados para confirmación de desactivación de saldo
+  const [showDisableBalanceConfirm, setShowDisableBalanceConfirm] = useState(false);
+  const [pendingBalanceValue, setPendingBalanceValue] = useState<boolean | null>(null);
 
   // Detectar si se requiere registro del admin principal
   useEffect(() => {
@@ -80,6 +88,7 @@ export function ConfigPage() {
         logoUrl: config.logoUrl,
         primaryColor: config.primaryColor,
         showCashDetails: config.showCashDetails,
+        enableCustomerBalance: config.enableCustomerBalance ?? true,
       });
       setLastSaved(new Date());
       isInitialLoadRef.current = true;
@@ -287,6 +296,33 @@ export function ConfigPage() {
     }
   }, [errors]);
 
+  // Manejar cambio del toggle de saldo con confirmación
+  const handleBalanceToggleChange = useCallback((newValue: boolean) => {
+    if (newValue === false && formData.enableCustomerBalance === true) {
+      // Intentar desactivar: mostrar confirmación
+      setPendingBalanceValue(false);
+      setShowDisableBalanceConfirm(true);
+    } else if (newValue === true) {
+      // Activar directamente
+      setFormData((prev) => ({ ...prev, enableCustomerBalance: true }));
+    }
+  }, [formData.enableCustomerBalance]);
+
+  // Confirmar desactivación de saldo
+  const confirmDisableBalance = useCallback(() => {
+    if (pendingBalanceValue === false) {
+      setFormData((prev) => ({ ...prev, enableCustomerBalance: false }));
+    }
+    setShowDisableBalanceConfirm(false);
+    setPendingBalanceValue(null);
+  }, [pendingBalanceValue]);
+
+  // Cancelar desactivación de saldo
+  const cancelDisableBalance = useCallback(() => {
+    setShowDisableBalanceConfirm(false);
+    setPendingBalanceValue(null);
+  }, []);
+
   // Función de autoguardado con validación
   const autoSave = useCallback(async (data: UpdateGrowConfigurationRequest) => {
     // Validaciones
@@ -343,7 +379,8 @@ export function ConfigPage() {
       formData.growName !== config.growName ||
       formData.logoUrl !== config.logoUrl ||
       formData.primaryColor !== config.primaryColor ||
-      formData.showCashDetails !== config.showCashDetails;
+      formData.showCashDetails !== config.showCashDetails ||
+      formData.enableCustomerBalance !== config.enableCustomerBalance;
 
     if (!hasChanges) {
       return;
@@ -775,45 +812,67 @@ export function ConfigPage() {
               
               {/* Previsualización de paleta */}
               <div className="config-color-preview">
-                <h4>Vista previa de colores generados:</h4>
-                <div className="config-color-swatches">
-                  <div 
-                    className="config-color-swatch"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleColorSwatchClick('primary')}
-                    title="Principal"
-                  >
-                    <div 
-                      className="config-color-swatch-color" 
-                      style={{ backgroundColor: colorPalette.primary }}
-                    />
-                    <span>Principal</span>
-                  </div>
-                  <div 
-                    className="config-color-swatch"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleColorSwatchClick('primaryLight')}
-                    title="Claro"
-                  >
-                    <div 
-                      className="config-color-swatch-color" 
-                      style={{ backgroundColor: colorPalette.primaryLight }}
-                    />
-                    <span>Claro</span>
-                  </div>
-                  <div 
-                    className="config-color-swatch"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleColorSwatchClick('primaryDark')}
-                    title="Oscuro"
-                  >
-                    <div 
-                      className="config-color-swatch-color" 
-                      style={{ backgroundColor: colorPalette.primaryDark }}
-                    />
-                    <span>Oscuro</span>
-                  </div>
-                </div>
+                {isAccessibilityMode ? (
+                  <>
+                    <h4 style={{ color: 'var(--color-warning)' }}>
+                      ⚠️ Modo de accesibilidad activo: {colorAccessibilityMode}
+                    </h4>
+                    <p className="config-color-info" style={{ color: 'var(--color-text-secondary)' }}>
+                      El color del growshop está siendo ignorado. Se está usando el color del modo de accesibilidad.
+                    </p>
+                    <div className="config-color-swatches">
+                      <div className="config-color-swatch">
+                        <div 
+                          className="config-color-swatch-color" 
+                          style={{ backgroundColor: 'var(--color-primary)' }}
+                        />
+                        <span>Color aplicado</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4>Vista previa de colores generados:</h4>
+                    <div className="config-color-swatches">
+                      <div 
+                        className="config-color-swatch"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleColorSwatchClick('primary')}
+                        title="Principal"
+                      >
+                        <div 
+                          className="config-color-swatch-color" 
+                          style={{ backgroundColor: colorPalette.primary }}
+                        />
+                        <span>Principal</span>
+                      </div>
+                      <div 
+                        className="config-color-swatch"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleColorSwatchClick('primaryLight')}
+                        title="Claro"
+                      >
+                        <div 
+                          className="config-color-swatch-color" 
+                          style={{ backgroundColor: colorPalette.primaryLight }}
+                        />
+                        <span>Claro</span>
+                      </div>
+                      <div 
+                        className="config-color-swatch"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleColorSwatchClick('primaryDark')}
+                        title="Oscuro"
+                      >
+                        <div 
+                          className="config-color-swatch-color" 
+                          style={{ backgroundColor: colorPalette.primaryDark }}
+                        />
+                        <span>Oscuro</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </FormSection>
@@ -882,8 +941,103 @@ export function ConfigPage() {
               </p>
             </div>
           </FormSection>
+
+          {currentAdmin?.isMainAdmin && (
+            <FormSection title="Funcionalidades">
+              <div className="form-field">
+                <label className="form-label">
+                  Usar saldo de socios
+                </label>
+                <div className="config-toggle">
+                  <button
+                    type="button"
+                    className={`config-toggle-button ${formData.enableCustomerBalance ? 'active' : ''}`}
+                    onClick={() => handleBalanceToggleChange(!formData.enableCustomerBalance)}
+                  >
+                    <span className="config-toggle-slider" />
+                  </button>
+                  <span className="config-toggle-label">
+                    {formData.enableCustomerBalance ? 'Activado' : 'Desactivado'}
+                  </span>
+                </div>
+                <p className="config-toggle-description">
+                  {formData.enableCustomerBalance 
+                    ? 'Los socios pueden usar su saldo para pagar, guardar cambio y transferir saldo.'
+                    : 'Al desactivar, no se puede usar ni guardar saldo. Los socios con saldo existente podrán verlo pero no usarlo, y solo se permitirá vaciarlo.'}
+                </p>
+              </div>
+            </FormSection>
+          )}
         </FormCard>
       </div>
+
+      {/* Modal de confirmación para desactivar saldo */}
+      <Modal
+        isOpen={showDisableBalanceConfirm}
+        onClose={cancelDisableBalance}
+        title="Desactivar saldo de socios"
+      >
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ marginBottom: '1rem' }}>
+            <strong>⚠️ Esta acción afecta inmediatamente todas las ventas.</strong>
+          </p>
+          <p style={{ marginBottom: '0.5rem' }}>
+            Al desactivar el saldo:
+          </p>
+          <ul style={{ marginLeft: '1.5rem', marginBottom: '1rem' }}>
+            <li>No se podrá usar saldo de clientes en ventas</li>
+            <li>No se guardará cambio en saldo</li>
+            <li>No se podrán transferir saldos entre clientes</li>
+          </ul>
+          <p style={{ marginBottom: '0.5rem' }}>
+            Los socios con saldo existente:
+          </p>
+          <ul style={{ marginLeft: '1.5rem', marginBottom: '1rem' }}>
+            <li>Podrán seguir viendo su saldo (solo lectura)</li>
+            <li>NO podrán usar el saldo</li>
+            <li>Solo se permitirá vaciar el saldo desde el perfil del socio</li>
+          </ul>
+          <p style={{ 
+            padding: '0.75rem', 
+            backgroundColor: 'var(--warning-bg)', 
+            color: 'var(--warning)', 
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            marginBottom: '1.5rem'
+          }}>
+            Esta acción se puede revertir reactivando el saldo más adelante.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            <button
+              onClick={cancelDisableBalance}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--border)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDisableBalance}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: 'var(--color-danger, #dc3545)',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              Desactivar
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,0 +1,404 @@
+.cajafuerte-daily-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.daily-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.daily-view-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.daily-view-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.daily-view-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Day Card */
+.day-card {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--color-border);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.day-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.day-card-today {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-surface) 0%, rgba(76, 175, 80, 0.05) 100%);
+}
+
+.day-card-closed {
+  border-left: 4px solid var(--color-success);
+}
+
+.day-card-open {
+  border-left: 4px solid var(--color-warning);
+}
+
+.day-card-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--spacing-lg);
+  align-items: center;
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.day-card-header:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.day-card-date {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.day-card-day {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: capitalize;
+}
+
+.day-card-full-date {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.day-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  width: fit-content;
+  margin-top: var(--spacing-xs);
+}
+
+.day-card-balance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  text-align: right;
+}
+
+.day-card-balance-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.day-card-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.day-card-amount {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.day-card-amount-final {
+  font-size: 1.25rem;
+  color: var(--color-primary);
+}
+
+.day-card-net-change {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: var(--spacing-xs);
+}
+
+.day-card-net-change.positive {
+  color: var(--color-success);
+}
+
+.day-card-net-change.negative {
+  color: var(--color-error);
+}
+
+.day-card-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.day-card-status-closed,
+.day-card-status-open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.day-card-icon {
+  font-size: 1.25rem;
+}
+
+.day-card-status-closed .day-card-icon {
+  color: var(--color-success);
+}
+
+.day-card-status-open .day-card-icon {
+  color: var(--color-warning);
+}
+
+.day-card-icon-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.day-card-status-text {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.day-card-status-time {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.day-card-expand-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  transition: transform 0.2s;
+}
+
+.day-card-expand-btn:hover {
+  color: var(--color-text);
+}
+
+/* Day Card Details */
+.day-card-details {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.day-card-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.day-card-summary-section {
+  background: var(--color-surface);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.day-card-summary-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.day-card-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.day-card-summary-row:last-child {
+  border-bottom: none;
+}
+
+.day-card-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  border-top: 2px solid var(--color-border);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.day-card-transactions {
+  margin-top: var(--spacing-lg);
+}
+
+.day-card-transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.day-card-transaction {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--border-radius-md);
+  font-size: 0.875rem;
+}
+
+.day-card-transaction-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  text-transform: uppercase;
+}
+
+.day-card-transaction-type.ADD {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.day-card-transaction-type.WITHDRAW {
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+.day-card-transaction-type.SALE_INPUT {
+  background: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+}
+
+.day-card-transaction-type.SALE_OUTPUT {
+  background: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning);
+}
+
+.day-card-transaction-amount {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.day-card-transaction-amount.positive {
+  color: var(--color-success);
+}
+
+.day-card-transaction-amount.negative {
+  color: var(--color-error);
+}
+
+.day-card-transaction-notes {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  grid-column: 1 / -1;
+}
+
+.day-card-transactions-more {
+  text-align: center;
+  padding: var(--spacing-md);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Positive/Negative helpers */
+.positive {
+  color: var(--color-success);
+}
+
+.negative {
+  color: var(--color-error);
+}
+
+/* Loading & Empty states */
+.daily-view-loading,
+.daily-view-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-md);
+  color: var(--color-text-secondary);
+}
+
+.daily-view-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.daily-view-empty-icon {
+  font-size: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .day-card-header {
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+  }
+  
+  .day-card-balance {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+  
+  .day-card-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .day-card-transaction {
+    grid-template-columns: 1fr auto;
+  }
+  
+  .day-card-transaction-type {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+}

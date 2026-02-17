@@ -6,26 +6,33 @@ import { CajaFuerteSummary } from '@/components/cajafuerte/CajaFuerteSummary';
 import { CajaFuerteHistory } from '@/components/cajafuerte/CajaFuerteHistory';
 import { AddMoneyModal } from '@/components/cajafuerte/AddMoneyModal';
 import { WithdrawMoneyModal } from '@/components/cajafuerte/WithdrawMoneyModal';
-import { ChangeDenominationsModal } from '@/components/cajafuerte/ChangeDenominationsModal';
-import { getCurrentState } from '@/services/cajafuerte.service';
+import { CajaClosedModal } from '@/components/cajafuerte/CajaClosedModal';
+import { getCurrentState, getTodayStatus, closeDay } from '@/services/cajafuerte.service';
 import { useUI } from '@/context/ui.context';
-import type { CajaFuerte } from '@/types/models';
-import { HiPlus, HiMinus, HiArrowsRightLeft } from 'react-icons/hi2';
+import type { CajaFuerte, TodayStatus } from '@/types/models';
+import { HiPlus, HiMinus, HiLockClosed, HiClock } from 'react-icons/hi2';
 import './CajaFuertePage.css';
 
 export function CajaFuertePage() {
   const { showToast } = useUI();
   const [cajaFuerte, setCajaFuerte] = useState<CajaFuerte | null>(null);
+  const [todayStatus, setTodayStatus] = useState<TodayStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [showClosedModal, setShowClosedModal] = useState(false);
+  const [closingDay, setClosingDay] = useState(false);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
 
-  const loadCajaFuerte = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const state = await getCurrentState();
+      const [state, status] = await Promise.all([
+        getCurrentState(),
+        getTodayStatus()
+      ]);
       setCajaFuerte(state);
+      setTodayStatus(status);
     } catch (error: any) {
       showToast(
         error?.response?.data?.message || 'Error al cargar CajaFuerte',
@@ -37,11 +44,41 @@ export function CajaFuertePage() {
   }, [showToast]);
 
   useEffect(() => {
-    loadCajaFuerte();
-  }, [loadCajaFuerte]);
+    loadData();
+  }, [loadData]);
 
   const handleSuccess = () => {
-    loadCajaFuerte();
+    loadData();
+    setHistoryRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCloseDay = async () => {
+    if (!todayStatus) return;
+    
+    // Verificar que la caja no esté ya cerrada
+    if (isTodayClosed) {
+      showToast('La caja ya está cerrada', 'warning');
+      await loadData(); // Refrescar estado
+      return;
+    }
+    
+    setClosingDay(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await closeDay({ date: today });
+      showToast('Caja cerrada exitosamente', 'success');
+      loadData();
+      setHistoryRefreshTrigger(prev => prev + 1);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Error al cerrar la caja';
+      showToast(errorMessage, 'error');
+      // Si el error indica que ya está cerrada, refrescar el estado
+      if (errorMessage.includes('ya fue cerrado') || errorMessage.includes('ya está cerrada')) {
+        loadData();
+      }
+    } finally {
+      setClosingDay(false);
+    }
   };
 
   if (loading && !cajaFuerte) {
@@ -60,12 +97,69 @@ export function CajaFuertePage() {
     );
   }
 
+  const isTodayClosed = todayStatus?.isClosed ?? false;
+
+  const handleAddMoneyClick = () => {
+    if (isTodayClosed) {
+      setShowClosedModal(true);
+    } else {
+      setShowAddModal(true);
+    }
+  };
+
+  const handleWithdrawMoneyClick = () => {
+    if (isTodayClosed) {
+      setShowClosedModal(true);
+    } else {
+      setShowWithdrawModal(true);
+    }
+  };
+
+  const handleReopenSuccess = () => {
+    loadData();
+    setHistoryRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className="cajafuerte-page">
       <PageHeader 
         title="CajaFuerte" 
-        subtitle="Gestión de dinero físico (billetes y monedas)" 
+        subtitle="Gestión de dinero" 
       />
+
+      {/* Status Banner */}
+      {todayStatus && (
+        <div className={`cajafuerte-status-banner ${isTodayClosed ? 'closed' : 'open'}`}>
+          <div className="cajafuerte-status-content">
+            <div className="cajafuerte-status-icon">
+              {isTodayClosed ? <HiLockClosed /> : <HiClock className="pulse" />}
+            </div>
+            <div className="cajafuerte-status-text">
+              <span className="cajafuerte-status-label">
+                {isTodayClosed 
+                  ? `Caja cerrada ${todayStatus.isAutoClosed ? 'automáticamente' : `por ${todayStatus.closedByUsername}`}` 
+                  : 'Caja abierta - Día en curso'}
+              </span>
+              {isTodayClosed && todayStatus.closedAt && (
+                <span className="cajafuerte-status-time">
+                  {new Date(todayStatus.closedAt).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+          </div>
+          {!isTodayClosed && (
+            <Button
+              variant="primary"
+              onClick={handleCloseDay}
+              loading={closingDay}
+              disabled={closingDay || isTodayClosed}
+              icon={<HiLockClosed />}
+            >
+              Cerrar Caja
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="cajafuerte-page-content">
         <div className="cajafuerte-page-main">
@@ -74,31 +168,24 @@ export function CajaFuertePage() {
           <div className="cajafuerte-page-actions">
             <Button
               variant="primary"
-              onClick={() => setShowAddModal(true)}
+              onClick={handleAddMoneyClick}
               icon={<HiPlus />}
             >
               Añadir dinero
             </Button>
             <Button
               variant="secondary"
-              onClick={() => setShowWithdrawModal(true)}
+              onClick={handleWithdrawMoneyClick}
               icon={<HiMinus />}
             >
               Retirar dinero
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowChangeModal(true)}
-              icon={<HiArrowsRightLeft />}
-            >
-              Cambiar denominaciones
             </Button>
           </div>
         </div>
 
         <div className="cajafuerte-page-history">
-          <h2 className="cajafuerte-page-history-title">Historial de transacciones</h2>
-          <CajaFuerteHistory />
+          <h2 className="cajafuerte-page-history-title">Historial</h2>
+          <CajaFuerteHistory refreshTrigger={historyRefreshTrigger} />
         </div>
       </div>
 
@@ -115,11 +202,10 @@ export function CajaFuertePage() {
         currentState={cajaFuerte}
       />
 
-      <ChangeDenominationsModal
-        isOpen={showChangeModal}
-        onClose={() => setShowChangeModal(false)}
-        onSuccess={handleSuccess}
-        currentState={cajaFuerte}
+      <CajaClosedModal
+        isOpen={showClosedModal}
+        onClose={() => setShowClosedModal(false)}
+        onReopenSuccess={handleReopenSuccess}
       />
     </div>
   );

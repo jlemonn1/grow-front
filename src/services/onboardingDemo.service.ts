@@ -71,6 +71,7 @@ export function generateMockData(): DemoData {
       subscriptionEndDate: subscriptionEndDate.toISOString().split('T')[0],
       notes: 'Cliente de prueba generado para onboarding',
       createdAt: generateDate(30 - index * 5),
+      customerType: index % 2 === 0 ? 'LUDICO' : 'TERAPEUTICO',
     };
   });
 
@@ -92,6 +93,7 @@ export function generateMockData(): DemoData {
     description: data.description,
     imageUrl: 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(data.name),
     createdAt: generateDate(25 - index * 3),
+    measurementType: 'WEIGHT',
   }));
 
   // 4. Crear ventas mock

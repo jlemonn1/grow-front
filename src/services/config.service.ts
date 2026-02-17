@@ -6,6 +6,7 @@ export interface GrowConfiguration {
   logoUrl: string | null;
   primaryColor: string;
   showCashDetails: boolean;
+  enableCustomerBalance: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +16,7 @@ export interface UpdateGrowConfigurationRequest {
   logoUrl: string | null;
   primaryColor: string;
   showCashDetails: boolean;
+  enableCustomerBalance: boolean;
 }
 
 export const configService = {

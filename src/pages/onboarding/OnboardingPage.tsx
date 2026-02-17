@@ -116,6 +116,7 @@ export function OnboardingPage() {
         logoUrl,
         primaryColor: config?.primaryColor || '#3bd420',
         showCashDetails: config?.showCashDetails ?? true,
+        enableCustomerBalance: config?.enableCustomerBalance ?? true,
       });
 
       showToast('¡Configuración completada! Bienvenido a tu growshop', 'success');

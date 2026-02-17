@@ -3,6 +3,7 @@ import { SaleItemCard } from '@/components/common/SaleItemCard';
 import { type ColumnDef } from '@/components/common/DataTable';
 import type { SaleItem } from '@/types/models';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './SaleItemsTable.css';
 
 interface SaleItemsTableProps {
@@ -25,25 +26,16 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
       accessor: 'productName',
     },
     {
-      header: 'Gramos',
+      header: 'Cantidad',
       accessor: 'grams',
-      cell: (value: unknown) => `${value}g`,
+      cell: (value: unknown, row: SaleItem) => `${value}${getMeasurementShortLabel(row.measurementType)}`,
     },
     {
-      header: 'Precio/gramo',
+      header: 'Precio unitario',
       accessor: 'pricePerGram',
-      cell: (value: unknown) => formatMoney(value as number),
-    },
-    {
-      header: 'Descuento',
-      accessor: (row: SaleItem) => {
-        if (row.discount !== undefined && row.discountType) {
-          return row.discountType === 'PERCENTAGE' 
-            ? `${row.discount}%`
-            : formatMoney(row.discount);
-        }
-        return '-';
-      },
+      cell: (_value: unknown, row: SaleItem) => (
+        `${formatMoney(row.pricePerGram)}/${getMeasurementShortLabel(row.measurementType)}`
+      ),
     },
     {
       header: 'Subtotal',

@@ -79,9 +79,9 @@ function DataTableComponent<T extends Record<string, any>>({
               role="row"
               data-tour={getRowDataTour ? getRowDataTour(row) : undefined}
               onClick={(e) => {
-                // No activar el click de la fila si se hace click en un botón, enlace o elemento interactivo
                 const target = e.target as HTMLElement;
-                if (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('button, a')) {
+                const interactive = target.closest('button, a, input, select, textarea');
+                if (interactive) {
                   return;
                 }
                 onRowClick?.(row);

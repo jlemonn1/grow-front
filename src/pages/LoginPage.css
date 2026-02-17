@@ -74,38 +74,43 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: all var(--transition-base), box-shadow var(--transition-glow);
+  overflow: hidden;
 }
 
 /* Efecto LED en los bordes del contenedor */
 .login-container::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--border-radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    var(--border-led-color),
-    var(--neon-primary),
-    var(--border-led-color)
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--neon-primary) 60deg,
+    var(--border-led-color) 120deg,
+    transparent 180deg,
+    transparent 360deg
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.5;
   z-index: -1;
-  animation: borderGlow 3s ease-in-out infinite;
+  animation: borderRotate 3s linear infinite;
 }
 
-@keyframes borderGlow {
-  0%, 100% {
-    opacity: 0.5;
+.login-container::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--bg-primary);
+  border-radius: calc(var(--border-radius-lg) - 2px);
+  z-index: -1;
+}
+
+@keyframes borderRotate {
+  0% {
+    transform: rotate(0deg);
   }
-  50% {
-    opacity: 0.8;
+  100% {
+    transform: rotate(360deg);
   }
 }
 

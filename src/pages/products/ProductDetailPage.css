@@ -511,6 +511,11 @@
   color: var(--neon-primary);
 }
 
+/* Toggle de tipo de medición - Simple y discreto */
+.segmented-toggle-wrapper {
+  margin-bottom: var(--spacing-md);
+}
+
 .product-edit-actions {
   display: flex;
   gap: var(--spacing-md);

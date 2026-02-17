@@ -15,6 +15,7 @@ import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft } from '@/ser
 import { customersService } from '@/services/customers.service';
 import { getTopProductsByMovements, type TopProduct } from '@/services/products.service';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import type { Product, SaleDraft, DenominationsMap } from '@/types/models';
 import './QuickSaleModal.css';
 
@@ -46,6 +47,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   } = ticket;
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const selectedMeasurementSuffix = getMeasurementShortLabel(selectedProduct?.measurementType ?? 'WEIGHT');
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
@@ -466,7 +468,8 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
 
   const handleAddProduct = useCallback(async () => {
     if (!selectedProduct || gramsToAdd <= 0) {
-      showToast('Selecciona un producto y especifica los gramos', 'warning');
+      const measurementLabel = selectedProduct?.measurementType === 'UNIT' ? 'la cantidad' : 'los gramos';
+      showToast(`Selecciona un producto y especifica ${measurementLabel}`, 'warning');
       return;
     }
 
@@ -476,7 +479,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       
       const stock = getProductStock(product.id);
       if (gramsToAdd > stock) {
-        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
+        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}${selectedMeasurementSuffix}`, 'error');
         return;
       }
 
@@ -705,26 +708,29 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
               {items.length > 0 && (
                 <div className="quick-sale-items-list">
                   <h3 className="quick-sale-items-title">Productos en el ticket</h3>
-                  {items.map((item, index) => (
-                    <div key={index} className="quick-sale-item">
-                      <div className="quick-sale-item-info">
-                        <div className="quick-sale-item-name">
-                          {item.product?.name || 'Producto'}
+                    {items.map((item, index) => {
+                      const itemSuffix = getMeasurementShortLabel(item.product?.measurementType ?? 'WEIGHT');
+                      return (
+                        <div key={index} className="quick-sale-item">
+                          <div className="quick-sale-item-info">
+                            <div className="quick-sale-item-name">
+                              {item.product?.name || 'Producto'}
+                            </div>
+                            <div className="quick-sale-item-details">
+                              {item.grams.toFixed(2)}{itemSuffix} × {formatMoney(item.pricePerGram)}/{itemSuffix} = {formatMoney(item.subtotal)}
+                            </div>
+                          </div>
+                          <button
+                            className="quick-sale-item-remove"
+                            onClick={() => removeItem(index)}
+                            type="button"
+                            aria-label="Eliminar"
+                          >
+                            ×
+                          </button>
                         </div>
-                        <div className="quick-sale-item-details">
-                          {item.grams.toFixed(2)}g × {formatMoney(item.pricePerGram)} = {formatMoney(item.subtotal)}
-                        </div>
-                      </div>
-                      <button
-                        className="quick-sale-item-remove"
-                        onClick={() => removeItem(index)}
-                        type="button"
-                        aria-label="Eliminar"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                      );
+                    })}
                   <div className="quick-sale-total">
                     Total: <strong>{formatMoney(total)}</strong>
                   </div>

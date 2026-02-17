@@ -1,13 +1,24 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { debounce } from '@/utils/debounce';
 import { saveSaleDraft, savePendingSale } from '@/services/sales.service';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import { setSaveDraftBeforeLogoutCallback } from '@/context/auth.context';
-import type { Customer, Product, TicketItem, PendingSale, DenominationsMap } from '@/types/models';
+import { useConfig } from '@/context/config.context';
+import type { Customer, Product, TicketItem, PendingSale } from '@/types/models';
+
+export interface AppliedCoupon {
+  code: string;
+  name: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+}
 
 interface TicketContextValue {
   customer: Customer | null;
   items: TicketItem[];
   total: number;
+  subtotalBeforeDiscount: number;
+  discountAmount: number;
   cashGiven: number;
   change: number;
   isValid: boolean;
@@ -17,22 +28,26 @@ interface TicketContextValue {
   saveChangeToBalance: boolean;
   balanceUsed: number;
   balanceRemaining: number;
+  appliedCoupon: AppliedCoupon | null;
+  manualDiscountPercent: number | null;
   addItem: (product: Product, grams: number) => void;
   updateItem: (index: number, grams: number) => void;
-  updateItemDiscount: (index: number, discount: number | undefined, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | undefined) => void;
   removeItem: (index: number) => void;
   setCustomer: (customer: Customer | null) => void;
   setCashGiven: (amount: number) => void;
   setUseBalance: (use: boolean) => void;
   setBalanceToUse: (amount: number) => void;
   setSaveChangeToBalance: (save: boolean) => void;
+  applyCoupon: (coupon: AppliedCoupon) => void;
+  removeCoupon: () => void;
+  setManualDiscount: (percent: number | null) => void;
   validateItem: (index: number, availableStock: number) => void;
   validateAll: (getProductStock: (productId: string, excludeItemIndex?: number) => number) => void;
   reset: () => void;
   calculateTotals: () => void;
-  loadDraft: (draft: { customerId?: string | null; items: Array<{ productId: string; grams: number; discount?: number; discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT' }>; cashGiven: number }, getProductById: (id: string) => Promise<Product | null>) => Promise<void>;
-  loadPendingSale: (pendingSale: PendingSale, getProductById: (id: string) => Promise<Product | null>) => Promise<{ selectedProductId: string | null; gramsToAdd: number; cashGivenDenominations: DenominationsMap; changeDenominations: DenominationsMap | null }>;
-  saveAsPendingSale: (selectedProductId: string | null, gramsToAdd: number, cashGivenDenominations: DenominationsMap, changeDenominations: DenominationsMap | null) => Promise<void>;
+  loadDraft: (draft: { customerId?: string | null; items: Array<{ productId: string; grams: number }>; cashGiven: number }, getProductById: (id: string) => Promise<Product | null>) => Promise<void>;
+  loadPendingSale: (pendingSale: PendingSale, getProductById: (id: string) => Promise<Product | null>) => Promise<{ selectedProductId: string | null; gramsToAdd: number }>;
+  saveAsPendingSale: (selectedProductId: string | null, gramsToAdd: number) => Promise<void>;
   setIsLoadingDraft: (loading: boolean) => void;
 }
 
@@ -48,6 +63,8 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const [items, setItems] = useState<TicketItem[]>([]);
   const [cashGiven, setCashGivenState] = useState<number>(0);
   const [total, setTotal] = useState<number>(0);
+  const [subtotalBeforeDiscount, setSubtotalBeforeDiscount] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [change, setChange] = useState<number>(0);
   const [isValid, setIsValid] = useState<boolean>(false);
   const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
@@ -56,34 +73,36 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const [saveChangeToBalance, setSaveChangeToBalanceState] = useState<boolean>(false);
   const [balanceUsed, setBalanceUsed] = useState<number>(0);
   const [balanceRemaining, setBalanceRemaining] = useState<number>(0);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [manualDiscountPercent, setManualDiscountPercent] = useState<number | null>(null);
   
   // Ref para evitar guardar durante la carga de un borrador
   const isLoadingDraftRef = useRef(false);
 
-  // Función helper para calcular subtotal con descuento
-  const calculateSubtotalWithDiscount = useCallback((
-    grams: number,
-    pricePerGram: number,
-    discount?: number,
-    discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  ): { subtotal: number; subtotalBeforeDiscount: number } => {
-    const subtotalBeforeDiscount = grams * pricePerGram;
-    
-    if (discount !== undefined && discountType) {
-      if (discountType === 'PERCENTAGE') {
-        const subtotal = subtotalBeforeDiscount * (1 - discount / 100);
-        return { subtotal, subtotalBeforeDiscount };
-      } else if (discountType === 'FIXED_AMOUNT') {
-        const subtotal = Math.max(0, subtotalBeforeDiscount - discount);
-        return { subtotal, subtotalBeforeDiscount };
-      }
-    }
-    
-    return { subtotal: subtotalBeforeDiscount, subtotalBeforeDiscount };
+  // Función helper para calcular subtotal simple (sin descuento por línea)
+  const calculateSubtotal = useCallback((grams: number, pricePerGram: number): number => {
+    return grams * pricePerGram;
   }, []);
 
   const calculateTotals = useCallback(() => {
-    const newTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+    const itemsTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+    setSubtotalBeforeDiscount(itemsTotal);
+    
+    // Calcular descuento
+    let discount = 0;
+    if (appliedCoupon) {
+      if (appliedCoupon.discountType === 'PERCENTAGE') {
+        discount = itemsTotal * (appliedCoupon.discountValue / 100);
+      } else {
+        discount = Math.min(appliedCoupon.discountValue, itemsTotal);
+      }
+    } else if (manualDiscountPercent && manualDiscountPercent > 0) {
+      discount = itemsTotal * (manualDiscountPercent / 100);
+    }
+    
+    const newTotal = Math.max(0, itemsTotal - discount);
+    setDiscountAmount(discount);
+    setTotal(newTotal);
     
     // Calcular saldo disponible
     const availableBalance = customer?.balance || 0;
@@ -138,28 +157,15 @@ export function TicketProvider({ children }: TicketProviderProps) {
     }
     
     setIsValid(hasValidCustomer && hasItems && allItemsValid && paymentSufficient);
-  }, [items, cashGiven, customer, useBalance, balanceToUse]);
+  }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent]);
 
   const addItem = useCallback((product: Product, grams: number) => {
     if (grams <= 0) {
       return;
     }
 
-    // Calcular precio de oferta: priorizar porcentaje, luego precio fijo
-    let pricePerGram = product.pricePerGram;
-    if (product.onSale) {
-      if (product.saleDiscountPercent !== undefined && product.saleDiscountPercent > 0) {
-        // Calcular precio con porcentaje de descuento
-        pricePerGram = product.pricePerGram * (1 - product.saleDiscountPercent / 100);
-      } else if (product.salePricePerGram !== undefined) {
-        // Usar precio fijo de oferta
-        pricePerGram = product.salePricePerGram;
-      }
-    }
-    const { subtotal, subtotalBeforeDiscount } = calculateSubtotalWithDiscount(
-      grams,
-      pricePerGram
-    );
+    const pricePerGram = product.pricePerGram;
+    const subtotal = calculateSubtotal(grams, pricePerGram);
 
     const newItem: TicketItem = {
       productId: product.id,
@@ -167,7 +173,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
       grams,
       pricePerGram,
       subtotal,
-      subtotalBeforeDiscount,
       validationState: 'checking',
       errorMessage: undefined,
     };
@@ -175,7 +180,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     setItems((prev) => {
       return [...prev, newItem];
     });
-  }, [calculateSubtotalWithDiscount]);
+  }, [calculateSubtotal]);
 
   const updateItem = useCallback((index: number, grams: number) => {
     if (grams <= 0) {
@@ -187,71 +192,18 @@ export function TicketProvider({ children }: TicketProviderProps) {
       const item = updated[index];
       if (!item) return prev;
 
-      const { subtotal, subtotalBeforeDiscount } = calculateSubtotalWithDiscount(
-        grams,
-        item.pricePerGram,
-        item.discount,
-        item.discountType
-      );
+      const subtotal = calculateSubtotal(grams, item.pricePerGram);
 
       updated[index] = {
         ...item,
         grams,
         subtotal,
-        subtotalBeforeDiscount,
         validationState: 'checking',
         errorMessage: undefined,
       };
       return updated;
     });
-  }, [calculateSubtotalWithDiscount]);
-
-  const updateItemDiscount = useCallback((
-    index: number,
-    discount: number | undefined,
-    discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | undefined
-  ) => {
-    setItems((prev) => {
-      const updated = [...prev];
-      const item = updated[index];
-      if (!item) return prev;
-
-      // Validar descuento
-      if (discount !== undefined && discountType) {
-        const subtotalBeforeDiscount = item.grams * item.pricePerGram;
-        
-        if (discountType === 'PERCENTAGE') {
-          if (discount < 0 || discount > 100) {
-            // No actualizar si el descuento es inválido
-            return prev;
-          }
-        } else if (discountType === 'FIXED_AMOUNT') {
-          if (discount < 0 || discount > subtotalBeforeDiscount) {
-            // No actualizar si el descuento es inválido
-            return prev;
-          }
-        }
-      }
-
-      const { subtotal, subtotalBeforeDiscount } = calculateSubtotalWithDiscount(
-        item.grams,
-        item.pricePerGram,
-        discount,
-        discountType
-      );
-
-      updated[index] = {
-        ...item,
-        discount,
-        discountType,
-        subtotal,
-        subtotalBeforeDiscount,
-        validationState: 'checking',
-        errorMessage: undefined,
-      };
-      return updated;
-    });
-  }, [calculateSubtotalWithDiscount]);
+  }, [calculateSubtotal]);
 
   const removeItem = useCallback((index: number) => {
     setItems((prev) => prev.filter((_, i) => i !== index));
@@ -322,13 +274,14 @@ export function TicketProvider({ children }: TicketProviderProps) {
         updated[index] = {
           ...item,
           validationState: 'invalid',
-          errorMessage: 'Los gramos deben ser mayores a 0',
+          errorMessage: `La cantidad debe ser mayor a 0`,
         };
       } else if (item.grams > availableStock) {
+        const measurementSuffix = getMeasurementShortLabel(item.product?.measurementType ?? 'WEIGHT');
         updated[index] = {
           ...item,
           validationState: 'invalid',
-          errorMessage: `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}g`,
+          errorMessage: `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}${measurementSuffix}`,
         };
       } else {
         updated[index] = {
@@ -350,15 +303,16 @@ export function TicketProvider({ children }: TicketProviderProps) {
           return {
             ...item,
             validationState: 'invalid',
-            errorMessage: 'Los gramos deben ser mayores a 0',
+            errorMessage: 'La cantidad debe ser mayor a 0',
           };
-        } else if (item.grams > availableStock) {
-          return {
-            ...item,
-            validationState: 'invalid',
-            errorMessage: `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}g`,
-          };
-        } else {
+      } else if (item.grams > availableStock) {
+          const measurementSuffix = getMeasurementShortLabel(item.product?.measurementType ?? 'WEIGHT');
+        return {
+          ...item,
+          validationState: 'invalid',
+          errorMessage: `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}${measurementSuffix}`,
+        };
+      } else {
           return {
             ...item,
             validationState: 'valid',
@@ -392,8 +346,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
-          discount: item.discount,
-          discountType: item.discountType,
         })),
       });
       
@@ -404,8 +356,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
-          discount: item.discount,
-          discountType: item.discountType,
         })),
       }));
     } catch (error) {
@@ -418,8 +368,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
           items: items.map(item => ({
             productId: item.productId,
             grams: item.grams,
-            discount: item.discount,
-            discountType: item.discountType,
           })),
         }));
       } catch (e) {
@@ -494,7 +442,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const loadPendingSale = useCallback(async (
     pendingSale: PendingSale,
     getProductById: (id: string) => Promise<Product | null>
-  ): Promise<{ selectedProductId: string | null; gramsToAdd: number; cashGivenDenominations: DenominationsMap; changeDenominations: DenominationsMap | null }> => {
+  ): Promise<{ selectedProductId: string | null; gramsToAdd: number }> => {
     isLoadingDraftRef.current = true;
     
     try {
@@ -510,21 +458,8 @@ export function TicketProvider({ children }: TicketProviderProps) {
         try {
           const product = await getProductById(draftItem.productId);
           if (product) {
-            let pricePerGram = product.pricePerGram;
-            if (product.onSale) {
-              if (product.saleDiscountPercent !== undefined && product.saleDiscountPercent > 0) {
-                pricePerGram = product.pricePerGram * (1 - product.saleDiscountPercent / 100);
-              } else if (product.salePricePerGram !== undefined) {
-                pricePerGram = product.salePricePerGram;
-              }
-            }
-            
-            const { subtotal, subtotalBeforeDiscount } = calculateSubtotalWithDiscount(
-              draftItem.grams,
-              pricePerGram,
-              draftItem.discount,
-              draftItem.discountType
-            );
+            const pricePerGram = product.pricePerGram;
+            const subtotal = calculateSubtotal(draftItem.grams, pricePerGram);
             
             loadedItems.push({
               productId: product.id,
@@ -532,9 +467,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
               grams: draftItem.grams,
               pricePerGram,
               subtotal,
-              subtotalBeforeDiscount,
-              discount: draftItem.discount,
-              discountType: draftItem.discountType,
               validationState: 'checking' as const,
               errorMessage: undefined,
             });
@@ -556,20 +488,16 @@ export function TicketProvider({ children }: TicketProviderProps) {
       return {
         selectedProductId: pendingSale.selectedProductId || null,
         gramsToAdd: pendingSale.gramsToAdd || 0,
-        cashGivenDenominations: pendingSale.cashGivenDenominations || {},
-        changeDenominations: pendingSale.changeDenominations || null,
       };
     } finally {
       isLoadingDraftRef.current = false;
     }
-  }, [calculateSubtotalWithDiscount]);
+  }, [calculateSubtotal]);
 
   const saveAsPendingSale = useCallback(async (
     selectedProductId: string | null,
-    gramsToAdd: number,
-    cashGivenDenominations: DenominationsMap,
-    changeDenominations: DenominationsMap | null
-  ) => {
+    gramsToAdd: number
+  ): Promise<void> => {
     // Solo guardar si hay cliente seleccionado O al menos un producto añadido
     const hasCustomer = customer !== null;
     const hasItems = items.length > 0;
@@ -586,13 +514,9 @@ export function TicketProvider({ children }: TicketProviderProps) {
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
-          discount: item.discount,
-          discountType: item.discountType,
         })),
         selectedProductId,
         gramsToAdd: gramsToAdd > 0 ? gramsToAdd : null,
-        cashGivenDenominations: Object.keys(cashGivenDenominations).length > 0 ? cashGivenDenominations : undefined,
-        changeDenominations: changeDenominations && Object.keys(changeDenominations).length > 0 ? changeDenominations : undefined,
         useBalance,
         balanceToUse: useBalance ? balanceToUse : undefined,
         saveChangeToBalance,
@@ -610,9 +534,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
       customerId?: string | null; 
       items: Array<{ 
         productId: string; 
-        grams: number; 
-        discount?: number; 
-        discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT' 
+        grams: number;
       }>; 
       cashGiven: number 
     },
@@ -633,21 +555,8 @@ export function TicketProvider({ children }: TicketProviderProps) {
         try {
           const product = await getProductById(draftItem.productId);
           if (product) {
-            let pricePerGram = product.pricePerGram;
-            if (product.onSale) {
-              if (product.saleDiscountPercent !== undefined && product.saleDiscountPercent > 0) {
-                pricePerGram = product.pricePerGram * (1 - product.saleDiscountPercent / 100);
-              } else if (product.salePricePerGram !== undefined) {
-                pricePerGram = product.salePricePerGram;
-              }
-            }
-            
-            const { subtotal, subtotalBeforeDiscount } = calculateSubtotalWithDiscount(
-              draftItem.grams,
-              pricePerGram,
-              draftItem.discount,
-              draftItem.discountType
-            );
+            const pricePerGram = product.pricePerGram;
+            const subtotal = calculateSubtotal(draftItem.grams, pricePerGram);
             
             loadedItems.push({
               productId: product.id,
@@ -655,9 +564,6 @@ export function TicketProvider({ children }: TicketProviderProps) {
               grams: draftItem.grams,
               pricePerGram,
               subtotal,
-              subtotalBeforeDiscount,
-              discount: draftItem.discount,
-              discountType: draftItem.discountType,
               validationState: 'checking',
               errorMessage: undefined,
             });
@@ -672,32 +578,74 @@ export function TicketProvider({ children }: TicketProviderProps) {
     } finally {
       isLoadingDraftRef.current = false;
     }
-  }, [calculateSubtotalWithDiscount]);
+  }, [calculateSubtotal]);
+
+  const applyCoupon = useCallback((coupon: AppliedCoupon) => {
+    setAppliedCoupon(coupon);
+    setManualDiscountPercent(null); // Limpiar descuento manual si hay cupón
+  }, []);
+
+  const removeCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+  }, []);
+
+  const setManualDiscount = useCallback((percent: number | null) => {
+    setManualDiscountPercent(percent);
+    if (percent !== null) {
+      setAppliedCoupon(null); // Limpiar cupón si hay descuento manual
+    }
+  }, []);
 
   const reset = useCallback(() => {
     setCustomerState(null);
     setItems([]);
     setCashGivenState(0);
     setTotal(0);
+    setSubtotalBeforeDiscount(0);
+    setDiscountAmount(0);
     setChange(0);
     setIsValid(false);
     setUseBalanceState(false);
     setSaveChangeToBalanceState(false);
     setBalanceUsed(0);
     setBalanceRemaining(0);
+    setAppliedCoupon(null);
+    setManualDiscountPercent(null);
     // Limpiar localStorage al resetear
     localStorage.removeItem(TICKET_STORAGE_KEY);
   }, []);
 
-  // Recalcular totales cuando cambian items, cashGiven, customer, useBalance, balanceToUse
+  // Obtener configuración para verificar si el saldo está habilitado
+  const { config } = useConfig();
+  const enableCustomerBalance = config?.enableCustomerBalance ?? true;
+
+  // Efecto para forzar estado de saldo cuando está deshabilitado
+  useEffect(() => {
+    if (!enableCustomerBalance) {
+      // Si el saldo está deshabilitado, forzar valores a false/0
+      if (useBalance) {
+        setUseBalanceState(false);
+      }
+      if (balanceToUse > 0) {
+        setBalanceToUse(0);
+      }
+      if (saveChangeToBalance) {
+        setSaveChangeToBalanceState(false);
+      }
+    }
+  }, [enableCustomerBalance]);
+
+  // Recalcular totales cuando cambian items, cashGiven, customer, useBalance, balanceToUse, cupones o descuentos
   useEffect(() => {
     calculateTotals();
-  }, [items, cashGiven, customer, useBalance, balanceToUse, calculateTotals]);
+  }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent, calculateTotals]);
 
   const value: TicketContextValue = {
     customer,
     items,
     total,
+    subtotalBeforeDiscount,
+    discountAmount,
     cashGiven,
     change,
     isValid,
@@ -707,15 +655,19 @@ export function TicketProvider({ children }: TicketProviderProps) {
     saveChangeToBalance,
     balanceUsed,
     balanceRemaining,
+    appliedCoupon,
+    manualDiscountPercent,
     addItem,
     updateItem,
-    updateItemDiscount,
     removeItem,
     setCustomer,
     setCashGiven,
     setUseBalance,
     setBalanceToUse: setBalanceToUseWrapper,
     setSaveChangeToBalance,
+    applyCoupon,
+    removeCoupon,
+    setManualDiscount,
     validateItem,
     validateAll,
     reset,

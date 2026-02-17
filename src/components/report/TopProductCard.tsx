@@ -43,8 +43,8 @@ export function TopProductCard({ product, title, icon, highlight, loading }: Top
         <div className="top-product-card-name">{product.name}</div>
         <div className="top-product-card-stats">
           <div className="top-product-card-stat">
-            <span className="top-product-card-stat-label">Gramos:</span>
-            <span className="top-product-card-stat-value">{product.totalGrams.toFixed(2)}g</span>
+            <span className="top-product-card-stat-label">Cantidad:</span>
+            <span className="top-product-card-stat-value">{product.totalGrams.toFixed(2)}</span>
           </div>
           <div className="top-product-card-stat">
             <span className="top-product-card-stat-label">Ingresos:</span>

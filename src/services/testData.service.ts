@@ -43,6 +43,7 @@ export async function loadTestDataForOnboarding(): Promise<{
       pin: customerData.pin,
       subscriptionType: 'MONTHLY',
       subscriptionPrice: customerData.subscriptionPrice,
+      customerType: 'LUDICO',
       notes: 'Cliente de prueba generado por easter egg',
     };
     const customer = await customersService.create(customerRequest);
@@ -67,6 +68,7 @@ export async function loadTestDataForOnboarding(): Promise<{
       description: productInfo.description,
       imageUrl: 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(productInfo.name),
       initialStockGrams: productInfo.stock,
+      measurementType: 'WEIGHT',
     };
     const product = await createProduct(productRequest);
     createdProducts.push(product);

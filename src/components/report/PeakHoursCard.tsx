@@ -72,9 +72,9 @@ export function PeakHoursCard({ data, loading }: PeakHoursCardProps) {
           </div>
 
           <div className="peak-hour-item">
-            <div className="peak-hour-item-label">Más Gramos</div>
+            <div className="peak-hour-item-label">Más Cantidad</div>
             <div className="peak-hour-item-value">{peakHours.maxGrams.label}</div>
-            <div className="peak-hour-item-amount">{peakHours.maxGrams.totalGrams.toFixed(2)} g</div>
+            <div className="peak-hour-item-amount">{peakHours.maxGrams.totalGrams.toFixed(2)}</div>
             <div className="peak-hour-item-detail">{peakHours.maxGrams.saleCount} ventas</div>
           </div>
         </div>

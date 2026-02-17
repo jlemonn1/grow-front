@@ -64,8 +64,8 @@ export function FumonCard({ fumon, loading }: FumonCardProps) {
           <div className="fumon-card-stat">
             <div className="fumon-card-stat-icon"><HiCube /></div>
             <div className="fumon-card-stat-content">
-              <div className="fumon-card-stat-label">Gramos Comprados</div>
-              <div className="fumon-card-stat-value">{fumon.totalGrams.toFixed(2)}g</div>
+              <div className="fumon-card-stat-label">Cantidad Total</div>
+              <div className="fumon-card-stat-value">{fumon.totalGrams.toFixed(2)}</div>
             </div>
           </div>
           <div className="fumon-card-stat">

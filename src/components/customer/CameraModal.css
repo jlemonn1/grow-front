@@ -1,0 +1,84 @@
+.camera-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.camera-video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.camera-photo-container {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.camera-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.camera-controls button {
+  min-width: 120px;
+}
+
+.camera-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  color: #ef4444;
+}
+
+@media (max-width: 480px) {
+  .camera-modal-container {
+    max-width: 100%;
+  }
+
+  .camera-controls {
+    flex-direction: column;
+  }
+
+  .camera-controls button {
+    width: 100%;
+  }
+}

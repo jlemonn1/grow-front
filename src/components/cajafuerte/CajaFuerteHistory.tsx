@@ -5,23 +5,33 @@ import { Select } from '@/components/forms/Select';
 import { DateRangePicker, type DateRange } from '@/components/common/DateRangePicker';
 import { Button } from '@/components/common/Button';
 import { CajaFuerteTransactionList } from './CajaFuerteTransactionList';
-import { getTransactions } from '@/services/cajafuerte.service';
-import type { CajaFuerteTransaction, CajaFuerteTransactionType } from '@/types/models';
+import { CajaFuerteDailyView } from './CajaFuerteDailyView';
+import { getTransactions, getDailySummary, closeDay } from '@/services/cajafuerte.service';
+import { useUI } from '@/context/ui.context';
+import type { CajaFuerteTransaction, CajaFuerteTransactionType, DailySummary } from '@/types/models';
+import { HiCalendar, HiListBullet } from 'react-icons/hi2';
 import './CajaFuerteHistory.css';
 
 const TRANSACTION_TYPE_OPTIONS = [
   { value: '', label: 'Todos los tipos' },
   { value: 'ADD', label: 'Añadir' },
   { value: 'WITHDRAW', label: 'Retirar' },
-  { value: 'CHANGE', label: 'Cambio' },
   { value: 'SALE_INPUT', label: 'Entrada por venta' },
   { value: 'SALE_OUTPUT', label: 'Salida por cambio' },
 ];
 
-export function CajaFuerteHistory() {
+type ViewMode = 'daily' | 'list';
+
+interface CajaFuerteHistoryProps {
+  refreshTrigger?: number;
+}
+
+export function CajaFuerteHistory({ refreshTrigger }: CajaFuerteHistoryProps) {
+  const { showToast } = useUI();
+  const [viewMode, setViewMode] = useState<ViewMode>('daily');
+  
   const [transactions, setTransactions] = useState<CajaFuerteTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [listLoading, setListLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 0,
     size: 25,
@@ -29,10 +39,34 @@ export function CajaFuerteHistory() {
     totalPages: 0,
   });
   const [selectedType, setSelectedType] = useState<CajaFuerteTransactionType | ''>('');
+  const [summaries, setSummaries] = useState<DailySummary[]>([]);
+  const [dailyLoading, setDailyLoading] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadHistory = useCallback(async (page: number = 0) => {
-    setLoading(true);
+  const loadDailyView = useCallback(async () => {
+    setDailyLoading(true);
+    try {
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      
+      const from = dateRange?.from || thirtyDaysAgo.toISOString().split('T')[0];
+      const to = dateRange?.to || today.toISOString().split('T')[0];
+      
+      const data = await getDailySummary(from, to);
+      setSummaries(data);
+      setError(null);
+    } catch (error: any) {
+      console.error('Error al cargar resumen diario:', error);
+      setError(error?.response?.data?.message || 'Error al cargar el resumen diario');
+    } finally {
+      setDailyLoading(false);
+    }
+  }, [dateRange]);
+
+  const loadListView = useCallback(async (page: number = 0) => {
+    setListLoading(true);
     try {
       const params: Parameters<typeof getTransactions>[0] = {
         page,
@@ -58,22 +92,44 @@ export function CajaFuerteHistory() {
       });
       setError(null);
     } catch (error: any) {
-      console.error('Error al cargar historial de CajaFuerte:', error);
-      setTransactions([]);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Error al cargar el historial de transacciones';
-      setError(errorMessage);
+      console.error('Error al cargar historial:', error);
+      setError(error?.response?.data?.message || 'Error al cargar el historial de transacciones');
     } finally {
-      setLoading(false);
+      setListLoading(false);
     }
   }, [selectedType, dateRange]);
 
   useEffect(() => {
-    loadHistory(0);
-  }, [loadHistory]);
+    if (viewMode === 'daily') {
+      loadDailyView();
+    } else {
+      loadListView(0);
+    }
+  }, [viewMode, loadDailyView, loadListView]);
+
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      if (viewMode === 'daily') {
+        loadDailyView();
+      } else {
+        loadListView(0);
+      }
+    }
+  }, [refreshTrigger, viewMode, loadDailyView, loadListView]);
+
+  const handleCloseDay = async (date: string) => {
+    try {
+      await closeDay({ date });
+      showToast('Día cerrado exitosamente', 'success');
+      loadDailyView();
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Error al cerrar el día', 'error');
+    }
+  };
 
   const handlePageChange = useCallback((page: number) => {
-    loadHistory(page);
-  }, [loadHistory]);
+    loadListView(page);
+  }, [loadListView]);
 
   const handleClearFilters = () => {
     setSelectedType('');
@@ -110,15 +166,34 @@ export function CajaFuerteHistory() {
 
   return (
     <div className="cajafuerte-history">
+      <div className="cajafuerte-history-view-toggle">
+        <button
+          className={`view-toggle-btn ${viewMode === 'daily' ? 'active' : ''}`}
+          onClick={() => setViewMode('daily')}
+        >
+          <HiCalendar />
+          <span>Vista Diaria</span>
+        </button>
+        <button
+          className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+          onClick={() => setViewMode('list')}
+        >
+          <HiListBullet />
+          <span>Vista Lista</span>
+        </button>
+      </div>
+
       <div className="cajafuerte-history-filters">
         <div className="cajafuerte-history-filters-row">
-          <Select
-            id="type-filter"
-            label="Tipo de transacción"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as CajaFuerteTransactionType | '')}
-            options={TRANSACTION_TYPE_OPTIONS}
-          />
+          {viewMode === 'list' && (
+            <Select
+              id="type-filter"
+              label="Tipo de transacción"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as CajaFuerteTransactionType | '')}
+              options={TRANSACTION_TYPE_OPTIONS}
+            />
+          )}
           <DateRangePicker
             value={dateRange ?? undefined}
             onChange={(range) => setDateRange(range)}
@@ -136,34 +211,38 @@ export function CajaFuerteHistory() {
         </div>
       </div>
 
-      {loading && transactions.length === 0 ? (
-        <div className="cajafuerte-history-loading">
-          <Spinner />
-        </div>
-      ) : error ? (
-        <div className="cajafuerte-history-error">
-          <EmptyState
-            message={error}
-            icon="⚠️"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => loadHistory(0)}
-            style={{ marginTop: 'var(--spacing-md)' }}
-          >
-            Reintentar
-          </Button>
-        </div>
-      ) : !loading && transactions.length === 0 ? (
-        <EmptyState
-          message="No hay transacciones registradas"
-          icon="💰"
+      {viewMode === 'daily' ? (
+        <CajaFuerteDailyView
+          summaries={summaries}
+          onCloseDay={handleCloseDay}
+          loading={dailyLoading}
         />
       ) : (
         <>
-          <CajaFuerteTransactionList transactions={transactions} />
-          {renderPagination()}
+          {listLoading && transactions.length === 0 ? (
+            <div className="cajafuerte-history-loading">
+              <Spinner />
+            </div>
+          ) : error ? (
+            <div className="cajafuerte-history-error">
+              <EmptyState message={error} icon="⚠️" />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => loadListView(0)}
+                style={{ marginTop: 'var(--spacing-md)' }}
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : !listLoading && transactions.length === 0 ? (
+            <EmptyState message="No hay transacciones registradas" icon="💰" />
+          ) : (
+            <>
+              <CajaFuerteTransactionList transactions={transactions} />
+              {renderPagination()}
+            </>
+          )}
         </>
       )}
     </div>

@@ -281,6 +281,36 @@
   gap: var(--spacing-sm);
 }
 
+.ticket-summary-cash-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.ticket-summary-cash-section .numeric-keypad {
+  max-width: 280px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.ticket-summary-cash-section .keypad-display {
+  min-height: 60px;
+  padding: var(--spacing-md);
+}
+
+.ticket-summary-cash-section .keypad-display-value {
+  font-size: 1.8rem;
+  min-width: 160px;
+}
+
+.ticket-summary-cash-section .keypad-button {
+  font-size: 1.25rem;
+}
+
+.ticket-summary-cash-section .keypad-submit {
+  display: none;
+}
+
 .ticket-summary-cash-error {
   padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(239, 68, 68, 0.1);
@@ -530,4 +560,74 @@
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9375rem;
+}
+
+/* Sección de descuentos */
+.ticket-summary-discount-section {
+  margin: var(--spacing-md) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Desglose de totales */
+.ticket-summary-breakdown {
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.03);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+}
+
+.ticket-summary-coupon-info {
+  color: var(--color-success);
+  font-size: 0.9375rem;
+}
+
+.ticket-summary-coupon-info span:first-child {
+  color: var(--text-secondary);
+}
+
+.ticket-summary-coupon-info span:last-child {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.ticket-summary-manual-discount {
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+}
+
+.ticket-summary-manual-discount span:first-child {
+  color: var(--text-secondary);
+}
+
+.ticket-summary-manual-discount span:last-child {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.ticket-summary-discount-amount {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--border-color);
+}
+
+.ticket-summary-discount-amount span:first-child {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticket-summary-discount-amount .discount-value {
+  color: var(--color-error);
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+}
+
+.ticket-summary-total .total-value {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  font-size: 1.25rem;
+  text-shadow: 0 0 8px var(--neon-glow-primary);
 }

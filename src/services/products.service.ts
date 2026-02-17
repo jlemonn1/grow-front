@@ -1,6 +1,13 @@
 import { get, post, patch, del } from './http';
 import type { PageResponse } from '@/types/api';
-import type { Product, CreateProductRequest, UpdateProductRequest } from '@/types/models';
+import type {
+  Product,
+  CreateProductRequest,
+  UpdateProductRequest,
+  StockMovement,
+  BatchRechargeStockRequest,
+  ProductMeasurementType,
+} from '@/types/models';
 
 export interface ListProductsParams {
   q?: string;
@@ -76,6 +83,7 @@ export interface TopProduct {
   pricePerGram: number;
   stockGrams: number;
   movementCount: number;
+  measurementType: ProductMeasurementType;
 }
 
 /**
@@ -110,4 +118,10 @@ export async function listProductsPublic(
   const endpoint = `/public/products${queryString ? `?${queryString}` : ''}`;
 
   return get<PageResponse<Product>>(endpoint);
+}
+
+export async function batchRechargeStock(
+  data: BatchRechargeStockRequest
+): Promise<StockMovement[]> {
+  return post<StockMovement[]>('/products/stock/recharges/batch', data);
 }

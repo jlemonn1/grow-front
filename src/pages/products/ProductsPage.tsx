@@ -1,21 +1,24 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
+import type { PageHeaderAction } from '@/components/common/PageHeader';
 import { Input } from '@/components/forms/Input';
 import { CardList } from '@/components/common/CardList';
 import { ProductCard } from '@/components/common/ProductCard';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { Button } from '@/components/common/Button';
+import { BatchStockInput } from '@/components/products/BatchStockInput';
 import { useProducts } from '@/hooks/useProducts';
 import { useUI } from '@/context/ui.context';
 import { useVisitor } from '@/context/visitor.context';
 import { useAuth } from '@/context/auth.context';
 import { AdminPermission } from '@/types/models';
-import { deleteProduct, listProductsPublic } from '@/services/products.service';
-import type { Product } from '@/types/models';
+import { batchRechargeStock, deleteProduct, listProductsPublic } from '@/services/products.service';
+import type { Product, BatchRechargeStockItem } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import { formatDateTime } from '@/utils/dates';
 import './ProductsPage.css';
 
@@ -24,6 +27,7 @@ export function ProductsPage() {
   const { showToast } = useUI();
   const { isVisitorMode } = useVisitor();
   const { hasPermission } = useAuth();
+  const canManageStock = !isVisitorMode && hasPermission(AdminPermission.GESTIONAR_STOCK);
   
   // Siempre llamar al hook (requisito de React)
   const productsContext = useProducts();
@@ -40,6 +44,9 @@ export function ProductsPage() {
     product: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchInputs, setBatchInputs] = useState<Record<string, string>>({});
+  const [isBatchSubmitting, setIsBatchSubmitting] = useState(false);
   
   // Estado para modo visitante
   const [visitorProducts, setVisitorProducts] = useState<Product[]>([]);
@@ -140,7 +147,92 @@ export function ProductsPage() {
     }
   }, [isDeleting]);
 
-  const columns: ColumnDef<Product>[] = [
+  const batchPayload = useMemo<BatchRechargeStockItem[]>(() => {
+    const payload: BatchRechargeStockItem[] = [];
+    for (const [productId, rawValue] of Object.entries(batchInputs)) {
+      const grams = Number(rawValue);
+      if (!Number.isFinite(grams) || grams <= 0) {
+        continue;
+      }
+      payload.push({ productId, grams });
+    }
+    return payload;
+  }, [batchInputs]);
+
+  const handleBatchInputChange = useCallback((productId: string, rawValue: string) => {
+    const normalized = rawValue.replace(',', '.');
+    setBatchInputs((prev) => {
+      if (normalized.trim() === '') {
+        const { [productId]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [productId]: normalized };
+    });
+  }, []);
+
+  const handleCancelBatch = useCallback(() => {
+    setBatchMode(false);
+    setBatchInputs({});
+  }, []);
+
+  const handleEnableBatchMode = useCallback(() => {
+    setBatchMode(true);
+    setBatchInputs({});
+  }, []);
+
+  const handleBatchSubmit = useCallback(async () => {
+    if (batchPayload.length === 0) {
+      showToast('Añade cantidades válidas antes de confirmar la recarga', 'warning');
+      return;
+    }
+
+    setIsBatchSubmitting(true);
+    try {
+      await batchRechargeStock({ items: batchPayload });
+      showToast('Stock actualizado correctamente', 'success');
+      setBatchMode(false);
+      setBatchInputs({});
+      await loadProductsData({
+        q: searchQuery || undefined,
+        page: pagination.page,
+        size: pagination.size,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al recargar stock';
+      showToast(message, 'error');
+    } finally {
+      setIsBatchSubmitting(false);
+    }
+  }, [batchPayload, showToast, loadProductsData, pagination.page, pagination.size, searchQuery]);
+
+  const batchEnableAction: PageHeaderAction = {
+    label: 'Recarga masiva',
+    variant: 'secondary',
+    onClick: handleEnableBatchMode,
+    dataTour: 'bulk-stock',
+  };
+
+  const batchConfirmAction: PageHeaderAction = {
+    label: 'Confirmar recargas',
+    onClick: handleBatchSubmit,
+    loading: isBatchSubmitting,
+    disabled: batchPayload.length === 0 || isBatchSubmitting,
+  };
+
+  const batchCancelAction: PageHeaderAction = {
+    label: 'Cancelar',
+    variant: 'secondary',
+    onClick: handleCancelBatch,
+    disabled: isBatchSubmitting,
+  };
+
+  const extraActions = canManageStock
+    ? batchMode
+      ? [batchConfirmAction, batchCancelAction]
+      : [batchEnableAction]
+    : undefined;
+
+  const baseColumns = useMemo<ColumnDef<Product>[]>(() => [
     {
       header: 'Nombre',
       accessor: 'name',
@@ -150,21 +242,27 @@ export function ProductsPage() {
       accessor: (row) => row.category?.name || '-',
     },
     {
-      header: 'Precio por gramo',
+      header: 'Precio unitario',
       accessor: 'pricePerGram',
-      cell: (value) => formatMoney(value),
+      cell: (_value, row) => `${formatMoney(row.pricePerGram)}/${getMeasurementShortLabel(row.measurementType)}`,
     },
     {
       header: 'Stock',
       accessor: 'stockGrams',
-      cell: (value) => `${value}g`,
+      cell: (value, row) => `${value}${getMeasurementShortLabel(row.measurementType)}`,
     },
     {
       header: 'Fecha creación',
       accessor: 'createdAt',
       cell: (value) => value ? formatDateTime(value) : '-',
     },
-    ...(isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_PRODUCTOS) ? [] : [{
+  ], []);
+
+  const actionColumn = useMemo<ColumnDef<Product> | null>(() => {
+    if (isVisitorMode || !hasPermission(AdminPermission.GESTIONAR_PRODUCTOS)) {
+      return null;
+    }
+    return {
       header: 'Acciones',
       accessor: (row: Product) => (
         <Button
@@ -175,8 +273,31 @@ export function ProductsPage() {
           Eliminar
         </Button>
       ),
-    }]),
-  ];
+    };
+  }, [handleDeleteClick, hasPermission, isVisitorMode]);
+
+  const batchColumn = useMemo<ColumnDef<Product>>(() => ({
+    header: 'Recarga',
+    accessor: (product) => (
+      <BatchStockInput
+        productName={product.name}
+        value={batchInputs[product.id] ?? ''}
+        onChange={(value) => handleBatchInputChange(product.id, value)}
+        disabled={isBatchSubmitting}
+      />
+    ),
+  }), [batchInputs, handleBatchInputChange, isBatchSubmitting]);
+
+  const columns = useMemo<ColumnDef<Product>[]>(() => {
+    const result = [...baseColumns];
+    if (batchMode && canManageStock) {
+      result.push(batchColumn);
+    }
+    if (actionColumn) {
+      result.push(actionColumn);
+    }
+    return result;
+  }, [actionColumn, batchColumn, batchMode, baseColumns, canManageStock]);
 
   return (
     <>
@@ -187,13 +308,14 @@ export function ProductsPage() {
           onClick: () => navigate('/products/new'),
           dataTour: 'create-product',
         } : undefined}
+        extraActions={extraActions}
       />
       
       <div className="products-page-container" style={{ marginTop: 'var(--spacing-lg)' }} data-tour="products-list">
         <div className="products-page-search">
           <Input
             type="text"
-            placeholder="Buscar productos..."
+            placeholder="Buscar productos o categorías..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ maxWidth: '400px', width: '100%' }}
@@ -231,6 +353,16 @@ export function ProductsPage() {
                   setDeleteModal({ isOpen: true, product: p });
                 })}
               />
+              {batchMode && canManageStock && (
+                <div className="products-page-batch-card-input">
+                  <BatchStockInput
+                    productName={product.name}
+                    value={batchInputs[product.id] ?? ''}
+                    onChange={(value) => handleBatchInputChange(product.id, value)}
+                    disabled={isBatchSubmitting}
+                  />
+                </div>
+              )}
             </div>
           )}
         />

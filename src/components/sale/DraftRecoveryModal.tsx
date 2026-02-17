@@ -44,8 +44,8 @@ export function DraftRecoveryModal({ isOpen, draft, onRecover, onDiscard }: Draf
               <span className="draft-recovery-value">{itemsCount} {itemsCount === 1 ? 'producto' : 'productos'}</span>
             </div>
             <div className="draft-recovery-item">
-              <span className="draft-recovery-label">Total gramos:</span>
-              <span className="draft-recovery-value">{totalGrams.toFixed(2)}g</span>
+              <span className="draft-recovery-label">Cantidad total:</span>
+              <span className="draft-recovery-value">{totalGrams.toFixed(2)}</span>
             </div>
             {draft.cashGiven > 0 && (
               <div className="draft-recovery-item">

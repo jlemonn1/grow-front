@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
-import { getDenominationLabel } from '@/utils/denominations';
 import type { CajaFuerteTransaction, CajaFuerteTransactionType } from '@/types/models';
 import './CajaFuerteTransactionItem.css';
 
@@ -15,8 +14,6 @@ const getTransactionTypeLabel = (type: CajaFuerteTransactionType): string => {
       return 'Añadir';
     case 'WITHDRAW':
       return 'Retirar';
-    case 'CHANGE':
-      return 'Cambio';
     case 'SALE_INPUT':
       return 'Entrada por venta';
     case 'SALE_OUTPUT':
@@ -34,27 +31,14 @@ const getTransactionTypeColor = (type: CajaFuerteTransactionType): string => {
     case 'WITHDRAW':
     case 'SALE_OUTPUT':
       return 'negative';
-    case 'CHANGE':
-      return 'neutral';
     default:
       return 'neutral';
   }
 };
 
-const formatDenominations = (denominations: Record<string, number>): string => {
-  const items = Object.entries(denominations)
-    .filter(([_, qty]) => qty !== 0)
-    .map(([value, qty]) => {
-      const val = parseFloat(value);
-      return `${qty}x ${getDenominationLabel(val)}`;
-    });
-  return items.length > 0 ? items.join(', ') : '-';
-};
-
 function CajaFuerteTransactionItemComponent({ transaction }: CajaFuerteTransactionItemProps) {
   const typeColor = getTransactionTypeColor(transaction.type);
-  const isPositive = transaction.amount >= 0;
-  const hasDenominations = transaction.denominations && Object.keys(transaction.denominations).length > 0;
+  const isPositive = transaction.type === 'ADD' || transaction.type === 'SALE_INPUT';
   const hasNotes = transaction.notes && transaction.notes.trim().length > 0;
   const hasCreatedBy = transaction.createdByUsername && transaction.createdByUsername.trim().length > 0;
 
@@ -66,7 +50,7 @@ function CajaFuerteTransactionItemComponent({ transaction }: CajaFuerteTransacti
             {getTransactionTypeLabel(transaction.type)}
           </div>
           <div className={`cajafuerte-transaction-amount ${isPositive ? 'positive' : 'negative'}`}>
-            {isPositive ? '+' : ''}{formatMoney(transaction.amount)}
+            {isPositive ? '+' : '-'}{formatMoney(transaction.amount)}
           </div>
         </div>
 
@@ -82,23 +66,12 @@ function CajaFuerteTransactionItemComponent({ transaction }: CajaFuerteTransacti
         </div>
       </div>
 
-      {(hasDenominations || hasNotes) && (
+      {hasNotes && (
         <div className="cajafuerte-transaction-details">
-          {hasDenominations && (
-            <div className="cajafuerte-transaction-detail-row">
-              <span className="cajafuerte-transaction-detail-label">Denominaciones:</span>
-              <span className="cajafuerte-transaction-detail-value">
-                {formatDenominations(transaction.denominations)}
-              </span>
-            </div>
-          )}
-
-          {hasNotes && (
-            <div className="cajafuerte-transaction-detail-row">
-              <span className="cajafuerte-transaction-detail-label">Notas:</span>
-              <span className="cajafuerte-transaction-detail-value">{transaction.notes}</span>
-            </div>
-          )}
+          <div className="cajafuerte-transaction-detail-row">
+            <span className="cajafuerte-transaction-detail-label">Notas:</span>
+            <span className="cajafuerte-transaction-detail-value">{transaction.notes}</span>
+          </div>
         </div>
       )}
     </div>

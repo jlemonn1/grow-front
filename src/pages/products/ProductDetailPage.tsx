@@ -196,19 +196,7 @@ export function ProductDetailPage() {
 
   const handleEdit = () => {
     if (!product) return;
-    // Asegurar que editData tiene los valores actuales del producto
-    setEditData({
-      name: product.name,
-      categoryId: product.category.id,
-      pricePerGram: product.pricePerGram,
-      description: product.description || '',
-      imageUrl: product.imageUrl,
-      onSale: product.onSale || false,
-      salePricePerGram: product.salePricePerGram,
-      saleDiscountPercent: product.saleDiscountPercent,
-    });
-    setIsEditing(true);
-    setErrors({});
+    navigate(`/products/${product.id}/edit`);
   };
 
   const handleCancelEdit = () => {

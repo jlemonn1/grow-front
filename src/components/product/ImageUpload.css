@@ -115,66 +115,80 @@
 .image-upload-placeholder {
   width: 200px;
   height: 200px;
-  border: 2px dashed var(--border-led-color);
   border-radius: var(--border-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--bg-secondary) 0%,
-    var(--bg-tertiary) 100%
-  );
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   transition: all var(--transition-base), box-shadow var(--transition-glow), transform var(--transition-base);
   position: relative;
+  overflow: hidden;
+}
+
+.image-upload-placeholder > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Efecto LED animado en el borde del placeholder */
 .image-upload-placeholder::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: var(--border-radius-lg);
-  padding: 2px;
-  background: linear-gradient(
-    135deg,
-    var(--border-led-color),
-    var(--neon-primary),
-    var(--border-led-color)
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--neon-primary) 45deg,
+    var(--border-led-color) 90deg,
+    transparent 135deg,
+    transparent 360deg
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.4;
-  animation: borderGlow 3s ease-in-out infinite;
+  z-index: 0;
+  animation: borderRotate 4s linear infinite;
 }
 
-@keyframes borderGlow {
-  0%, 100% {
-    opacity: 0.4;
+.image-upload-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
+  border-radius: calc(var(--border-radius-lg) - 2px);
+  z-index: 0;
+}
+
+@keyframes borderRotate {
+  0% {
+    transform: rotate(0deg);
   }
-  50% {
-    opacity: 0.7;
+  100% {
+    transform: rotate(360deg);
   }
 }
 
 /* Estado drag-over para placeholder */
 .image-upload-placeholder.image-upload-drag-over {
-  border-color: var(--neon-primary);
-  border-style: solid;
   box-shadow: var(--shadow-neon-md);
   transform: scale(1.02);
   animation: dragPulsePlaceholder 1.5s ease-in-out infinite;
 }
 
 .image-upload-placeholder.image-upload-drag-over::before {
-  opacity: 1;
-  animation: borderGlowIntense 1s ease-in-out infinite;
+  animation: borderRotate 1s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--neon-primary) 45deg,
+    var(--color-primary) 90deg,
+    transparent 135deg,
+    transparent 360deg
+  );
 }
 
 @keyframes dragPulsePlaceholder {
@@ -185,15 +199,6 @@
   50% {
     box-shadow: var(--shadow-neon-lg);
     transform: scale(1.03);
-  }
-}
-
-@keyframes borderGlowIntense {
-  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
   }
 }
 
@@ -223,6 +228,14 @@
 
   .image-upload-placeholder::before {
     animation: none;
+  }
+  
+  .image-upload-placeholder::after {
+    background: linear-gradient(
+      135deg,
+      var(--bg-secondary) 0%,
+      var(--bg-tertiary) 100%
+    );
   }
 }
 

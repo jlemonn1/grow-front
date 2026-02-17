@@ -2,6 +2,7 @@ import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import { ProductImage } from '@/components/common/ProductImage';
 import type { SaleItem } from '@/types/models';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './SaleItemCardSummary.css';
 
 interface SaleItemCardSummaryProps {
@@ -11,6 +12,7 @@ interface SaleItemCardSummaryProps {
 }
 
 export function SaleItemCardSummary({ item, isExpanded, onToggleExpand }: SaleItemCardSummaryProps) {
+  const measurementSuffix = getMeasurementShortLabel(item.measurementType ?? 'WEIGHT');
   return (
     <div className="sale-item-card-summary">
       {item.imageUrl && (
@@ -27,29 +29,18 @@ export function SaleItemCardSummary({ item, isExpanded, onToggleExpand }: SaleIt
             {item.productName}
           </h3>
           <div className="sale-item-card-subtotal">
-            {item.subtotalBeforeDiscount && item.subtotalBeforeDiscount !== item.lineTotal ? (
-              <>
-                <span className="sale-item-card-subtotal-original">
-                  {formatMoney(item.subtotalBeforeDiscount)}
-                </span>
-                <span className="sale-item-card-subtotal-final">
-                  {formatMoney(item.lineTotal)}
-                </span>
-              </>
-            ) : (
-              <span>{formatMoney(item.lineTotal)}</span>
-            )}
+            <span>{formatMoney(item.lineTotal)}</span>
           </div>
         </div>
         <div className="sale-item-card-stats">
-          <div className="sale-item-card-stat">
-            <span className="sale-item-card-stat-label">Gramos:</span>
-            <span className="sale-item-card-stat-value">{item.grams}g</span>
-          </div>
-          <div className="sale-item-card-stat">
-            <span className="sale-item-card-stat-label">Precio/gramo:</span>
-            <span className="sale-item-card-stat-value">{formatMoney(item.pricePerGram)}</span>
-          </div>
+            <div className="sale-item-card-stat">
+              <span className="sale-item-card-stat-label">Cantidad:</span>
+              <span className="sale-item-card-stat-value">{item.grams}{measurementSuffix}</span>
+            </div>
+            <div className="sale-item-card-stat">
+              <span className="sale-item-card-stat-label">Precio unitario:</span>
+              <span className="sale-item-card-stat-value">{formatMoney(item.pricePerGram)}/{measurementSuffix}</span>
+            </div>
         </div>
       </div>
       <button

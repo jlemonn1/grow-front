@@ -1,4 +1,5 @@
 import { InputHTMLAttributes, forwardRef, memo } from 'react';
+import { HiXCircle } from 'react-icons/hi2';
 import './Input.css';
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
@@ -22,7 +23,12 @@ const InputComponent = forwardRef<HTMLInputElement, InputProps>(
           className={`form-input ${error ? 'form-input-error' : ''}`}
           {...props}
         />
-        {error && <span className="form-error">{error}</span>}
+        {error && (
+          <span className="form-error">
+            <HiXCircle className="form-error-icon" aria-hidden="true" />
+            {error}
+          </span>
+        )}
       </div>
     );
   }

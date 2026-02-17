@@ -94,13 +94,14 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar configuración';
       setError(errorMessage);
-      // Usar valores por defecto si hay error
+// Usar valores por defecto si hay error
       const defaultConfig = {
         id: '',
         growName: 'Growshop',
         logoUrl: null,
         primaryColor: '#3bd420',
         showCashDetails: true,
+        enableCustomerBalance: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -210,6 +211,19 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [config, loadConfiguration]);
+
+  // Escuchar cuando el modo de accesibilidad vuelve a normal para reaplicar colores del growshop
+  useEffect(() => {
+    const handleNormalMode = () => {
+      if (config?.primaryColor) {
+        const palette = generateColorPalette(config.primaryColor);
+        applyColorSystem(palette);
+      }
+    };
+    
+    window.addEventListener('color-accessibility:normal', handleNormalMode);
+    return () => window.removeEventListener('color-accessibility:normal', handleNormalMode);
+  }, [config?.primaryColor]);
 
   // Escuchar cambios del tema del sistema
   useEffect(() => {

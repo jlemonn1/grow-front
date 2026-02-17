@@ -5,6 +5,43 @@
   width: 100%;
 }
 
+/* View Toggle */
+.cajafuerte-history-view-toggle {
+  display: flex;
+  gap: var(--spacing-xs);
+  background: var(--color-surface);
+  padding: 4px;
+  border-radius: var(--border-radius-md);
+  width: fit-content;
+  margin-bottom: var(--spacing-sm);
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.view-toggle-btn.active {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 .cajafuerte-history-filters {
   background: var(--bg-primary);
   border-radius: var(--border-radius);

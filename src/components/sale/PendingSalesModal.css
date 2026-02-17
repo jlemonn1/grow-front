@@ -34,8 +34,8 @@
   border: 1px solid var(--border-color);
   gap: 12px;
   transition: all 0.2s ease;
-  max-height: calc(3 * 1.5em + 24px); /* Máximo 3 líneas + padding */
-  overflow: hidden;
+  min-height: 80px;
+  flex-wrap: wrap;
 }
 
 .pending-sale-item:hover {
@@ -128,18 +128,25 @@
 
 .pending-sale-actions {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  gap: 4px;
   flex-shrink: 0;
-  align-items: stretch;
-  min-width: 100px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .pending-sale-actions button {
-  padding: 6px 12px;
+  padding: 6px 8px;
   font-size: 12px;
   min-height: 32px;
   white-space: nowrap;
+}
+
+.pending-sale-actions button:last-child,
+.pending-sale-actions button:nth-child(2) {
+  padding: 6px;
+  min-width: 32px;
 }
 
 /* Responsive: pantallas medianas y pequeñas */
@@ -151,6 +158,7 @@
 
   .pending-sale-actions {
     min-width: 90px;
+    justify-content: flex-start;
   }
 
   .pending-sale-actions button {

@@ -49,6 +49,12 @@
   box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
 }
 
+.products-page-batch-card-input {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .products-page-container {
     padding: 0;

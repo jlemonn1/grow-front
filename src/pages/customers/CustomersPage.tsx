@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Input } from '@/components/forms/Input';
 import { CardList } from '@/components/common/CardList';
 import { CustomerCard } from '@/components/common/CustomerCard';
+import { CustomerAvatar } from '@/components/common/CustomerAvatar';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { Button } from '@/components/common/Button';
@@ -174,6 +175,18 @@ export function CustomersPage() {
     {
       header: 'Nombre',
       accessor: 'displayName',
+      cell: (value, row) => (
+        <div className="customers-table-name-cell">
+          <CustomerAvatar
+            name={row.displayName}
+            imageUrl={row.profilePictureUrl}
+            size={36}
+            className="customers-table-avatar"
+            tooltip={`Foto de ${row.displayName}`}
+          />
+          <span className="customers-table-name-text">{value}</span>
+        </div>
+      ),
     },
     {
       header: 'PIN',

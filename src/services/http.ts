@@ -102,9 +102,14 @@ function parseFieldErrors(data: any): Record<string, string[]> | undefined {
  */
 async function handleError(response: Response): Promise<never> {
   let error: ApiError;
+  
+  console.error('[http.ts] handleError - Status:', response.status);
+  console.error('[http.ts] handleError - StatusText:', response.statusText);
 
   try {
     const data = await response.json();
+    console.error('[http.ts] handleError - Response data:', data);
+    
     const fieldErrors = parseFieldErrors(data);
     
     error = {
@@ -118,7 +123,8 @@ async function handleError(response: Response): Promise<never> {
       const productInfo = extractProductInfoFrom409(error.message);
       (error as any).productInfo = productInfo;
     }
-  } catch {
+  } catch (e) {
+    console.error('[http.ts] handleError - Could not parse response JSON:', e);
     error = {
       message: `Error ${response.status}: ${response.statusText}`,
       status: response.status,
@@ -181,14 +187,38 @@ async function request<T>(
   // Si no, construirla con BASE_URL
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
 
+  console.log('[http.ts] request - URL:', url);
+  console.log('[http.ts] request - Method:', options.method || 'GET');
+  console.log('[http.ts] request - Headers:', options.headers);
+
+  // Si el body es FormData, no añadir Content-Type para que el navegador lo establezca automáticamente con el boundary correcto
+  const isFormData = options.body instanceof FormData;
+  const baseHeaders = getHeaders(endpoint) as Record<string, string>;
+  const requestHeaders: Record<string, string> = {};
+
+  if (isFormData) {
+    // Copiar todos los headers excepto Content-Type para FormData
+    Object.entries(baseHeaders).forEach(([key, value]) => {
+      if (key.toLowerCase() !== 'content-type') {
+        requestHeaders[key] = value;
+      }
+    });
+  } else {
+    Object.assign(requestHeaders, baseHeaders);
+  }
+
+  // Añadir/merge los headers custom del options
+  if (options.headers) {
+    Object.assign(requestHeaders, options.headers);
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
-      headers: {
-        ...getHeaders(endpoint),
-        ...options.headers,
-      },
+      headers: requestHeaders,
     });
+
+    console.log('[http.ts] request - Response status:', response.status, response.statusText);
 
     // Notificar que hay conexión
     if (connectionStatusCallback) {
@@ -196,6 +226,7 @@ async function request<T>(
     }
 
     if (!response.ok) {
+      console.error('[http.ts] request - Response not OK, calling handleError');
       await handleError(response);
     }
 
@@ -248,22 +279,30 @@ export async function post<T>(endpoint: string, body?: unknown): Promise<T> {
  * POST request with FormData (for file uploads)
  */
 export async function postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-  const baseHeaders = getHeaders(endpoint) as Record<string, string>;
-  // Create new headers object without Content-Type to let browser set it with boundary for multipart/form-data
-  const headers: Record<string, string> = {};
-  
-  // Copy all headers except Content-Type
-  Object.entries(baseHeaders).forEach(([key, value]) => {
-    if (key.toLowerCase() !== 'content-type') {
-      headers[key] = value;
+  console.log('[http.ts] postFormData called for endpoint:', endpoint);
+
+  // Log FormData entries
+  const formDataEntries: Record<string, any> = {};
+  formData.forEach((value, key) => {
+    if (value instanceof File) {
+      formDataEntries[key] = { type: 'File', name: value.name, size: value.size };
+    } else {
+      formDataEntries[key] = value;
     }
   });
-  
-  return request<T>(endpoint, {
-    method: 'POST',
-    body: formData,
-    headers,
-  });
+  console.log('[http.ts] FormData entries:', formDataEntries);
+
+  try {
+    const result = await request<T>(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
+    console.log('[http.ts] postFormData success');
+    return result;
+  } catch (error) {
+    console.error('[http.ts] postFormData error:', error);
+    throw error;
+  }
 }
 
 /**
@@ -280,21 +319,9 @@ export async function put<T>(endpoint: string, body?: unknown): Promise<T> {
  * PUT request with FormData (for file uploads)
  */
 export async function putFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-  const baseHeaders = getHeaders(endpoint) as Record<string, string>;
-  // Create new headers object without Content-Type to let browser set it with boundary for multipart/form-data
-  const headers: Record<string, string> = {};
-  
-  // Copy all headers except Content-Type
-  Object.entries(baseHeaders).forEach(([key, value]) => {
-    if (key.toLowerCase() !== 'content-type') {
-      headers[key] = value;
-    }
-  });
-  
   return request<T>(endpoint, {
     method: 'PUT',
     body: formData,
-    headers,
   });
 }
 

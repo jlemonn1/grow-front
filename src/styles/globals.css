@@ -15,9 +15,13 @@
   --color-secondary: #64748b;
   --color-secondary-dark: #475569;
   --color-success: #10b981;
+  --color-success-rgb: 16, 185, 129;
   --color-error: #ef4444;
+  --color-error-rgb: 239, 68, 68;
   --color-warning: #f59e0b;
+  --color-warning-rgb: 245, 158, 11;
   --color-info: #3b82f6;
+  --color-info-rgb: 59, 130, 246;
 
   /* Colores de fondo (modo claro por defecto, override en modo oscuro) */
   --bg-dark: #1e293b;
@@ -314,4 +318,161 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* ============================================================================
+   MODO DE ACCESIBILIDAD DE COLOR PARA DALTONISMO
+   ============================================================================ */
+
+/* Modo Normal - Usa los colores por defecto definidos en :root */
+:root[data-color-accessibility="normal"],
+:root:not([data-color-accessibility]) {
+  /* No sobrescribe nada, usa los valores por defecto de :root */
+}
+
+/* Modo Protanopia (falta de percepción del rojo) */
+/* Estrategia: Usar azul/amarillo en lugar de rojo/verde */
+:root[data-color-accessibility="protanopia"] {
+  /* Color primario: Azul brillante (distinguible del rojo/verde) */
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-primary-light: #60a5fa;
+  --color-primary-rgb: 59, 130, 246;
+
+  /* Error: Azul profundo (evita rojo que no distinguen) */
+  --color-error: #1e40af;
+  --color-error-rgb: 30, 64, 175;
+
+  /* Success: Amarillo dorado (distingue bien de azul) */
+  --color-success: #d97706;
+  --color-success-rgb: 217, 119, 6;
+
+  /* Warning: Naranja oscuro */
+  --color-warning: #c2410c;
+  --color-warning-rgb: 194, 65, 12;
+
+  /* Info: Violeta (contraste con azul) */
+  --color-info: #7c3aed;
+  --color-info-rgb: 124, 58, 237;
+}
+
+/* Modo Deuteranopia (falta de percepción del verde) */
+/* Estrategia: Usar azul/naranja en lugar de verde/rojo */
+:root[data-color-accessibility="deuteranopia"] {
+  /* Color primario: Azul cian */
+  --color-primary: #0ea5e9;
+  --color-primary-dark: #0284c7;
+  --color-primary-light: #38bdf8;
+  --color-primary-rgb: 14, 165, 233;
+
+  /* Error: Naranja rojizo (más distinguible que rojo puro) */
+  --color-error: #ea580c;
+  --color-error-rgb: 234, 88, 12;
+
+  /* Success: Azul (evita verde) */
+  --color-success: #2563eb;
+  --color-success-rgb: 37, 99, 235;
+
+  /* Warning: Amarillo oscuro */
+  --color-warning: #a16207;
+  --color-warning-rgb: 161, 98, 7;
+
+  /* Info: Rosa/Magenta (distingue bien) */
+  --color-info: #db2777;
+  --color-info-rgb: 219, 39, 119;
+}
+
+/* Modo Tritanopia (falta de percepción del azul) */
+/* Estrategia: Usar rojo/verde/rosa en lugar de azul/amarillo */
+:root[data-color-accessibility="tritanopia"] {
+  /* Color primario: Verde esmeralda */
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-primary-light: #34d399;
+  --color-primary-rgb: 16, 185, 129;
+
+  /* Error: Rojo brillante (distingue bien) */
+  --color-error: #dc2626;
+  --color-error-rgb: 220, 38, 38;
+
+  /* Success: Verde oscuro */
+  --color-success: #15803d;
+  --color-success-rgb: 21, 128, 61;
+
+  /* Warning: Rosa/Fucsia (evita amarillo que no distinguen) */
+  --color-warning: #e11d48;
+  --color-warning-rgb: 225, 29, 72;
+
+  /* Info: Verde cian */
+  --color-info: #14b8a6;
+  --color-info-rgb: 20, 184, 166;
+}
+
+/* Modo Alto Contraste (sin depender de matiz) */
+:root[data-color-accessibility="high-contrast"] {
+  /* Color primario: Blanco puro */
+  --color-primary: #ffffff;
+  --color-primary-dark: #e0e0e0;
+  --color-primary-light: #ffffff;
+  --color-primary-rgb: 255, 255, 255;
+
+  /* Alto contraste en lugar de colores */
+  --color-error: #ff0000;
+  --color-error-rgb: 255, 0, 0;
+
+  --color-success: #00ff00;
+  --color-success-rgb: 0, 255, 0;
+
+  --color-warning: #ffff00;
+  --color-warning-rgb: 255, 255, 0;
+
+  --color-info: #00ffff;
+  --color-info-rgb: 0, 255, 255;
+
+  /* Bordes más gruesos */
+  --border-width-error: 3px;
+  --border-width-success: 3px;
+  --border-width-warning: 3px;
+}
+
+/* Clases de iconos de accesibilidad (siempre visibles) */
+.accessibility-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.accessibility-icon-error::before {
+  content: '✕';
+  color: var(--color-error);
+}
+
+.accessibility-icon-success::before {
+  content: '✓';
+  color: var(--color-success);
+}
+
+.accessibility-icon-warning::before {
+  content: '⚠';
+  color: var(--color-warning);
+}
+
+.accessibility-icon-info::before {
+  content: 'ℹ';
+  color: var(--color-info);
+}
+
+/* Indicadores de dirección para valores positivos/negativos */
+.accessibility-indicator-positive::before {
+  content: '↑';
+  margin-right: 0.25rem;
+  font-weight: bold;
+}
+
+.accessibility-indicator-negative::before {
+  content: '↓';
+  margin-right: 0.25rem;
+  font-weight: bold;
 }

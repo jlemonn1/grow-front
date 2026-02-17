@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiFilter } from 'react-icons/hi';
+import { HiFilter, HiViewGrid, HiCollection } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { CardList } from '@/components/common/CardList';
@@ -8,6 +8,7 @@ import { SaleCard } from '@/components/common/SaleCard';
 import { DateRangePicker, type DateRange } from '@/components/common/DateRangePicker';
 import { Select, type SelectOption } from '@/components/forms/Select';
 import { Button } from '@/components/common/Button';
+import { Input } from '@/components/forms/Input';
 import { listSales } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { useCustomerNames } from '@/hooks/useCustomerNames';
@@ -15,7 +16,10 @@ import type { Sale, Customer } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
 import type { PageResponse } from '@/types/api';
+import { SalesProductsView } from './SalesProductsView';
 import './SalesPage.css';
+
+type ViewMode = 'dispensas' | 'productos';
 
 export function SalesPage() {
   const navigate = useNavigate();
@@ -36,6 +40,8 @@ export function SalesPage() {
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('dispensas');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Cargar lista de clientes para el selector
   useEffect(() => {
@@ -75,12 +81,25 @@ export function SalesPage() {
       }
 
       const response: PageResponse<Sale> = await listSales(params);
-      setSales(response.content);
+      
+      let filteredSales = response.content;
+      
+      if (viewMode === 'dispensas' && searchTerm) {
+        const matchingCustomers = customers.filter(c => 
+          c.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        const matchingCustomerIds = matchingCustomers.map(c => c.id);
+        filteredSales = response.content.filter(sale => 
+          matchingCustomerIds.includes(sale.customerId)
+        );
+      }
+      
+      setSales(filteredSales);
       setPagination({
         page: response.number,
         size: response.size,
-        total: response.totalElements,
-        totalPages: response.totalPages,
+        total: filteredSales.length,
+        totalPages: Math.ceil(filteredSales.length / response.size),
       });
 
       // Cargar nombres de clientes para las ventas mostradas
@@ -93,13 +112,13 @@ export function SalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCustomerId, dateRange, loadCustomerNames]);
+  }, [selectedCustomerId, dateRange, loadCustomerNames, viewMode, searchTerm, customers]);
 
   // Cargar ventas al montar y cuando cambien los filtros
   useEffect(() => {
     loadSales(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCustomerId, dateRange]);
+  }, [selectedCustomerId, dateRange, viewMode, searchTerm]);
 
   const handlePageChange = useCallback((page: number) => {
     loadSales(page);
@@ -180,8 +199,28 @@ export function SalesPage() {
 
   return (
     <>
-      <PageHeader title="Ventas" />
-      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+        <PageHeader title="Ventas" />
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          <Button
+            variant={viewMode === 'dispensas' ? 'primary' : 'secondary'}
+            onClick={() => setViewMode('dispensas')}
+            style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}
+          >
+            <HiViewGrid size={16} />
+            Dispensas
+          </Button>
+          <Button
+            variant={viewMode === 'productos' ? 'primary' : 'secondary'}
+            onClick={() => setViewMode('productos')}
+            style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}
+          >
+            <HiCollection size={16} />
+            Productos
+          </Button>
+        </div>
+      </div>
+       
       <div className="sales-page-container" style={{ marginTop: 'var(--spacing-lg)' }}>
         {/* Filtros mejorados */}
         <div className="sales-page-filters">
@@ -191,18 +230,29 @@ export function SalesPage() {
           </div>
           
           <div className="sales-page-filters-content">
-            <div className="sales-page-filter-group">
-              <Select
-                label="Socio"
-                options={customerOptions}
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                disabled={customersLoading}
-                data-tour="filter-customer"
+            <div className="sales-page-filter-group sales-page-filter-group-search">
+              <Input
+                type="text"
+                placeholder={viewMode === 'dispensas' ? 'Buscar socio...' : 'Buscar producto o categoría...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            {viewMode === 'dispensas' && (
+              <div className="sales-page-filter-group sales-page-filter-group-customer">
+                <Select
+                  label="Socio"
+                  options={customerOptions}
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  disabled={customersLoading}
+                  data-tour="filter-customer"
+                />
+              </div>
+            )}
             
-            <div className="sales-page-filter-group">
+            <div className="sales-page-filter-group sales-page-filter-group-date">
               <DateRangePicker
                 value={dateRange || undefined}
                 onChange={(range) => setDateRange(range || null)}
@@ -232,32 +282,36 @@ export function SalesPage() {
           </div>
         )}
 
-        <div data-tour="sales-list">
-          <CardList
-            columns={columns}
-            data={sales}
-            loading={loading}
-            pagination={pagination ? {
-              page: pagination.page,
-              size: pagination.size,
-              total: pagination.total,
-              totalPages: pagination.totalPages,
-            } : undefined}
-            onPageChange={handlePageChange}
-            onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-            emptyMessage="No hay ventas disponibles"
-            getRowDataTour={(sale) => `sale-row-${sale.id}`}
-            renderCard={(sale, isExpanded, onToggleExpand) => (
-              <SaleCard
-                sale={sale}
-                customerName={getCustomerName(sale.customerId)}
-                isExpanded={isExpanded}
-                onToggleExpand={onToggleExpand}
-                onClick={(sale) => navigate(`/sales/${sale.id}`)}
-              />
-            )}
-          />
-        </div>
+        {viewMode === 'dispensas' ? (
+          <div data-tour="sales-list">
+            <CardList
+              columns={columns}
+              data={sales}
+              loading={loading}
+              pagination={pagination ? {
+                page: pagination.page,
+                size: pagination.size,
+                total: pagination.total,
+                totalPages: pagination.totalPages,
+              } : undefined}
+              onPageChange={handlePageChange}
+              onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
+              emptyMessage="No hay ventas disponibles"
+              getRowDataTour={(sale) => `sale-row-${sale.id}`}
+              renderCard={(sale, isExpanded, onToggleExpand) => (
+                <SaleCard
+                  sale={sale}
+                  customerName={getCustomerName(sale.customerId)}
+                  isExpanded={isExpanded}
+                  onToggleExpand={onToggleExpand}
+                  onClick={(sale) => navigate(`/sales/${sale.id}`)}
+                />
+              )}
+            />
+          </div>
+        ) : (
+          <SalesProductsView dateRange={dateRange} searchTerm={searchTerm} />
+        )}
       </div>
     </>
   );

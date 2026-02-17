@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Product } from '@/types/models';
+import { getMeasurementLongLabel, getMeasurementShortLabel } from '@/utils/measurement';
 
 interface UseProductDispenseOptions {
   product: Product | null;
@@ -15,26 +16,16 @@ interface UseProductDispenseReturn {
   setEuros: (value: number) => void;
   isValid: boolean;
   effectivePricePerGram: number;
+  measurementLabel: string;
+  measurementShortLabel: string;
 }
 
 /**
- * Calcula el precio efectivo por gramo considerando ofertas
+ * Precio efectivo por unidad de medicion.
+ * Las ofertas ya no se aplican por producto, solo a nivel total de venta.
  */
 function calculateEffectivePricePerGram(product: Product): number {
-  let pricePerGram = product.pricePerGram;
-  
-  if (product.onSale) {
-    if (product.saleDiscountPercent !== undefined && product.saleDiscountPercent > 0) {
-      // Calcular precio con porcentaje de descuento
-      pricePerGram = product.pricePerGram * (1 - product.saleDiscountPercent / 100);
-    } else if (product.salePricePerGram !== undefined) {
-      // Usar precio fijo de oferta
-      pricePerGram = product.salePricePerGram;
-    }
-  }
-  
-  // Redondear a 2 decimales
-  return Math.round(pricePerGram * 100) / 100;
+  return Math.round(product.pricePerGram * 100) / 100;
 }
 
 /**
@@ -55,6 +46,11 @@ export function useProductDispense({
   
   // Calcular precio efectivo
   const effectivePricePerGram = product ? calculateEffectivePricePerGram(product) : 0;
+  
+  // Etiquetas de medición dinámicas
+  const measurementType = product?.measurementType ?? 'WEIGHT';
+  const measurementLabel = useMemo(() => getMeasurementLongLabel(measurementType), [measurementType]);
+  const measurementShortLabel = useMemo(() => getMeasurementShortLabel(measurementType), [measurementType]);
   
   // Función helper para redondear a 2 decimales
   const roundToTwoDecimals = useCallback((value: number): number => {
@@ -86,18 +82,18 @@ export function useProductDispense({
     }
   }, [product?.id, initialGrams, effectivePricePerGram, availableStock, roundToTwoDecimals]);
   
-  // Validar gramos contra stock disponible
+  // Validar cantidad contra stock disponible
   const validateGrams = useCallback((gramsValue: number): string | undefined => {
     if (gramsValue <= 0) {
-      return 'Los gramos deben ser mayores a 0';
+      return `La cantidad debe ser mayor a 0`;
     }
     
     if (gramsValue > availableStock) {
-      return `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}g`;
+      return `Stock insuficiente. Disponible: ${availableStock.toFixed(2)}${measurementShortLabel}`;
     }
     
     return undefined;
-  }, [availableStock]);
+  }, [availableStock, measurementShortLabel]);
   
   // Actualizar gramos y sincronizar euros
   const setGrams = useCallback((value: number) => {
@@ -156,7 +152,7 @@ export function useProductDispense({
     } else {
       setGramsState(0);
       setEurosState(0);
-      setError(roundedEuros > 0 ? 'El precio por gramo debe ser mayor a 0' : undefined);
+      setError(roundedEuros > 0 ? `El precio por ${measurementLabel} debe ser mayor a 0` : undefined);
     }
     
     // Reset flag usando requestAnimationFrame para mejor sincronización
@@ -175,5 +171,7 @@ export function useProductDispense({
     setEuros,
     isValid,
     effectivePricePerGram,
+    measurementLabel,
+    measurementShortLabel,
   };
 }

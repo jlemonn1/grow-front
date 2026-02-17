@@ -125,6 +125,18 @@
   overflow-y: auto;
 }
 
+/* Modal que se ajusta al contenido sin scroll */
+.modal-content.modal-auto-size {
+  max-height: none;
+  width: auto;
+  min-width: 300px;
+}
+
+.modal-content.modal-auto-size .modal-body {
+  overflow-y: visible;
+  padding: var(--spacing-md);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

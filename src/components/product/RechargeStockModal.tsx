@@ -50,7 +50,7 @@ export function RechargeStockModal({
 
     // Validación
     if (grams <= 0) {
-      setError('Los gramos deben ser mayores a 0');
+      setError('La cantidad debe ser mayor a 0');
       return;
     }
 
@@ -133,7 +133,7 @@ export function RechargeStockModal({
       <form onSubmit={handleSubmit} className="recharge-stock-form">
         <NumberInput
           id="grams"
-          label="Gramos a agregar"
+          label="Cantidad a agregar"
           value={grams}
           onChange={setGrams}
           min={0.01}

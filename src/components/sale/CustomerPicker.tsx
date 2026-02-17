@@ -1,13 +1,15 @@
 import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HiQrCode } from 'react-icons/hi2';
 import { HiSearch, HiPhone, HiKey, HiPencil, HiDocumentText } from 'react-icons/hi';
 import { Input } from '@/components/forms/Input';
 import { QRScannerModal } from '@/components/common/QRScannerModal';
-import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
+
 import { AddNoteModal } from '@/components/customer/AddNoteModal';
 import { customersService } from '@/services/customers.service';
 import { formatMoney } from '@/utils/money';
 import type { Customer } from '@/types/models';
+import { CustomerAvatar } from '@/components/common/CustomerAvatar';
 import './CustomerPicker.css';
 
 interface CustomerPickerProps {
@@ -22,6 +24,7 @@ export interface CustomerPickerRef {
 const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProps>(
   ({ selectedCustomer, onSelect }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -34,7 +37,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const [showResults, setShowResults] = useState(false);
   const [searchType, setSearchType] = useState<'name' | 'phone' | 'pin' | 'any' | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
 
   // Limpiar estados internos cuando selectedCustomer cambia a null
@@ -143,7 +146,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     setShowQRScanner(false);
   }, [handleSelect]);
 
-  const handleCustomerUpdated = useCallback((updatedCustomer: Customer) => {
+  const handleCustomerChange = useCallback((updatedCustomer: Customer) => {
     onSelect(updatedCustomer);
   }, [onSelect]);
 
@@ -251,43 +254,54 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
           ) : (
             <ul className="customer-picker-list">
               {results.map((customer) => (
-                <li
-                  key={customer.id}
-                  id={`customer-${customer.id}`}
-                  className={`customer-picker-item ${
-                    selectedCustomer?.id === customer.id ? 'selected' : ''
-                  }`}
-                  data-tour={`customer-row-${customer.id}`}
-                  onMouseDown={(e) => {
-                    // Prevenir que el blur del input cierre el dropdown antes del click
+              <li
+                key={customer.id}
+                id={`customer-${customer.id}`}
+                className={`customer-picker-item ${
+                  selectedCustomer?.id === customer.id ? 'selected' : ''
+                }`}
+                data-tour={`customer-row-${customer.id}`}
+                onMouseDown={(e) => {
+                  // Prevenir que el blur del input cierre el dropdown antes del click
+                  e.preventDefault();
+                }}
+                onClick={() => handleSelect(customer)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                  }}
-                  onClick={() => handleSelect(customer)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelect(customer);
-                    }
-                  }}
-                  role="option"
-                  aria-selected={selectedCustomer?.id === customer.id}
-                  tabIndex={0}
-                >
-                  <div className="customer-picker-item-header">
-                    <div className="customer-picker-item-name">{customer.displayName}</div>
-                    {customer.pin && (
-                      <span className="customer-picker-item-pin">{customer.pin}</span>
-                    )}
+                    handleSelect(customer);
+                  }
+                }}
+                role="option"
+                aria-selected={selectedCustomer?.id === customer.id}
+                tabIndex={0}
+              >
+                <div className="customer-picker-item-content">
+                  <CustomerAvatar
+                    name={customer.displayName}
+                    imageUrl={customer.profilePictureUrl}
+                    size={36}
+                    className="customer-picker-item-avatar"
+                    tooltip={`Foto de ${customer.displayName}`}
+                  />
+                  <div className="customer-picker-item-body">
+                    <div className="customer-picker-item-header">
+                      <div className="customer-picker-item-name">{customer.displayName}</div>
+                      {customer.pin && (
+                        <span className="customer-picker-item-pin">{customer.pin}</span>
+                      )}
+                    </div>
+                    <div className="customer-picker-item-details">
+                      {customer.phone && (
+                        <div className="customer-picker-item-phone">
+                          <HiPhone className="customer-picker-item-phone-icon" />
+                          {customer.phone}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="customer-picker-item-details">
-                    {customer.phone && (
-                      <div className="customer-picker-item-phone">
-                        <HiPhone className="customer-picker-item-phone-icon" />
-                        {customer.phone}
-                      </div>
-                    )}
-                  </div>
-                </li>
+                </div>
+              </li>
               ))}
             </ul>
           )}
@@ -296,6 +310,13 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
 
       {selectedCustomer && !showResults && (
         <div className="customer-picker-selected">
+          <CustomerAvatar
+            name={selectedCustomer.displayName}
+            imageUrl={selectedCustomer.profilePictureUrl}
+            size={40}
+            className="customer-picker-selected-avatar"
+            tooltip={`Foto de ${selectedCustomer.displayName}`}
+          />
           <div className="customer-picker-selected-info">
             <span>
               Socio seleccionado: <strong>{selectedCustomer.displayName}</strong>
@@ -310,7 +331,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
             <button
               type="button"
               className="customer-picker-action-button"
-              onClick={() => setShowEditModal(true)}
+              onClick={() => selectedCustomer && navigate(`/customers/${selectedCustomer.id}/edit`)}
               aria-label="Editar cliente"
               title="Editar cliente"
             >
@@ -337,21 +358,14 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
         />
       )}
 
-      {showEditModal && selectedCustomer && (
-        <EditCustomerModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          customer={selectedCustomer}
-          onUpdated={handleCustomerUpdated}
-        />
-      )}
+
 
       {showAddNoteModal && selectedCustomer && (
         <AddNoteModal
           isOpen={showAddNoteModal}
           onClose={() => setShowAddNoteModal(false)}
           customer={selectedCustomer}
-          onNoteAdded={handleCustomerUpdated}
+          onNoteAdded={handleCustomerChange}
         />
       )}
     </div>

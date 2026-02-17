@@ -50,7 +50,7 @@ export function HourlySalesChart({ data, loading }: HourlySalesChartProps) {
     hora: point.label,
     monto: point.totalAmount,
     ventas: point.saleCount,
-    gramos: point.totalGrams,
+    cantidad: point.totalGrams,
   }));
 
   const gridColor = borderColor + '4d';
@@ -82,8 +82,8 @@ export function HourlySalesChart({ data, loading }: HourlySalesChartProps) {
               if (name === 'monto') {
                 return value !== undefined ? formatMoney(value) : '';
               }
-              if (name === 'gramos') {
-                return value !== undefined ? `${value.toFixed(2)} g` : '';
+              if (name === 'cantidad') {
+                return value !== undefined ? `${value.toFixed(2)}` : '';
               }
               return value !== undefined ? value.toString() : '';
             }}

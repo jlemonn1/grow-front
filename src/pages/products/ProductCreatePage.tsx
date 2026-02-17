@@ -1,14 +1,13 @@
 import { useState, FormEvent, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlineCurrencyEuro, HiOutlineArchive } from 'react-icons/hi';
+import { HiOutlineCurrencyEuro, HiOutlineArchive, HiCheck, HiChevronRight, HiChevronLeft } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/forms/Input';
 import { Textarea } from '@/components/forms/Textarea';
 import { Select } from '@/components/forms/Select';
 import { NumberInput } from '@/components/forms/NumberInput';
-import { FormCard } from '@/components/forms/FormCard';
-import { FormSection } from '@/components/forms/FormSection';
+import { SegmentedToggle } from '@/components/forms/SegmentedToggle';
 import { Spinner } from '@/components/common/Spinner';
 import { Modal } from '@/components/common/Modal';
 import { ConfirmUnsavedChangesModal } from '@/components/common/ConfirmUnsavedChangesModal';
@@ -16,9 +15,9 @@ import { ImageUpload } from '@/components/product/ImageUpload';
 import { useUI } from '@/context/ui.context';
 import { useProducts } from '@/context/products.context';
 import { listCategories, createCategory } from '@/services/categories.service';
-import type { Category } from '@/types/models';
+import type { Category, ProductMeasurementType } from '@/types/models';
 import type { ValidationError, ApiError } from '@/types/api';
-import { formatMoney } from '@/utils/money';
+import { getMeasurementLongLabel } from '@/utils/measurement';
 import './ProductCreatePage.css';
 
 interface FormData {
@@ -28,9 +27,7 @@ interface FormData {
   description: string;
   imageUrl: string;
   initialStockGrams: number;
-  onSale: boolean;
-  salePricePerGram?: number;
-  saleDiscountPercent?: number;
+  measurementType: ProductMeasurementType;
 }
 
 interface FormErrors {
@@ -40,10 +37,16 @@ interface FormErrors {
   description?: string;
   imageUrl?: string;
   initialStockGrams?: string;
-  onSale?: string;
-  salePricePerGram?: string;
-  saleDiscountPercent?: string;
 }
+
+type Step = 0 | 1 | 2 | 3;
+
+const STEPS = [
+  { id: 0 as Step, title: 'Básico', fields: ['name', 'categoryId'] as (keyof FormData)[] },
+  { id: 1 as Step, title: 'Precio y stock', fields: ['measurementType', 'pricePerGram', 'initialStockGrams'] as (keyof FormData)[] },
+  { id: 2 as Step, title: 'Imagen', fields: ['imageUrl'] as (keyof FormData)[] },
+  { id: 3 as Step, title: 'Descripción', fields: ['description'] as (keyof FormData)[] },
+];
 
 export function ProductCreatePage() {
   const navigate = useNavigate();
@@ -57,7 +60,8 @@ export function ProductCreatePage() {
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   
-  // Ref para mantener el showToast sin causar re-renders
+  const [currentStep, setCurrentStep] = useState<Step>(0);
+  
   const showToastRef = useRef(showToast);
   useEffect(() => {
     showToastRef.current = showToast;
@@ -70,22 +74,20 @@ export function ProductCreatePage() {
     description: '',
     imageUrl: '',
     initialStockGrams: 0,
-    onSale: false,
-    salePricePerGram: undefined,
+    measurementType: 'WEIGHT',
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const formDataRef = useRef<FormData>(formData);
+  const measurementLongName = getMeasurementLongLabel(formData.measurementType);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
 
-  // Sincronizar ref con formData
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
 
-  // Función para cargar categorías (memoizada para evitar re-renders)
   const loadCategories = useCallback(async (setLoading = true) => {
     if (setLoading) {
       setLoadingCategories(true);
@@ -94,7 +96,6 @@ export function ProductCreatePage() {
       const cats = await listCategories();
       setCategories(cats);
     } catch (err) {
-      // Usar ref para evitar dependencias
       showToastRef.current('Error al cargar categorías', 'error');
     } finally {
       if (setLoading) {
@@ -103,7 +104,6 @@ export function ProductCreatePage() {
     }
   }, []);
 
-  // Cargar categorías al montar
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
@@ -129,18 +129,43 @@ export function ProductCreatePage() {
         return 'El stock inicial no puede ser negativo';
       }
     }
-    if (name === 'imageUrl') {
-      if (!value || (typeof value === 'string' && !value.trim())) {
-        return 'La imagen es obligatoria';
+    return undefined;
+  };
+
+  const validateStep = (step: Step): FormErrors => {
+    const stepErrors: FormErrors = {};
+    const stepConfig = STEPS.find(s => s.id === step);
+    if (!stepConfig) return stepErrors;
+
+    for (const field of stepConfig.fields) {
+      const value = formData[field];
+      const error = validateField(field, value);
+      if (error) {
+        (stepErrors as Record<string, string>)[field] = error;
       }
     }
-    return undefined;
+
+    return stepErrors;
+  };
+
+  const stepErrors = useMemo(() => {
+    return STEPS.reduce((acc, step) => {
+      acc[step.id] = validateStep(step.id);
+      return acc;
+    }, {} as Record<Step, FormErrors>);
+  }, [formData]);
+
+  const isStepComplete = (step: Step): boolean => {
+    return Object.keys(stepErrors[step] || {}).length === 0;
+  };
+
+  const getCompletedSteps = (): Step[] => {
+    return STEPS.filter(s => s.id < currentStep && isStepComplete(s.id)).map(s => s.id) as Step[];
   };
 
   const handleChange = useCallback((name: keyof FormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     
-    // Limpiar error del campo cuando el usuario empieza a escribir
     setErrors((prev) => {
       if (name in prev) {
         const newErrors = { ...prev };
@@ -153,7 +178,6 @@ export function ProductCreatePage() {
 
   const handleBlur = useCallback((name: keyof FormData) => {
     const value = formDataRef.current[name];
-    // Solo validar campos que no sean booleanos y que no sean undefined
     if (typeof value !== 'boolean' && value !== undefined) {
       const error = validateField(name, value);
       if (error) {
@@ -162,33 +186,45 @@ export function ProductCreatePage() {
     }
   }, []);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-    
-    const nameError = validateField('name', formData.name);
-    if (nameError) newErrors.name = nameError;
-    
-    const categoryError = validateField('categoryId', formData.categoryId);
-    if (categoryError) newErrors.categoryId = categoryError;
-    
-    const priceError = validateField('pricePerGram', formData.pricePerGram);
-    if (priceError) newErrors.pricePerGram = priceError;
-    
-    const stockError = validateField('initialStockGrams', formData.initialStockGrams);
-    if (stockError) newErrors.initialStockGrams = stockError;
-    
-    const imageError = validateField('imageUrl', formData.imageUrl);
-    if (imageError) newErrors.imageUrl = imageError;
+  const handleNext = () => {
+    const currentErrors = stepErrors[currentStep];
+    if (currentErrors && Object.keys(currentErrors).length > 0) {
+      const firstErrorField = Object.keys(currentErrors)[0] as keyof FormErrors;
+      const element = document.querySelector(`[name="${firstErrorField}"]`) as HTMLInputElement;
+      element?.focus();
+      showToast('Completa los campos requeridos antes de continuar', 'error');
+      return;
+    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (currentStep < 3) {
+      setCurrentStep(prev => (prev + 1) as Step);
+    }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => (prev - 1) as Step);
+    }
+  };
 
-    if (!validateForm()) {
-      return;
+  const handleGoToStep = (step: Step) => {
+    if (step <= currentStep || getCompletedSteps().includes(step - 1 as Step)) {
+      setCurrentStep(step);
+    }
+  };
+
+  const handleSubmit = async (e?: FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
+
+    for (const step of STEPS) {
+      if (step.id < 3) {
+        const errors = stepErrors[step.id];
+        if (errors && Object.keys(errors).length > 0) {
+          setCurrentStep(step.id);
+          showToast('Completa todos los campos requeridos', 'error');
+          return;
+        }
+      }
     }
 
     setIsSubmitting(true);
@@ -199,26 +235,25 @@ export function ProductCreatePage() {
         categoryId: formData.categoryId,
         pricePerGram: formData.pricePerGram,
         description: formData.description.trim() || undefined,
-        imageUrl: formData.imageUrl,
+        imageUrl: formData.imageUrl || '',
         initialStockGrams: formData.initialStockGrams,
+        measurementType: formData.measurementType,
       });
 
       showToast('Producto creado exitosamente', 'success');
       navigate(`/products/${product.id}`);
     } catch (error) {
-      // Manejo de errores de validación (422)
       if (error && typeof error === 'object' && 'status' in error) {
         const apiError = error as ValidationError;
         if (apiError.status === 422 && apiError.fieldErrors) {
           const fieldErrors: FormErrors = {};
           
-      Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
-        if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
-            field === 'description' || field === 'imageUrl' || field === 'initialStockGrams' ||
-            field === 'onSale' || field === 'salePricePerGram' || field === 'saleDiscountPercent') {
-          fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
-        }
-      });
+          Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
+            if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
+                field === 'description' || field === 'imageUrl' || field === 'initialStockGrams') {
+              fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
+            }
+          });
 
           setErrors(fieldErrors);
           
@@ -229,7 +264,6 @@ export function ProductCreatePage() {
         }
       }
 
-      // Otros errores
       showToast('Error al crear producto. Intente nuevamente.', 'error');
     } finally {
       setIsSubmitting(false);
@@ -237,7 +271,20 @@ export function ProductCreatePage() {
   };
 
   const handleCancel = () => {
-    navigate('/products');
+    const hasChanges = 
+      formData.name !== initialFormData.name ||
+      formData.categoryId !== initialFormData.categoryId ||
+      formData.pricePerGram !== initialFormData.pricePerGram ||
+      formData.description !== initialFormData.description ||
+      formData.imageUrl !== initialFormData.imageUrl ||
+      formData.initialStockGrams !== initialFormData.initialStockGrams ||
+      formData.measurementType !== initialFormData.measurementType;
+
+    if (hasChanges) {
+      setShowUnsavedChangesModal(true);
+    } else {
+      navigate('/products');
+    }
   };
 
   const handleOpenCreateCategoryModal = useCallback(() => {
@@ -276,13 +323,10 @@ export function ProductCreatePage() {
     try {
       const newCategory = await createCategory({ name: newCategoryName.trim() });
       
-      // Recargar categorías (sin mostrar loading)
       await loadCategories(false);
       
-      // Seleccionar la nueva categoría
       setFormData((prev) => ({ ...prev, categoryId: newCategory.id }));
       
-      // Limpiar error de categoría si existía
       if (errors.categoryId) {
         setErrors((prev) => {
           const newErrors = { ...prev };
@@ -295,7 +339,6 @@ export function ProductCreatePage() {
       setShowCreateCategoryModal(false);
       setNewCategoryName('');
     } catch (err) {
-      // Manejo de errores de validación (422)
       if (err && typeof err === 'object' && 'status' in err) {
         const apiError = err as ApiError;
         if (apiError.status === 422) {
@@ -312,7 +355,6 @@ export function ProductCreatePage() {
         }
       }
 
-      // Otros errores
       const errorMessage = err instanceof Error ? err.message : 'Error al crear categoría';
       setCategoryError(errorMessage);
       showToast(errorMessage, 'error');
@@ -321,7 +363,6 @@ export function ProductCreatePage() {
     }
   };
 
-  // Memoizar las opciones de categorías para evitar re-renders innecesarios
   const categoryOptions = useMemo(() => {
     return categories.map((cat) => ({
       value: cat.id,
@@ -329,20 +370,34 @@ export function ProductCreatePage() {
     }));
   }, [categories]);
 
-  // Detectar si hay cambios sin guardar
-  const hasUnsavedChanges = useMemo(() => {
-    return (
+  const getStepSummary = (step: Step): string => {
+    switch (step) {
+      case 0:
+        return formData.name ? `• ${formData.name}` : 'Sin nombre';
+      case 1:
+        return formData.pricePerGram > 0 
+          ? `• ${formData.pricePerGram}€ / ${formData.initialStockGrams}g`
+          : 'Sin precio/stock';
+      case 2:
+        return formData.imageUrl ? '• Imagen asignada' : '• Sin imagen (opcional)';
+      case 3:
+        return formData.description ? '• Con descripción' : 'Sin descripción';
+      default:
+        return '';
+    }
+  };
+
+  const handleBackButton = () => {
+    const hasChanges = 
       formData.name !== initialFormData.name ||
       formData.categoryId !== initialFormData.categoryId ||
       formData.pricePerGram !== initialFormData.pricePerGram ||
       formData.description !== initialFormData.description ||
       formData.imageUrl !== initialFormData.imageUrl ||
-      formData.initialStockGrams !== initialFormData.initialStockGrams
-    );
-  }, [formData]);
+      formData.initialStockGrams !== initialFormData.initialStockGrams ||
+      formData.measurementType !== initialFormData.measurementType;
 
-  const handleBack = () => {
-    if (hasUnsavedChanges) {
+    if (hasChanges) {
       setShowUnsavedChangesModal(true);
     } else {
       navigate('/products');
@@ -350,56 +405,8 @@ export function ProductCreatePage() {
   };
 
   const handleSaveAndExit = async () => {
-    if (!validateForm()) {
-      setShowUnsavedChangesModal(false);
-      return;
-    }
-
-    setIsSubmitting(true);
     setShowUnsavedChangesModal(false);
-
-    try {
-      await createProduct({
-        name: formData.name.trim(),
-        categoryId: formData.categoryId,
-        pricePerGram: formData.pricePerGram,
-        description: formData.description.trim() || undefined,
-        imageUrl: formData.imageUrl,
-        initialStockGrams: formData.initialStockGrams,
-        onSale: formData.onSale || undefined,
-        salePricePerGram: formData.onSale && formData.salePricePerGram ? formData.salePricePerGram : undefined,
-        saleDiscountPercent: formData.onSale && formData.saleDiscountPercent ? formData.saleDiscountPercent : undefined,
-      });
-
-      showToast('Producto creado exitosamente', 'success');
-      navigate('/products');
-    } catch (error) {
-      // Manejo de errores de validación (422)
-      if (error && typeof error === 'object' && 'status' in error) {
-        const apiError = error as ValidationError;
-        if (apiError.status === 422 && apiError.fieldErrors) {
-          const fieldErrors: FormErrors = {};
-          
-      Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
-        if (field === 'name' || field === 'categoryId' || field === 'pricePerGram' || 
-            field === 'description' || field === 'imageUrl' || field === 'initialStockGrams' ||
-            field === 'onSale' || field === 'salePricePerGram' || field === 'saleDiscountPercent') {
-          fieldErrors[field as keyof FormErrors] = messages[0] || 'Error de validación';
-        }
-      });
-
-          setErrors(fieldErrors);
-          
-          if (Object.keys(fieldErrors).length > 0) {
-            showToast('Por favor, corrige los errores en el formulario', 'error');
-          }
-        }
-      } else {
-        showToast('Error al crear producto. Intente nuevamente.', 'error');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleSubmit();
   };
 
   const handleExitWithoutSaving = () => {
@@ -410,7 +417,7 @@ export function ProductCreatePage() {
   if (loadingCategories) {
     return (
       <>
-        <PageHeader title="Nuevo producto" onBack={handleBack} />
+        <PageHeader title="Nuevo producto" onBack={handleBackButton} />
         <div className="product-create-container">
           <Spinner size="lg" />
         </div>
@@ -418,270 +425,144 @@ export function ProductCreatePage() {
     );
   }
 
-  return (
-    <>
-      <PageHeader title="Nuevo producto" onBack={handleBack} />
-      <div className="product-create-container">
-        <FormCard>
-          <form onSubmit={handleSubmit} className="product-create-form">
-            <FormSection
-              title="Información básica"
-              description="Datos principales del producto"
-            >
-              <div className="form-row">
-                <Input
-                  id="name"
-                  label="Nombre del producto"
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  onBlur={() => handleBlur('name')}
-                  error={errors.name}
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <div className="step-content">
+            <h2 className="step-title">Información básica</h2>
+            <p className="step-description">Datos principales del producto</p>
+            
+            <div className="step-form">
+              <Input
+                id="name"
+                label="Nombre del producto"
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                onBlur={() => handleBlur('name')}
+                error={errors.name}
+                required
+                disabled={isSubmitting}
+                placeholder="Ej: Amnesia Haze"
+                data-tour="product-name-input"
+                autoFocus
+              />
+
+              <div className="category-select-wrapper">
+                <Select
+                  id="categoryId"
+                  label="Categoría"
+                  value={formData.categoryId}
+                  onChange={(e) => handleChange('categoryId', e.target.value)}
+                  onBlur={() => handleBlur('categoryId')}
+                  error={errors.categoryId}
+                  options={[
+                    { value: '', label: 'Seleccione una categoría' },
+                    ...categoryOptions,
+                  ]}
                   required
                   disabled={isSubmitting}
-                  placeholder="Ej: Amnesia Haze"
-                  data-tour="product-name-input"
+                  data-tour="product-category-select"
                 />
-
-                <div className="category-select-wrapper">
-                  <Select
-                    id="categoryId"
-                    label="Categoría"
-                    value={formData.categoryId}
-                    onChange={(e) => handleChange('categoryId', e.target.value)}
-                    onBlur={() => handleBlur('categoryId')}
-                    error={errors.categoryId}
-                    options={[
-                      { value: '', label: 'Seleccione una categoría' },
-                      ...categoryOptions,
-                    ]}
-                    required
-                    disabled={isSubmitting}
-                    data-tour="product-category-select"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleOpenCreateCategoryModal}
-                    disabled={isSubmitting}
-                    className="create-category-button"
-                    data-tour="create-category-button"
-                  >
-                    + Nueva categoría
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleOpenCreateCategoryModal}
+                  disabled={isSubmitting}
+                  className="create-category-button"
+                  data-tour="create-category-button"
+                >
+                  + Nueva
+                </Button>
               </div>
-            </FormSection>
+            </div>
+          </div>
+        );
 
-            <FormSection
-              title="Precio y stock"
-              description="Información de venta e inventario"
-            >
-              <div className="form-row">
-                <div className="form-field-with-icon">
-                  <HiOutlineCurrencyEuro className="form-field-icon" />
-                  <NumberInput
-                    id="pricePerGram"
-                    label="Precio por gramo (€)"
-                    value={formData.pricePerGram}
-                    onChange={(value) => handleChange('pricePerGram', value)}
-                    onBlur={() => handleBlur('pricePerGram')}
-                    error={errors.pricePerGram}
-                    min={0}
-                    step={0.01}
-                    required
-                    disabled={isSubmitting}
-                    placeholder="0.00"
-                    data-tour="product-price-input"
-                  />
-                </div>
-
-                <div className="form-field-with-icon">
-                  <HiOutlineArchive className="form-field-icon" />
-                  <NumberInput
-                    id="initialStockGrams"
-                    label="Stock inicial (gramos)"
-                    value={formData.initialStockGrams}
-                    onChange={(value) => handleChange('initialStockGrams', value)}
-                    onBlur={() => handleBlur('initialStockGrams')}
-                    error={errors.initialStockGrams}
-                    min={0}
-                    step={0.01}
-                    required
-                    disabled={isSubmitting}
-                    placeholder="0.00"
-                    data-tour="product-stock-input"
-                  />
-                </div>
+      case 1:
+        return (
+          <div className="step-content">
+            <h2 className="step-title">Precio y stock</h2>
+            <p className="step-description">Define el tipo de medición, precio y stock inicial</p>
+            
+            <div className="step-form">
+              <SegmentedToggle
+                id="measurementType"
+                label="Tipo de medición"
+                value={formData.measurementType}
+                onChange={(value) => handleChange('measurementType', value as ProductMeasurementType)}
+                options={[
+                  { value: 'WEIGHT', label: 'Peso' },
+                  { value: 'UNIT', label: 'Unidad' },
+                ]}
+                disabled={isSubmitting}
+              />
+              
+              <div className="form-field-with-icon">
+                <HiOutlineCurrencyEuro className="form-field-icon" />
+                <NumberInput
+                  id="pricePerGram"
+                  label={`Precio por ${measurementLongName} (€)`}
+                  value={formData.pricePerGram}
+                  onChange={(value) => handleChange('pricePerGram', value)}
+                  onBlur={() => handleBlur('pricePerGram')}
+                  error={errors.pricePerGram}
+                  min={0}
+                  step={0.01}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="0.00"
+                  data-tour="product-price-input"
+                  autoFocus
+                />
               </div>
-            </FormSection>
 
-            <FormSection
-              title="Oferta"
-              description="Marca el producto como en oferta y establece un precio especial (precio fijo o porcentaje)"
-            >
-              <div className="form-row">
-                <div className="form-checkbox-container">
-                  <input
-                    type="checkbox"
-                    id="onSale"
-                    checked={formData.onSale}
-                    onChange={(e) => {
-                      const onSale = e.target.checked;
-                      setFormData({ 
-                        ...formData, 
-                        onSale,
-                        // Si se desmarca la oferta, limpiar ambos campos
-                        salePricePerGram: onSale ? formData.salePricePerGram : undefined,
-                        saleDiscountPercent: onSale ? formData.saleDiscountPercent : undefined
-                      });
-                    }}
-                    disabled={isSubmitting}
-                    className="form-checkbox"
-                    data-tour="product-on-sale-checkbox"
-                  />
-                  <label htmlFor="onSale" className="form-checkbox-label">
-                    Producto en oferta
-                  </label>
-                </div>
+              <div className="form-field-with-icon">
+                <HiOutlineArchive className="form-field-icon" />
+                <NumberInput
+                  id="initialStockGrams"
+                  label={`Stock inicial (${measurementLongName})`}
+                  value={formData.initialStockGrams}
+                  onChange={(value) => handleChange('initialStockGrams', value)}
+                  onBlur={() => handleBlur('initialStockGrams')}
+                  error={errors.initialStockGrams}
+                  min={0}
+                  step={0.01}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="0.00"
+                  data-tour="product-stock-input"
+                />
               </div>
-              {formData.onSale && (
-                <>
-                  <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
-                    <Select
-                      id="saleType"
-                      label="Tipo de oferta"
-                      value={
-                        formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0
-                          ? 'percent'
-                          : formData.salePricePerGram !== undefined
-                          ? 'fixed'
-                          : 'percent'
-                      }
-                      onChange={(e) => {
-                        const saleType = e.target.value;
-                        if (saleType === 'percent') {
-                          // Cambiar a porcentaje, limpiar precio fijo
-                          setFormData({ 
-                            ...formData, 
-                            salePricePerGram: undefined,
-                            saleDiscountPercent: formData.saleDiscountPercent || 0
-                          });
-                        } else {
-                          // Cambiar a precio fijo, limpiar porcentaje
-                          setFormData({ 
-                            ...formData, 
-                            salePricePerGram: formData.salePricePerGram || 0,
-                            saleDiscountPercent: undefined
-                          });
-                        }
-                      }}
-                      options={[
-                        { value: 'percent', label: 'Porcentaje de descuento (%)' },
-                        { value: 'fixed', label: 'Precio fijo (€)' },
-                      ]}
-                      disabled={isSubmitting}
-                      data-tour="product-sale-type-select"
-                    />
-                  </div>
-                  {(formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0) || 
-                   (formData.saleDiscountPercent === undefined && formData.salePricePerGram === undefined) ? (
-                    <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
-                      <NumberInput
-                        id="saleDiscountPercent"
-                        label="Porcentaje de descuento (%)"
-                        value={formData.saleDiscountPercent || 0}
-                          onChange={(value) => {
-                            const percent = value ?? 0;
-                            setFormData({ 
-                              ...formData, 
-                              saleDiscountPercent: percent > 0 ? percent : undefined,
-                              salePricePerGram: undefined // Limpiar precio fijo cuando se usa porcentaje
-                            });
-                          }}
-                          onBlur={() => {
-                            if (formData.saleDiscountPercent !== undefined) {
-                              handleBlur('saleDiscountPercent');
-                            }
-                          }}
-                        error={errors.saleDiscountPercent}
-                        min={0}
-                        max={100}
-                        step={1}
-                        disabled={isSubmitting}
-                        placeholder="Ej: 20"
-                        data-tour="product-discount-percent-input"
-                      />
-                      {formData.saleDiscountPercent !== undefined && formData.saleDiscountPercent > 0 && formData.pricePerGram > 0 && (
-                        <div style={{ 
-                          padding: 'var(--spacing-sm)', 
-                          background: 'var(--bg-tertiary)', 
-                          borderRadius: 'var(--border-radius-sm)',
-                          fontSize: 'var(--font-size-sm)',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          Precio calculado: {formatMoney(formData.pricePerGram * (1 - formData.saleDiscountPercent / 100))}/g
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="form-row" style={{ marginTop: 'var(--spacing-sm)' }}>
-                      <div className="form-field-with-icon">
-                        <HiOutlineCurrencyEuro className="form-field-icon" />
-                        <NumberInput
-                          id="salePricePerGram"
-                          label="Precio de oferta por gramo (€)"
-                          value={formData.salePricePerGram || 0}
-                          onChange={(value) => {
-                            const price = value ?? 0;
-                            setFormData({ 
-                              ...formData, 
-                              salePricePerGram: price > 0 ? price : undefined,
-                              saleDiscountPercent: undefined // Limpiar porcentaje cuando se usa precio fijo
-                            });
-                          }}
-                          onBlur={() => {
-                            if (formData.salePricePerGram !== undefined) {
-                              handleBlur('salePricePerGram');
-                            }
-                          }}
-                          error={errors.salePricePerGram}
-                          min={0}
-                          step={0.01}
-                          disabled={isSubmitting}
-                          placeholder="Precio especial en oferta"
-                          data-tour="product-sale-price-input"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </FormSection>
+            </div>
+          </div>
+        );
 
-            <FormSection
-              title="Imagen del producto"
-              description="Sube una imagen para identificar el producto"
-            >
+      case 2:
+        return (
+          <div className="step-content">
+            <h2 className="step-title">Imagen del producto</h2>
+            <p className="step-description">Sube una imagen para identificar el producto (opcional)</p>
+            
+            <div className="step-form">
               <ImageUpload
                 value={formData.imageUrl}
                 onChange={(url) => handleChange('imageUrl', url)}
-                onError={(error) => {
-                  setErrors((prev) => ({ ...prev, imageUrl: error }));
-                }}
                 data-tour="product-image-upload"
               />
-              {errors.imageUrl && (
-                <div className="form-error" style={{ marginTop: 'var(--spacing-xs)' }}>
-                  {errors.imageUrl}
-                </div>
-              )}
-            </FormSection>
+              <p className="step-hint">Puedes continuar sin imagen y añadirla más tarde</p>
+            </div>
+          </div>
+        );
 
-            <FormSection
-              title="Descripción"
-              description="Información adicional sobre el producto (opcional)"
-            >
+      case 3:
+        return (
+          <div className="step-content">
+            <h2 className="step-title">Descripción</h2>
+            <p className="step-description">Información adicional sobre el producto (opcional)</p>
+            
+            <div className="step-form">
               <Textarea
                 id="description"
                 label="Descripción"
@@ -693,31 +574,111 @@ export function ProductCreatePage() {
                 placeholder="Información adicional sobre el producto..."
                 rows={4}
                 data-tour="product-description-textarea"
+                autoFocus
               />
-            </FormSection>
+            </div>
+          </div>
+        );
 
-            <div className="product-create-actions">
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <PageHeader title="Nuevo producto" onBack={handleBackButton} />
+      <div className="product-create-container">
+        <div className="stepper-nav">
+          <div className="stepper">
+            {STEPS.map((step, index) => {
+              const isCompleted = isStepComplete(step.id);
+              const isCurrent = currentStep === step.id;
+              const canNavigate = step.id <= currentStep || getCompletedSteps().includes(step.id - 1 as Step);
+
+              return (
+                <div key={step.id} className="stepper-item">
+                  <button
+                    type="button"
+                    className={`stepper-button ${isCurrent ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${!canNavigate ? 'disabled' : ''}`}
+                    onClick={() => canNavigate && handleGoToStep(step.id)}
+                    disabled={!canNavigate}
+                  >
+                    <span className="stepper-number">
+                      {isCompleted ? <HiCheck /> : index + 1}
+                    </span>
+                    <span className="stepper-label">{step.title}</span>
+                  </button>
+                  {index < STEPS.length - 1 && (
+                    <div className={`stepper-connector ${isCompleted ? 'completed' : ''}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="step-summary-bar">
+            {STEPS.slice(0, currentStep).map(step => (
+              <div key={step.id} className="step-summary-item">
+                <span className="step-summary-label">{step.title}:</span>
+                <span className="step-summary-value">{getStepSummary(step.id)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="step-actions">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            data-tour="cancel-product"
+          >
+            Cancelar
+          </Button>
+          
+          <div className="step-actions-center">
+            {currentStep > 0 && (
               <Button
                 type="button"
                 variant="secondary"
-                onClick={handleCancel}
+                onClick={handleBack}
                 disabled={isSubmitting}
-                data-tour="cancel-product"
+                icon={<HiChevronLeft />}
               >
-                Cancelar
+                Atrás
               </Button>
+            )}
+            
+            {currentStep < 3 ? (
               <Button
-                type="submit"
+                type="button"
                 variant="primary"
+                onClick={handleNext}
+                disabled={isSubmitting}
+                icon={<HiChevronRight />}
+              >
+                Siguiente
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => handleSubmit()}
                 loading={isSubmitting}
                 disabled={isSubmitting}
                 data-tour="save-product"
               >
                 Guardar producto
               </Button>
-            </div>
-          </form>
-        </FormCard>
+            )}
+          </div>
+        </div>
+
+        <div className="step-container">
+          {renderStepContent()}
+        </div>
       </div>
 
       <Modal

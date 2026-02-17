@@ -5,6 +5,7 @@ import { listProducts } from '@/services/products.service';
 import { listCategories } from '@/services/categories.service';
 import type { Product, Category } from '@/types/models';
 import { formatMoney } from '@/utils/money';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './ProductPicker.css';
 
 interface ProductPickerProps {
@@ -313,8 +314,10 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
             </div>
           ) : (
             <ul className="product-picker-list">
-              {results.map((product) => (
-                <li
+                {results.map((product) => {
+                  const measurementSuffix = getMeasurementShortLabel(product.measurementType);
+                  return (
+                  <li
                   key={product.id}
                   id={`product-${product.id}`}
                   className={`product-picker-item ${
@@ -346,14 +349,15 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
                   <div className="product-picker-item-info">
                     <div className="product-picker-item-name">{product.name}</div>
                     <div className="product-picker-item-details">
-                      <span>{formatMoney(product.pricePerGram)}/g</span>
+                      <span>{formatMoney(product.pricePerGram)}/{measurementSuffix}</span>
                       <span className={`product-picker-stock ${product.stockGrams <= 0 ? 'stock-zero' : ''}`}>
-                        Stock: {product.stockGrams}g
+                        Stock: {product.stockGrams}{measurementSuffix}
                       </span>
                     </div>
                   </div>
-                </li>
-              ))}
+                  </li>
+                );
+                })}
             </ul>
           )}
         </div>
@@ -370,7 +374,7 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
           <div>
             Producto seleccionado: <strong>{selectedProduct.name}</strong>
             <span className="product-picker-selected-stock">
-              (Stock: {selectedProduct.stockGrams}g)
+              Stock: {selectedProduct.stockGrams}{getMeasurementShortLabel(selectedProduct.measurementType)}
             </span>
           </div>
         </div>

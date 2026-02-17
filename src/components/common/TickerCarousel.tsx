@@ -4,6 +4,7 @@ import { HiCalendar, HiCurrencyEuro } from 'react-icons/hi';
 import { HiExclamationTriangle } from 'react-icons/hi2';
 import { getDashboardTicker } from '@/services/reports.service';
 import type { DashboardTickerResponse } from '@/types/models';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import './TickerCarousel.css';
 
 export function TickerCarousel() {
@@ -30,10 +31,13 @@ export function TickerCarousel() {
   const messages: Array<{ text: string; color: string; icon?: React.ReactNode }> = [];
 
   if (data) {
-    if (data.lowStockProducts?.length > 0) {
-      const productsText = data.lowStockProducts
-        .map(p => `${p.name} (${p.stockGrams.toFixed(0)}g)`)
-        .join(', ');
+      if (data.lowStockProducts?.length > 0) {
+        const productsText = data.lowStockProducts
+          .map(p => {
+            const suffix = getMeasurementShortLabel(p.measurementType);
+            return `${p.name} (${p.stockGrams.toFixed(0)}${suffix})`;
+          })
+          .join(', ');
       messages.push({
         text: `Stock bajo: ${productsText}`,
         color: 'orange',

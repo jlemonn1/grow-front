@@ -1,6 +1,7 @@
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import { formatMoney } from '@/utils/money';
 import type { Customer } from '@/types/models';
+import { CustomerAvatar } from '@/components/common/CustomerAvatar';
 import './CustomerCardSummary.css';
 
 interface CustomerCardSummaryProps {
@@ -10,28 +11,17 @@ interface CustomerCardSummaryProps {
 }
 
 export function CustomerCardSummary({ customer, isExpanded, onToggleExpand }: CustomerCardSummaryProps) {
-  const getImageUrl = (url?: string) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    return `${apiBaseUrl}${url}`;
-  };
-
   return (
     <div className="customer-card-summary">
       <div className="customer-card-main-info">
         <div className="customer-card-header">
-          {customer.profilePictureUrl && (
-            <div className="customer-card-avatar">
-              <img 
-                src={getImageUrl(customer.profilePictureUrl) || ''} 
-                alt={customer.displayName}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+          <CustomerAvatar
+            name={customer.displayName}
+            imageUrl={customer.profilePictureUrl}
+            size={44}
+            className="customer-card-avatar"
+            tooltip={`Foto de ${customer.displayName}`}
+          />
           <h3 className="customer-card-name" title={customer.displayName}>
             {customer.displayName}
           </h3>

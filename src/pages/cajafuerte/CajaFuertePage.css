@@ -47,12 +47,104 @@
   margin: 0;
 }
 
+/* Status Banner */
+.cajafuerte-status-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cajafuerte-status-banner.open {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%);
+  border: 1px solid var(--color-warning);
+}
+
+.cajafuerte-status-banner.closed {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 1px solid var(--color-success);
+}
+
+.cajafuerte-status-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cajafuerte-status-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cajafuerte-status-banner.open .cajafuerte-status-icon {
+  color: var(--color-warning);
+}
+
+.cajafuerte-status-banner.closed .cajafuerte-status-icon {
+  color: var(--color-success);
+}
+
+.cajafuerte-status-icon .pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.cajafuerte-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cajafuerte-status-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.cajafuerte-status-banner.open .cajafuerte-status-label {
+  color: var(--color-warning);
+}
+
+.cajafuerte-status-banner.closed .cajafuerte-status-label {
+  color: var(--color-success);
+}
+
+.cajafuerte-status-time {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
   .cajafuerte-page-actions {
     flex-direction: column;
   }
 
   .cajafuerte-page-actions > * {
+    width: 100%;
+  }
+
+  .cajafuerte-status-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .cajafuerte-status-banner > button {
     width: 100%;
   }
 }

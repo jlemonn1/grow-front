@@ -1,4 +1,5 @@
 import { SelectHTMLAttributes, forwardRef } from 'react';
+import { HiXCircle } from 'react-icons/hi2';
 import './Select.css';
 
 export interface SelectOption {
@@ -32,7 +33,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <span className="select-error-message">{error}</span>}
+        {error && (
+          <span className="select-error-message">
+            <HiXCircle className="select-error-icon" aria-hidden="true" />
+            {error}
+          </span>
+        )}
       </div>
     );
   }

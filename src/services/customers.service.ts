@@ -10,7 +10,7 @@ import type {
   BalanceTransaction,
   AdjustBalanceRequest,
   TransferBalanceRequest,
-  Product
+  Product,
 } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 
@@ -48,24 +48,76 @@ export const customersService = {
   async create(data: CreateCustomerRequest & {
     profilePicture?: File;
     dniPicture?: File;
+    contractSignatureDataUrl?: string;
   }): Promise<Customer> {
-    // Si hay archivos, usar FormData
-    if (data.profilePicture || data.dniPicture) {
+    console.log('[customers.service] create called with data:', {
+      displayName: data.displayName,
+      pin: data.pin,
+      hasProfilePicture: !!data.profilePicture,
+      hasDniPicture: !!data.dniPicture,
+      hasContractSignature: !!data.contractSignatureDataUrl,
+      profilePictureName: data.profilePicture?.name,
+      profilePictureSize: data.profilePicture?.size,
+      dniPictureName: data.dniPicture?.name,
+      dniPictureSize: data.dniPicture?.size,
+    });
+
+    const requiresFormData = Boolean(
+      data.profilePicture ||
+      data.dniPicture ||
+      data.contractSignatureDataUrl
+    );
+    console.log('[customers.service] requiresFormData:', requiresFormData);
+
+    if (requiresFormData) {
       const formData = new FormData();
+      console.log('[customers.service] Building FormData...');
+      const appendIfPresent = (key: string, value: string | number | null | undefined) => {
+        if (value === undefined || value === null) return;
+        formData.append(key, String(value));
+      };
+
       formData.append('displayName', data.displayName);
-      if (data.phone) formData.append('phone', data.phone);
-      if (data.notes) formData.append('notes', data.notes);
+      appendIfPresent('phone', data.phone);
+      appendIfPresent('notes', data.notes);
       formData.append('pin', data.pin);
-      if (data.subscriptionType) formData.append('subscriptionType', data.subscriptionType);
-      formData.append('subscriptionPrice', data.subscriptionPrice.toString());
-      if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
-      if (data.dniPicture) formData.append('dniPicture', data.dniPicture);
-      if (data.dniNumber) formData.append('dniNumber', data.dniNumber);
+      appendIfPresent('subscriptionType', data.subscriptionType);
+      appendIfPresent('subscriptionPrice', data.subscriptionPrice);
+      if (data.profilePicture) {
+        console.log('[customers.service] Appending profilePicture:', data.profilePicture.name, data.profilePicture.size);
+        formData.append('profilePicture', data.profilePicture);
+      }
+      if (data.dniPicture) {
+        console.log('[customers.service] Appending dniPicture:', data.dniPicture.name, data.dniPicture.size);
+        formData.append('dniPicture', data.dniPicture);
+      }
+      appendIfPresent('dniNumber', data.dniNumber);
+      appendIfPresent('address', data.address);
+      appendIfPresent('estimatedMonthlyConsumptionGrams', data.estimatedMonthlyConsumptionGrams);
+      appendIfPresent('guarantorId', data.guarantorId);
+      appendIfPresent('contractSignatureDataUrl', data.contractSignatureDataUrl);
+      appendIfPresent('customerType', data.customerType);
+
+      console.log('[customers.service] FormData built, calling postFormData to /customers/with-files...');
       
-      return postFormData<Customer>('/customers', formData);
-    } else {
-      // Si no hay archivos, usar JSON normal
-      return post<Customer>('/customers', data);
+      try {
+        const result = await postFormData<Customer>('/customers/with-files', formData);
+        console.log('[customers.service] Customer created successfully:', result.id);
+        return result;
+      } catch (error) {
+        console.error('[customers.service] Error creating customer:', error);
+        throw error;
+      }
+    }
+
+    console.log('[customers.service] Using regular POST without files...');
+    try {
+      const result = await post<Customer>('/customers', data);
+      console.log('[customers.service] Customer created successfully:', result.id);
+      return result;
+    } catch (error) {
+      console.error('[customers.service] Error creating customer:', error);
+      throw error;
     }
   },
 
@@ -104,25 +156,43 @@ export const customersService = {
   async update(customerId: string, data: UpdateCustomerRequest & {
     profilePicture?: File;
     dniPicture?: File;
+    contractSignatureDataUrl?: string;
   }): Promise<Customer> {
-    // Si hay archivos, usar FormData
-    if (data.profilePicture || data.dniPicture) {
+    const requiresFormData = Boolean(
+      data.profilePicture ||
+      data.dniPicture ||
+      data.contractSignatureDataUrl
+    );
+    if (requiresFormData) {
       const formData = new FormData();
-      if (data.displayName) formData.append('displayName', data.displayName);
-      if (data.phone !== undefined) formData.append('phone', data.phone || '');
-      if (data.notes !== undefined) formData.append('notes', data.notes || '');
-      if (data.pin) formData.append('pin', data.pin);
-      if (data.subscriptionType) formData.append('subscriptionType', data.subscriptionType);
-      if (data.subscriptionPrice !== undefined) formData.append('subscriptionPrice', data.subscriptionPrice.toString());
-      if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
-      if (data.dniPicture) formData.append('dniPicture', data.dniPicture);
-      if (data.dniNumber !== undefined) formData.append('dniNumber', data.dniNumber || '');
-      
-      return putFormData<Customer>(`/customers/${customerId}`, formData);
-    } else {
-      // Si no hay archivos, usar JSON normal
-      return put<Customer>(`/customers/${customerId}`, data);
+      const appendIfPresent = (key: string, value: string | number | null | undefined) => {
+        if (value === undefined || value === null) return;
+        formData.append(key, String(value));
+      };
+
+      appendIfPresent('displayName', data.displayName);
+      appendIfPresent('phone', data.phone);
+      appendIfPresent('notes', data.notes);
+      appendIfPresent('pin', data.pin);
+      appendIfPresent('subscriptionType', data.subscriptionType);
+      appendIfPresent('subscriptionPrice', data.subscriptionPrice);
+      if (data.profilePicture) {
+        formData.append('profilePicture', data.profilePicture);
+      }
+      if (data.dniPicture) {
+        formData.append('dniPicture', data.dniPicture);
+      }
+      appendIfPresent('dniNumber', data.dniNumber);
+      appendIfPresent('address', data.address);
+      appendIfPresent('estimatedMonthlyConsumptionGrams', data.estimatedMonthlyConsumptionGrams);
+      appendIfPresent('guarantorId', data.guarantorId);
+      appendIfPresent('contractSignatureDataUrl', data.contractSignatureDataUrl);
+      appendIfPresent('customerType', data.customerType);
+
+      return putFormData<Customer>(`/customers/${customerId}/with-files`, formData);
     }
+
+    return put<Customer>(`/customers/${customerId}`, data);
   },
 
   /**
@@ -246,11 +316,18 @@ export const customersService = {
     return get<PageResponse<BalanceTransaction>>(endpoint);
   },
 
-  /**
-   * Obtiene los productos recomendados para un cliente
-   * Solo devuelve productos con stock disponible
-   */
-  async getRecommendedProducts(customerId: string): Promise<Product[]> {
-    return get<Product[]>(`/customers/${customerId}/recommended-products`);
-  },
+/**
+    * Obtiene los productos recomendados para un cliente
+    * Solo devuelve productos con stock disponible
+    */
+   async getRecommendedProducts(customerId: string): Promise<Product[]> {
+     return get<Product[]>(`/customers/${customerId}/recommended-products`);
+   },
+
+   /**
+    * Vacía el saldo de un cliente (solo cuando el saldo está deshabilitado por configuración)
+    */
+   async clearBalance(customerId: string): Promise<void> {
+     return post<void>(`/customers/${customerId}/balance/clear`, { confirm: true });
+   },
 };

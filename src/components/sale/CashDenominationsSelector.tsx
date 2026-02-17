@@ -1,153 +1,73 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { DenominationSelector } from '@/components/cajafuerte/DenominationSelector';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/common/Button';
-import { calculateOptimalChange, getCurrentState } from '@/services/cajafuerte.service';
-import { getDenominationLabel } from '@/utils/denominations';
 import { formatMoney } from '@/utils/money';
 import { useUI } from '@/context/ui.context';
-import type { DenominationsMap, CajaFuerte } from '@/types/models';
-import { HiArrowPath, HiExclamationTriangle } from 'react-icons/hi2';
+import { HiExclamationTriangle } from 'react-icons/hi2';
 import './CashDenominationsSelector.css';
 
 interface CashDenominationsSelectorProps {
   changeAmount: number;
-  changeDenominations: DenominationsMap | null;
-  onChangeDenominationsChange: (denominations: DenominationsMap | null) => void;
+  onConfirmChange?: () => void;
   disabled?: boolean;
 }
 
 export function CashDenominationsSelector({
   changeAmount,
-  changeDenominations,
-  onChangeDenominationsChange,
+  onConfirmChange,
   disabled = false,
 }: CashDenominationsSelectorProps) {
   const { showToast } = useUI();
-  const [cajaFuerte, setCajaFuerte] = useState<CajaFuerte | null>(null);
-  const [loadingChange, setLoadingChange] = useState(false);
-  const [changeError, setChangeError] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
-  // Cargar estado de CajaFuerte al montar
+  // Reset confirmation when change amount changes
   useEffect(() => {
-    const loadCajaFuerte = async () => {
-      try {
-        const state = await getCurrentState();
-        setCajaFuerte(state);
-      } catch (error) {
-        console.error('Error al cargar CajaFuerte:', error);
-      }
-    };
-    loadCajaFuerte();
-  }, []);
+    setConfirmed(false);
+  }, [changeAmount]);
 
-  // Calcular cambio automáticamente cuando cambia changeAmount
-  const calculateChange = useCallback(async () => {
-    if (changeAmount <= 0) {
-      onChangeDenominationsChange(null);
-      setChangeError(null);
-      return;
-    }
+  const handleConfirm = () => {
+    setConfirmed(true);
+    onConfirmChange?.();
+    showToast('Cambio confirmado', 'success');
+  };
 
-    setLoadingChange(true);
-    setChangeError(null);
-
-    try {
-      const result = await calculateOptimalChange(changeAmount);
-      onChangeDenominationsChange(result.denominations);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Error al calcular cambio';
-      setChangeError(errorMessage);
-      onChangeDenominationsChange(null);
-      showToast(errorMessage, 'error');
-    } finally {
-      setLoadingChange(false);
-    }
-  }, [changeAmount, onChangeDenominationsChange, showToast]);
-
-  // Calcular cambio cuando cambia changeAmount
-  useEffect(() => {
-    if (changeAmount > 0) {
-      calculateChange();
-    } else {
-      onChangeDenominationsChange(null);
-      setChangeError(null);
-    }
-  }, [changeAmount, calculateChange, onChangeDenominationsChange]);
-
-  // Validar disponibilidad de cambio
-  const validateChangeAvailability = useCallback(() => {
-    if (!changeDenominations || !cajaFuerte) {
-      return null;
-    }
-
-    const issues: string[] = [];
-    for (const [denomination, quantity] of Object.entries(changeDenominations)) {
-      const available = cajaFuerte.denominations[denomination] || 0;
-      if (quantity > available) {
-        issues.push(`${quantity}x ${getDenominationLabel(parseFloat(denomination))} (disponibles: ${available})`);
-      }
-    }
-
-    return issues.length > 0 ? issues : null;
-  }, [changeDenominations, cajaFuerte]);
-
-  const availabilityIssues = useMemo(() => validateChangeAvailability(), [validateChangeAvailability]);
+  if (changeAmount <= 0) {
+    return null;
+  }
 
   return (
     <div className="cash-denominations-selector">
-      {changeAmount > 0 && (
-        <div className="cash-denominations-section">
-          <div className="cash-denominations-section-header">
-            <h4 className="cash-denominations-section-title">Cambio a dar: {formatMoney(changeAmount)}</h4>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={calculateChange}
-              disabled={disabled || loadingChange}
-              icon={<HiArrowPath />}
-            >
-              Recalcular
-            </Button>
-          </div>
-
-          {loadingChange ? (
-            <div className="cash-denominations-loading">Calculando cambio...</div>
-          ) : changeError ? (
-            <div className="cash-denominations-error">
-              <HiExclamationTriangle />
-              {changeError}
-            </div>
-          ) : changeDenominations ? (
-            <>
-              <DenominationSelector
-                denominations={changeDenominations}
-                onChange={onChangeDenominationsChange}
-                availableDenominations={cajaFuerte?.denominations}
-                disabled={disabled}
-                showTotal={true}
-              />
-              {availabilityIssues && (
-                <div className="cash-denominations-warning">
-                  <HiExclamationTriangle />
-                  <div>
-                    <strong>Advertencia:</strong> No hay suficientes denominaciones disponibles:
-                    <ul>
-                      {availabilityIssues.map((issue, idx) => (
-                        <li key={idx}>{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="cash-denominations-empty">
-              Calculando cambio...
-            </div>
-          )}
+      <div className="cash-denominations-section">
+        <div className="cash-denominations-section-header">
+          <h4 className="cash-denominations-section-title">
+            Cambio a entregar: {formatMoney(changeAmount)}
+          </h4>
         </div>
-      )}
+
+        <div className="cash-denominations-info">
+          <HiExclamationTriangle />
+          <p>
+            Entregar <strong>{formatMoney(changeAmount)}</strong> en cambio al cliente.
+          </p>
+        </div>
+
+        {onConfirmChange && !confirmed && (
+          <Button
+            type="button"
+            variant="primary"
+            size="small"
+            onClick={handleConfirm}
+            disabled={disabled}
+          >
+            Confirmar cambio entregado
+          </Button>
+        )}
+
+        {confirmed && (
+          <div className="cash-denominations-confirmed">
+            ✓ Cambio confirmado
+          </div>
+        )}
+      </div>
     </div>
   );
 }

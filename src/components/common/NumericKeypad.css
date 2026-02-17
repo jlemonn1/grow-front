@@ -1,0 +1,172 @@
+.numeric-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.keypad-display {
+  background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 100%);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  border: 2px solid var(--color-primary);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.1);
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypad-display-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  white-space: nowrap;
+}
+
+.keypad-display-currency {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.keypad-display-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  /* Espacio fijo para 6 dígitos + decimales */
+  min-width: 200px;
+  display: inline-block;
+  text-align: right;
+}
+
+.keypad-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.keypad-button {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(145deg, #2a2a4a 0%, #1f1f3a 100%);
+  color: #fff;
+  box-shadow: 0 4px 0 #0f0f1a, 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypad-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, #3a3a5a 0%, #2f2f4a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #0f0f1a, 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-button:active:not(:disabled),
+.keypad-button.pressed {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #0f0f1a, inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.keypad-clear {
+  background: linear-gradient(145deg, #c62828 0%, #b71c1c 100%);
+  box-shadow: 0 4px 0 #7f0000, 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.keypad-clear:hover:not(:disabled) {
+  background: linear-gradient(145deg, #d32f2f 0%, #c62828 100%);
+  box-shadow: 0 6px 0 #7f0000, 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-clear:active:not(:disabled),
+.keypad-clear.pressed {
+  box-shadow: 0 0 0 #7f0000, inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-dot {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.keypad-submit {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.25rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  background: linear-gradient(145deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 4px 0 #2e7d32, 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.1s ease;
+  margin-top: var(--spacing-sm);
+}
+
+.keypad-submit:hover:not(:disabled) {
+  background: linear-gradient(145deg, #66bb6a 0%, #5cb85c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #2e7d32, 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-submit:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #2e7d32, inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.keypad-submit:disabled {
+  background: linear-gradient(145deg, #666 0%, #555 100%);
+  box-shadow: 0 4px 0 #333, 0 4px 8px rgba(0, 0, 0, 0.3);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Animación de pulse para el display */
+@keyframes displayPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.keypad-display {
+  animation: displayPulse 2s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .numeric-keypad {
+    padding: var(--spacing-md);
+  }
+  
+  .keypad-display-value {
+    font-size: 2rem;
+  }
+  
+  .keypad-button {
+    font-size: 1.25rem;
+  }
+}

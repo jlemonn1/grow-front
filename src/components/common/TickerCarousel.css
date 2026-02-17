@@ -39,18 +39,18 @@
 }
 
 .ticker-orange {
-  color: #ff9800;
-  text-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+  color: var(--color-warning, #ff9800);
+  text-shadow: 0 0 8px rgba(var(--color-warning-rgb, 255, 152, 0), 0.5);
 }
 
 .ticker-red {
-  color: #f44336;
-  text-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+  color: var(--color-error, #f44336);
+  text-shadow: 0 0 8px rgba(var(--color-error-rgb, 244, 67, 54), 0.5);
 }
 
 .ticker-green {
-  color: #4caf50;
-  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+  color: var(--color-success, #4caf50);
+  text-shadow: 0 0 8px rgba(var(--color-success-rgb, 76, 175, 80), 0.5);
 }
 
 @media (max-width: 768px) {

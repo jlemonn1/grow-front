@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/forms/Textarea';
-import { DenominationSelector } from './DenominationSelector';
+import { NumericKeypad } from '@/components/common/NumericKeypad';
 import { withdrawMoney } from '@/services/cajafuerte.service';
 import { useUI } from '@/context/ui.context';
-import type { DenominationsMap, CajaFuerte } from '@/types/models';
+import { formatMoney } from '@/utils/money';
+import type { CajaFuerte } from '@/types/models';
 import './WithdrawMoneyModal.css';
 
 interface WithdrawMoneyModalProps {
@@ -22,17 +23,19 @@ export function WithdrawMoneyModal({
   currentState 
 }: WithdrawMoneyModalProps) {
   const { showToast, setGlobalLoading } = useUI();
-  const [denominations, setDenominations] = useState<DenominationsMap>({});
+  const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validar que hay al menos una denominación
-    const hasDenominations = Object.values(denominations).some(qty => qty > 0);
-    if (!hasDenominations) {
-      showToast('Debes seleccionar al menos una denominación', 'warning');
+  const handleSubmit = async () => {
+    const amountValue = parseFloat(amount);
+    if (!amountValue || amountValue <= 0) {
+      showToast('Debes ingresar un monto válido', 'warning');
+      return;
+    }
+
+    if (amountValue > currentState.totalAmount) {
+      showToast('Saldo insuficiente en CajaFuerte', 'error');
       return;
     }
 
@@ -41,12 +44,12 @@ export function WithdrawMoneyModal({
 
     try {
       await withdrawMoney({
-        denominations,
+        amount: amountValue,
         notes: notes.trim() || undefined,
       });
       
       showToast('Dinero retirado exitosamente', 'success');
-      setDenominations({});
+      setAmount('');
       setNotes('');
       onSuccess();
       onClose();
@@ -63,26 +66,38 @@ export function WithdrawMoneyModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setDenominations({});
+      setAmount('');
       setNotes('');
       onClose();
     }
   };
 
+  const numericAmount = parseFloat(amount) || 0;
+  const hasError = numericAmount > currentState.totalAmount;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Retirar dinero de CajaFuerte">
-      <form onSubmit={handleSubmit} className="withdraw-money-modal-form">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Retirar dinero" autoSize={true}>
+      <div className="withdraw-money-modal-form">
         <div className="withdraw-money-modal-content">
           <p className="withdraw-money-modal-description">
-            Selecciona las denominaciones que deseas retirar de la CajaFuerte.
+            Saldo disponible: <strong>{formatMoney(currentState.totalAmount)}</strong>
+          </p>
+          <p className="withdraw-money-modal-description">
+            Ingresa el monto que deseas retirar.
           </p>
           
-          <DenominationSelector
-            denominations={denominations}
-            onChange={setDenominations}
-            availableDenominations={currentState.denominations}
+          {hasError && (
+            <div className="withdraw-money-modal-error">
+              El monto excede el saldo disponible
+            </div>
+          )}
+          
+          <NumericKeypad
+            value={amount}
+            onChange={setAmount}
+            onSubmit={handleSubmit}
+            maxValue={currentState.totalAmount}
             disabled={isSubmitting}
-            showTotal={true}
           />
 
           <Textarea
@@ -105,16 +120,8 @@ export function WithdrawMoneyModal({
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          >
-            Retirar dinero
-          </Button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 }

@@ -10,13 +10,16 @@ import { SaleDetailPage } from './pages/sales/SaleDetailPage';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { ProductCreatePage } from './pages/products/ProductCreatePage';
 import { ProductDetailPage } from './pages/products/ProductDetailPage';
+import { ProductEditPage } from './pages/products/ProductEditPage';
 import { CustomersPage } from './pages/customers/CustomersPage';
 import { CustomerCreatePage } from './pages/customers/CustomerCreatePage';
+import { CustomerEditPage } from './pages/customers/CustomerEditPage';
 import { CustomerDetailPage } from './pages/customers/CustomerDetailPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { ConfigPage } from './pages/config/ConfigPage';
 import { AdminsPage } from './pages/admins/AdminsPage';
 import { CajaFuertePage } from './pages/cajafuerte/CajaFuertePage';
+import { CouponsPage } from './pages/coupons/CouponsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { OnboardingRoute } from './components/common/OnboardingRoute';
@@ -65,13 +68,16 @@ export function AppRoutes() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
+        <Route path="products/:id/edit" element={<ProductEditPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/new" element={<CustomerCreatePage />} />
         <Route path="customers/:id" element={<CustomerDetailPage />} />
+        <Route path="customers/:id/edit" element={<CustomerEditPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="cajafuerte" element={<CajaFuertePage />} />
         <Route path="config" element={<ConfigPage />} />
         <Route path="admins" element={<AdminsPage />} />
+        <Route path="coupons" element={<CouponsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -63,6 +63,24 @@
   box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
 }
 
+.customers-table-name-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.customers-table-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.customers-table-name-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: normal;
+}
+
 @media (max-width: 640px) {
   .customers-page-container {
     padding: 0;

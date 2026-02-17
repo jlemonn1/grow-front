@@ -5,6 +5,8 @@ import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
 import { getAllPendingSales, deletePendingSale, recoverPendingSale, getSaleDraft } from '@/services/sales.service';
 import { useUI } from '@/context/ui.context';
+import { useProducts } from '@/context/products.context';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import type { PendingSale } from '@/types/models';
 import { HiTrash, HiEye, HiArrowPath } from 'react-icons/hi2';
 import './PendingSalesModal.css';
@@ -21,6 +23,12 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
   const [loading, setLoading] = useState(false);
   const [selectedForDetails, setSelectedForDetails] = useState<PendingSale | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { products } = useProducts();
+
+  const getMeasurementSuffix = useCallback((productId?: string | null) => {
+    const product = productId ? products.find((p) => p.id === productId) : undefined;
+    return getMeasurementShortLabel(product?.measurementType ?? 'WEIGHT');
+  }, [products]);
 
   // Cargar pendientes al abrir el modal
   useEffect(() => {
@@ -114,6 +122,7 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
       <PendingSaleDetailsModal
         isOpen={true}
         pendingSale={selectedForDetails}
+        getMeasurementSuffix={getMeasurementSuffix}
         onClose={() => setSelectedForDetails(null)}
         onRecover={handleRecover}
         onDelete={handleDelete}
@@ -189,8 +198,9 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
                     size="small"
                     onClick={(e) => handleViewDetails(pendingSale, e)}
                     icon={<HiEye />}
+                    title="Ver detalles"
                   >
-                    Ver detalles
+                    {' '}
                   </Button>
                   <Button
                     type="button"
@@ -200,8 +210,9 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
                     icon={<HiTrash />}
                     loading={deletingId === pendingSale.id}
                     disabled={deletingId === pendingSale.id}
+                    title="Eliminar"
                   >
-                    Eliminar
+                    {' '}
                   </Button>
                 </div>
               </div>
@@ -217,6 +228,7 @@ export function PendingSalesModal({ isOpen, onClose, onRecover }: PendingSalesMo
 interface PendingSaleDetailsModalProps {
   isOpen: boolean;
   pendingSale: PendingSale;
+  getMeasurementSuffix: (productId?: string | null) => string;
   onClose: () => void;
   onRecover: (pendingSale: PendingSale) => void;
   onDelete: (pendingSale: PendingSale, e: React.MouseEvent) => void;
@@ -225,6 +237,7 @@ interface PendingSaleDetailsModalProps {
 function PendingSaleDetailsModal({
   isOpen,
   pendingSale,
+  getMeasurementSuffix,
   onClose,
   onRecover,
   onDelete,
@@ -265,22 +278,25 @@ function PendingSaleDetailsModal({
         {pendingSale.items.length > 0 && (
           <div className="pending-sale-details-section">
             <h4>Productos en el Ticket ({pendingSale.items.length})</h4>
-            <div className="pending-sale-items-list">
-              {pendingSale.items.map((item, index) => (
-                <div key={index} className="pending-sale-item-row">
-                  <span className="pending-sale-item-product">Producto ID: {item.productId}</span>
-                  <span className="pending-sale-item-grams">{item.grams.toFixed(2)}g</span>
-                  {item.discount && (
-                    <span className="pending-sale-item-discount">
-                      Descuento: {item.discountType === 'PERCENTAGE' ? `${item.discount}%` : formatMoney(item.discount)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="pending-sale-total-grams">
-              <strong>Total gramos: {totalGrams.toFixed(2)}g</strong>
-            </div>
+             <div className="pending-sale-items-list">
+               {pendingSale.items.map((item, index) => {
+                 const suffix = getMeasurementSuffix(item.productId);
+                 return (
+                   <div key={index} className="pending-sale-item-row">
+                     <span className="pending-sale-item-product">Producto ID: {item.productId}</span>
+                     <span className="pending-sale-item-grams">{item.grams.toFixed(2)}{suffix}</span>
+                      {/* Descuentos se aplican a nivel total de venta, no por item */}
+                    </div>
+                 );
+               })}
+             </div>
+             <div className="pending-sale-total-grams">
+               <strong>
+                 Total cantidad: {totalGrams.toFixed(2)}{
+                   pendingSale.items.length > 0 ? getMeasurementSuffix(pendingSale.items[0].productId) : 'g'
+                 }
+               </strong>
+             </div>
           </div>
         )}
 
@@ -295,12 +311,12 @@ function PendingSaleDetailsModal({
                 </span>
               </div>
               {pendingSale.gramsToAdd && pendingSale.gramsToAdd > 0 && (
-                <div className="pending-sale-details-item">
-                  <span className="pending-sale-details-label">Gramos introducidos:</span>
-                  <span className="pending-sale-details-value">
-                    {pendingSale.gramsToAdd.toFixed(2)}g
-                  </span>
-                </div>
+              <div className="pending-sale-details-item">
+                <span className="pending-sale-details-label">Cantidad:</span>
+                <span className="pending-sale-details-value">
+                  {pendingSale.gramsToAdd.toFixed(2)}{getMeasurementSuffix(pendingSale.selectedProductId)}
+                </span>
+              </div>
               )}
             </div>
           </div>

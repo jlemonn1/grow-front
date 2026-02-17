@@ -211,6 +211,9 @@
   transition: all var(--transition-base), box-shadow var(--transition-glow);
   position: relative;
   background: transparent;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
 }
 
 .customer-picker-item::before {
@@ -268,6 +271,27 @@
   transition: color var(--transition-fast), text-shadow var(--transition-glow);
 }
 
+.customer-picker-item-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.customer-picker-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.customer-picker-item-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
 .customer-picker-item-phone {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -298,7 +322,6 @@
   animation: selectedPulse 2s ease-in-out infinite;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--spacing-sm);
 }
 
@@ -311,6 +334,13 @@
   display: flex;
   gap: var(--spacing-xs);
   flex-shrink: 0;
+  margin-left: auto;
+}
+
+.customer-picker-selected-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
 }
 
 .customer-picker-action-button {

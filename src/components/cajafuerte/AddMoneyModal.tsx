@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/forms/Textarea';
-import { DenominationSelector } from './DenominationSelector';
+import { NumericKeypad } from '@/components/common/NumericKeypad';
 import { addMoney } from '@/services/cajafuerte.service';
 import { useUI } from '@/context/ui.context';
-import type { DenominationsMap } from '@/types/models';
 import './AddMoneyModal.css';
 
 interface AddMoneyModalProps {
@@ -16,17 +15,14 @@ interface AddMoneyModalProps {
 
 export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps) {
   const { showToast, setGlobalLoading } = useUI();
-  const [denominations, setDenominations] = useState<DenominationsMap>({});
+  const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validar que hay al menos una denominación
-    const hasDenominations = Object.values(denominations).some(qty => qty > 0);
-    if (!hasDenominations) {
-      showToast('Debes añadir al menos una denominación', 'warning');
+  const handleSubmit = async () => {
+    const amountValue = parseFloat(amount);
+    if (!amountValue || amountValue <= 0) {
+      showToast('Debes ingresar un monto válido', 'warning');
       return;
     }
 
@@ -35,12 +31,12 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
 
     try {
       await addMoney({
-        denominations,
+        amount: amountValue,
         notes: notes.trim() || undefined,
       });
       
       showToast('Dinero añadido exitosamente', 'success');
-      setDenominations({});
+      setAmount('');
       setNotes('');
       onSuccess();
       onClose();
@@ -57,57 +53,53 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setDenominations({});
+      setAmount('');
       setNotes('');
       onClose();
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Añadir dinero a CajaFuerte">
-      <form onSubmit={handleSubmit} className="add-money-modal-form">
-        <div className="add-money-modal-content">
-          <p className="add-money-modal-description">
-            Selecciona las denominaciones que deseas añadir a la CajaFuerte.
-          </p>
-          
-          <DenominationSelector
-            denominations={denominations}
-            onChange={setDenominations}
+    <Modal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      title="Añadir dinero"
+      autoSize={true}
+    >
+      <div className="add-money-layout">
+        {/* Sección del teclado */}
+        <div className="add-money-keypad-section">
+          <NumericKeypad
+            value={amount}
+            onChange={setAmount}
+            onSubmit={handleSubmit}
             disabled={isSubmitting}
-            showTotal={true}
           />
+        </div>
 
+        {/* Sección de notas */}
+        <div className="add-money-notes-section">
           <Textarea
             id="notes"
             label="Notas (opcional)"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={isSubmitting}
-            rows={3}
+            rows={2}
             placeholder="Descripción del ingreso..."
           />
-        </div>
-
-        <div className="add-money-modal-actions">
+          
           <Button
             type="button"
             variant="secondary"
             onClick={handleClose}
             disabled={isSubmitting}
+            className="add-money-cancel-btn"
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          >
-            Añadir dinero
-          </Button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 }

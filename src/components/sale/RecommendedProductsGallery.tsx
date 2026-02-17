@@ -6,7 +6,7 @@ import './RecommendedProductsGallery.css';
 
 interface RecommendedProductsGalleryProps {
   customerId: string | null;
-  onProductSelect: (product: Product) => void;
+  onProductSelect: (product: Product, autoAdd?: boolean) => void;
   loading?: boolean;
 }
 
@@ -56,7 +56,7 @@ export function RecommendedProductsGallery({
   const hasMore = products.length > INITIAL_VISIBLE_COUNT;
 
   const handleProductClick = (product: Product) => {
-    onProductSelect(product);
+    onProductSelect(product, true);
   };
 
   return (

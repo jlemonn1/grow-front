@@ -97,7 +97,9 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
         { facingMode: 'environment' },
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            return { width: viewfinderWidth, height: viewfinderHeight };
+          },
           aspectRatio: 1.0,
         },
         (decodedText) => {

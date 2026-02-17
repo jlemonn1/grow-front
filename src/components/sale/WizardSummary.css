@@ -1,0 +1,145 @@
+.wizard-summary-card {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg, 12px);
+  overflow: hidden;
+}
+
+.wizard-summary-header {
+  padding: var(--spacing-md, 16px);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.wizard-summary-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wizard-summary-content {
+  padding: var(--spacing-md, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 8px);
+}
+
+.wizard-summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--spacing-sm, 8px) 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin: var(--spacing-xs, 4px) 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.wizard-summary-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.wizard-summary-item-name {
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.wizard-summary-item-qty {
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.wizard-summary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  font-size: 0.875rem;
+}
+
+.wizard-summary-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.wizard-summary-label {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.wizard-summary-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+  margin-left: auto;
+}
+
+.wizard-summary-discount .wizard-summary-value,
+.wizard-summary-balance .wizard-summary-value {
+  color: var(--color-success);
+}
+
+.wizard-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-sm, 8px);
+  margin-top: var(--spacing-xs, 4px);
+  border-top: 1px solid var(--border-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.wizard-summary-total-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--neon-primary);
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.wizard-summary-change .wizard-summary-value {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wizard-summary-card {
+    border-radius: var(--border-radius);
+  }
+
+  .wizard-summary-header {
+    padding: var(--spacing-sm, 12px);
+  }
+
+  .wizard-summary-header h3 {
+    font-size: 0.8rem;
+  }
+
+  .wizard-summary-content {
+    padding: var(--spacing-sm, 12px);
+  }
+
+  .wizard-summary-row {
+    font-size: 0.8rem;
+  }
+
+  .wizard-summary-total {
+    font-size: 0.9rem;
+  }
+
+  .wizard-summary-total-value {
+    font-size: 1.1rem;
+  }
+}

@@ -9,6 +9,7 @@ interface ModalProps {
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
   closeOnEscape?: boolean;
+  autoSize?: boolean;
 }
 
 export function Modal({ 
@@ -19,6 +20,7 @@ export function Modal({
   showCloseButton = true,
   closeOnOverlayClick = true,
   closeOnEscape = true,
+  autoSize = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -136,7 +138,7 @@ export function Modal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div ref={modalRef} className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className={`modal-content ${autoSize ? 'modal-auto-size' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 id="modal-title" className="modal-title">{title}</h2>
           {showCloseButton && (

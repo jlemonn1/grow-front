@@ -1,29 +1,42 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiOutlineUser, HiOutlineCube, HiOutlineShoppingCart, HiOutlinePlus, HiOutlineRefresh, HiOutlineClock } from 'react-icons/hi';
+import { HiOutlineUser, HiOutlineCube, HiOutlineShoppingCart, HiOutlinePlus, HiOutlineRefresh, HiOutlineClock, HiCheck, HiChevronRight, HiChevronLeft } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { CustomerPicker } from '@/components/sale/CustomerPicker';
 import { ProductPicker } from '@/components/sale/ProductPicker';
 import { RecommendedProductsGallery } from '@/components/sale/RecommendedProductsGallery';
 import { TicketItemsList } from '@/components/sale/TicketItemsList';
 import { TicketSummary } from '@/components/sale/TicketSummary';
-import { CashDenominationsSelector } from '@/components/sale/CashDenominationsSelector';
+import { WizardSummary } from '@/components/sale/WizardSummary';
+import { NumericKeypad } from '@/components/common/NumericKeypad';
+
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
 import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
-import { PartialChangeModal } from '@/components/sale/PartialChangeModal';
+
 import { ProductDispenseInput } from '@/components/sale/ProductDispenseInput';
 import { Button } from '@/components/common/Button';
 import { useTicket } from '@/hooks/useTicket';
 import { useTicket as useTicketContext } from '@/context/ticket.context';
 import { useProducts } from '@/context/products.context';
 import { useUI } from '@/context/ui.context';
+import { getMeasurementShortLabel } from '@/utils/measurement';
 import { createSale, getSaleDraft, deleteSaleDraft, clearSaleDraft, savePendingSale } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { login } from '@/services/auth.service';
 import { PendingSalesModal } from '@/components/sale/PendingSalesModal';
+import { CajaClosedModal } from '@/components/cajafuerte/CajaClosedModal';
+import { useCajaStatus } from '@/hooks/useCajaStatus';
 import type { ValidationError, ApiError } from '@/types/api';
-import type { CreateSaleRequest, Product, Sale, SaleDraft, DenominationsMap, PendingSale } from '@/types/models';
+import type { CreateSaleRequest, Product, Sale, SaleDraft, PendingSale } from '@/types/models';
 import './SaleCreatePage.css';
+
+type Step = 0 | 1 | 2;
+
+const STEPS = [
+  { id: 0 as Step, title: 'Socio', icon: HiOutlineUser },
+  { id: 1 as Step, title: 'Productos', icon: HiOutlineCube },
+  { id: 2 as Step, title: 'Pago', icon: HiOutlineShoppingCart },
+];
 
 export function SaleCreatePage() {
   const navigate = useNavigate();
@@ -35,6 +48,8 @@ export function SaleCreatePage() {
     customer,
     items,
     total,
+    subtotalBeforeDiscount,
+    discountAmount,
     cashGiven,
     change,
     isValid,
@@ -44,9 +59,14 @@ export function SaleCreatePage() {
     saveChangeToBalance,
     balanceUsed,
     balanceRemaining,
+    appliedCoupon,
+    manualDiscountPercent,
     setUseBalance,
     setBalanceToUse,
     setSaveChangeToBalance,
+    applyCoupon,
+    removeCoupon,
+    setManualDiscount,
   } = ticketContext;
   const {
     setCustomer,
@@ -56,14 +76,17 @@ export function SaleCreatePage() {
     getProductStock,
     addProductToTicket,
     updateItemGrams,
-    updateItemDiscount,
     validateItemWithStock,
     refreshProductAndValidate,
     findProductIdByName,
     ensureProductInContext,
   } = ticket;
 
+  const [currentStep, setCurrentStep] = useState<Step>(0);
+  const [completedSteps, setCompletedSteps] = useState<Set<Step>>(new Set());
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const selectedMeasurementSuffix = getMeasurementShortLabel(selectedProduct?.measurementType ?? 'WEIGHT');
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cashGivenError, setCashGivenError] = useState<string | undefined>();
@@ -72,15 +95,12 @@ export function SaleCreatePage() {
   const [draft, setDraft] = useState<SaleDraft | null>(null);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [shouldValidateAfterLoad, setShouldValidateAfterLoad] = useState(false);
-  const [cashGivenDenominations, setCashGivenDenominations] = useState<DenominationsMap>({});
-  const [changeDenominations, setChangeDenominations] = useState<DenominationsMap | null>(null);
-  const [showPartialChangeModal, setShowPartialChangeModal] = useState(false);
-  const [partialChangeData, setPartialChangeData] = useState<{
-    changeAmount: number;
-    changeDenominations: DenominationsMap;
-    remainingAmount: number;
-  } | null>(null);
+
   const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
+  const [showClosedModal, setShowClosedModal] = useState(false);
+  
+  // Hook para verificar estado de caja
+  const { isTodayClosed, refreshStatus: refreshCajaStatus } = useCajaStatus();
   
   // Refs para atajos de teclado
   const gramsInputRef = useRef<HTMLInputElement>(null);
@@ -223,11 +243,9 @@ export function SaleCreatePage() {
             items: draft.items || [],
             selectedProductId: null, // No disponible en el draft
             gramsToAdd: null, // No disponible en el draft
-            cashGivenDenominations: undefined, // No disponible en el draft
-            changeDenominations: undefined, // No disponible en el draft
             useBalance: false, // No disponible en el draft
             balanceToUse: undefined, // No disponible en el draft
-            saveChangeToBalance: false, // No disponible en el draft
+            saveChangeToBalance: false // No disponible en el draft
           });
           showToast('Borrador guardado como pendiente', 'success');
         } catch (error) {
@@ -294,10 +312,6 @@ export function SaleCreatePage() {
         }
       }
       
-      // Restaurar denominaciones
-      setCashGivenDenominations(additionalState.cashGivenDenominations);
-      setChangeDenominations(additionalState.changeDenominations);
-      
       // Refrescar productos después de cargar
       await Promise.all(productIds.map(id => refreshProduct(id)));
       
@@ -315,13 +329,23 @@ export function SaleCreatePage() {
   }, [ticketContext, getProductById, refreshProduct, showToast, setGlobalLoading]);
 
   // Manejar selección de producto
-  const handleProductSelect = useCallback(async (product: Product | null) => {
+  const handleProductSelect = useCallback(async (product: Product | null, autoAdd = false) => {
     setSelectedProduct(product);
     if (product) {
       try {
         await ensureProductInContext(product);
         const stock = getProductStock(product.id);
-        setGramsToAdd(Math.min(1, stock));
+        const grams = Math.min(1, stock);
+        setGramsToAdd(grams);
+
+        if (autoAdd && grams > 0) {
+          await addProductToTicket(product, grams);
+          showToast('Producto agregado al ticket', 'success');
+          if (currentStep === 0) {
+            setCompletedSteps(prev => new Set([...prev, 0]));
+            setCurrentStep(1);
+          }
+        }
       } catch (error) {
         console.error('Error al cargar producto:', error);
         showToast('Error al cargar el producto', 'error');
@@ -330,7 +354,7 @@ export function SaleCreatePage() {
     } else {
       setGramsToAdd(0);
     }
-  }, [ensureProductInContext, getProductStock, showToast]);
+  }, [ensureProductInContext, getProductStock, showToast, addProductToTicket, currentStep, setCompletedSteps, setCurrentStep]);
 
   // Agregar producto al ticket
   const handleAddProduct = useCallback(async () => {
@@ -344,7 +368,7 @@ export function SaleCreatePage() {
       const stock = getProductStock(product.id);
       
       if (gramsToAdd > stock) {
-        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}g`, 'error');
+        showToast(`Stock insuficiente. Disponible: ${stock.toFixed(2)}${selectedMeasurementSuffix}`, 'error');
         return;
       }
 
@@ -379,42 +403,32 @@ export function SaleCreatePage() {
     setCashGivenError(undefined);
 
     try {
-      // Validar que hay denominaciones recibidas (deben haberse contado automáticamente)
-      const hasCashGivenDenominations = cashGivenDenominations && 
-        Object.keys(cashGivenDenominations).length > 0 && 
-        Object.values(cashGivenDenominations).some(qty => qty > 0);
-      
-      if (cashGiven > 0 && !hasCashGivenDenominations) {
-        showToast('No se han registrado las denominaciones recibidas. Usa los botones de billetes/monedas.', 'warning');
-        setIsProcessing(false);
-        setGlobalLoading(false);
-        return;
-      }
-
-      // Solo validar denominaciones de cambio si no se guarda todo en saldo
-      if (change > 0 && !saveChangeToBalance && (!changeDenominations || Object.keys(changeDenominations).length === 0)) {
-        showToast('Debes calcular las denominaciones de cambio', 'warning');
+      // Validar que se ha ingresado el efectivo recibido (solo si no se usa saldo o el saldo no cubre todo)
+      const effectiveCashNeeded = useBalance ? Math.max(0, total - balanceToUse) : total;
+      if (effectiveCashNeeded > 0 && cashGiven <= 0) {
+        showToast('Debes ingresar el efectivo recibido', 'warning');
         setIsProcessing(false);
         setGlobalLoading(false);
         return;
       }
 
       // Construir request
-      // Si se guarda todo el cambio en saldo, no enviar denominaciones de cambio
+      // Redondear valores a 2 decimales para evitar problemas de precisión de punto flotante
+      const roundedCashGiven = Math.round(cashGiven * 100) / 100;
+      const roundedBalanceToUse = useBalance ? Math.round(balanceToUse * 100) / 100 : undefined;
+      
       const request: CreateSaleRequest = {
         customerId: customer.id,
-        cashGiven,
-        cashGivenDenominations,
-        changeDenominations: change > 0 && !saveChangeToBalance ? (changeDenominations ?? undefined) : undefined,
+        cashGiven: roundedCashGiven,
         useBalance,
-        balanceToUse: useBalance ? balanceToUse : undefined,
+        balanceToUse: roundedBalanceToUse,
         saveChangeToBalance,
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
-          discount: item.discount,
-          discountType: item.discountType,
         })),
+        couponCode: appliedCoupon?.code,
+        manualDiscountPercent: manualDiscountPercent ?? undefined,
       };
 
       // Crear venta
@@ -442,8 +456,6 @@ export function SaleCreatePage() {
       reset();
       setSelectedProduct(null);
       setGramsToAdd(0);
-      setCashGivenDenominations({});
-      setChangeDenominations(null);
     } catch (error) {
       // Manejo de errores específicos
       if (error && typeof error === 'object' && 'status' in error) {
@@ -541,8 +553,6 @@ export function SaleCreatePage() {
     items,
     cashGiven,
     total,
-    cashGivenDenominations,
-    changeDenominations,
     change,
     useBalance,
     balanceToUse,
@@ -556,7 +566,7 @@ export function SaleCreatePage() {
     setGlobalLoading,
   ]);
 
-  // Procesar venta (función pública que verifica cambio parcial)
+// Procesar venta (función pública que verifica cambio parcial)
   const handleProcessSale = useCallback(async () => {
     if (!isValid) {
       showToast('El ticket no es válido. Revisa los errores.', 'warning');
@@ -573,38 +583,19 @@ export function SaleCreatePage() {
       return;
     }
 
-    // Verificar si el cambio es parcial (solo si no se había marcado guardar en saldo)
-    if (change > 0 && !saveChangeToBalance && changeDenominations) {
-      const changeGiven = Object.entries(changeDenominations)
-        .filter(([_, qty]) => qty > 0)
-        .reduce((sum, [denomination, qty]) => sum + parseFloat(denomination) * qty, 0);
-      
-      const changeDifference = Math.abs(changeGiven - change);
-      
-      // Si hay diferencia significativa (más de 0.01), es cambio parcial
-      if (changeDifference > 0.01 && changeGiven < change) {
-        const remainingAmount = change - changeGiven;
-        // Marcar automáticamente "guardar en saldo" para el resto del cambio
-        setSaveChangeToBalance(true);
-        setPartialChangeData({
-          changeAmount: change,
-          changeDenominations,
-          remainingAmount,
-        });
-        setShowPartialChangeModal(true);
-        return;
-      }
+    // Verificar si la caja está cerrada
+    if (isTodayClosed) {
+      setShowClosedModal(true);
+      return;
     }
 
-    // Si no hay cambio parcial, procesar directamente
+    // Procesar directamente
     await processSaleInternal();
   }, [
     isValid,
     customer,
     items,
-    change,
-    saveChangeToBalance,
-    changeDenominations,
+    isTodayClosed,
     processSaleInternal,
     showToast,
   ]);
@@ -649,15 +640,9 @@ export function SaleCreatePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isValid, isProcessing, selectedProduct, handleProcessSale]);
 
-  const handleBack = () => {
-    navigate('/home');
-  };
-
   const handleReset = useCallback(() => {
     // Resetear todo el ticket (esto ya limpia customer, items, cashGiven)
     reset();
-    setCashGivenDenominations({});
-    setChangeDenominations(null);
     // Limpiar producto seleccionado y gramos
     setSelectedProduct(null);
     setGramsToAdd(0);
@@ -669,117 +654,226 @@ export function SaleCreatePage() {
     if (gramsInputRef.current) {
       gramsInputRef.current.value = '';
     }
+    // Limpiar wizard
+    setCurrentStep(0);
+    setCompletedSteps(new Set());
     // Mostrar confirmación
     showToast('Todos los campos han sido limpiados', 'success');
   }, [reset, setCashGiven, showToast]);
 
-  return (
-    <>
-      <PageHeader 
-        title="Dispensar" 
-        onBack={handleBack}
-        isSaving={isSavingDraft}
-        action={{
-          label: 'Limpiar todo',
-          onClick: handleReset,
-          icon: HiOutlineRefresh,
-        }}
-        dataTourBack="back-to-home"
-      />
-      <div style={{ padding: '0 24px', marginBottom: '16px' }}>
-        <Button
-          variant="secondary"
-          onClick={() => setShowPendingSalesModal(true)}
-          icon={<HiOutlineClock />}
-        >
-          Pedidos Pendientes
-        </Button>
-      </div>
-      <div className="sale-create-container">
-        <div className="sale-create-main">
-          <div className="sale-create-section">
-            <div className="sale-create-section-header">
-              <HiOutlineUser className="sale-create-section-icon" />
-              <h2 className="sale-create-section-title">Socio</h2>
-            </div>
-            <CustomerPicker
-              ref={customerSearchRef}
-              selectedCustomer={customer}
-              onSelect={setCustomer}
-            />
-            {customer && (
-              <RecommendedProductsGallery
-                customerId={customer.id}
-                onProductSelect={handleProductSelect}
-              />
-            )}
-          </div>
+  const canGoToStep = (step: Step): boolean => {
+    if (step === 0) return true;
+    if (step === 1) return customer !== null;
+    if (step === 2) return customer !== null && items.length > 0;
+    return false;
+  };
 
-          <div className="sale-create-section">
-            <div className="sale-create-section-header">
-              <HiOutlineCube className="sale-create-section-icon" />
-              <h2 className="sale-create-section-title">Agregar Producto</h2>
-            </div>
-            <ProductPicker
-              ref={productSearchRef}
-              selectedProduct={selectedProduct}
-              onSelect={handleProductSelect}
-            />
-            {selectedProduct && (
-              <div className="sale-create-product-form">
-                <div className="sale-create-dispense-input">
-                  <div onKeyDown={(e) => {
-                    if (e.key === 'Enter' && gramsToAdd > 0) {
-                      e.preventDefault();
-                      handleAddProduct();
-                    }
-                  }}>
-                    <ProductDispenseInput
-                      product={selectedProduct}
-                      availableStock={getProductStock(selectedProduct.id)}
-                      onGramsChange={setGramsToAdd}
-                      gramsInputRef={gramsInputRef}
-                      eurosInputRef={eurosInputRef}
-                    />
-                  </div>
+  const validateStep = (step: Step): boolean => {
+    if (step === 0) return customer !== null;
+    if (step === 1) return customer !== null && items.length > 0;
+    if (step === 2) return customer !== null && items.length > 0 && isValid;
+    return false;
+  };
+
+  const handleNext = () => {
+    if (currentStep < 2 && canGoToStep((currentStep + 1) as Step)) {
+      if (validateStep(currentStep)) {
+        setCompletedSteps(prev => new Set([...prev, currentStep]));
+        setCurrentStep(prev => (prev + 1) as Step);
+      } else {
+        showToast('Completa los datos requeridos para continuar', 'warning');
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => (prev - 1) as Step);
+    } else {
+      navigate('/home');
+    }
+  };
+
+  const handleGoToStep = (step: Step) => {
+    if (step <= currentStep || canGoToStep(step)) {
+      setCurrentStep(step);
+    }
+  };
+
+  const renderProgressBar = () => {
+    return (
+      <div className="wizard-top-bar">
+        <div className="wizard-progress-bar">
+          <div className="wizard-progress-track">
+            {STEPS.map((step, index) => {
+              const isCompleted = completedSteps.has(step.id);
+              const isActive = currentStep === step.id;
+              const isClickable = step.id <= currentStep || canGoToStep(step.id);
+
+              return (
+                <div key={step.id} className="wizard-progress-step">
+                  <button
+                    className={`wizard-step-button ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${!isClickable ? 'disabled' : ''}`}
+                    onClick={() => isClickable && handleGoToStep(step.id)}
+                    disabled={!isClickable}
+                  >
+                    <div className="wizard-step-indicator">
+                      {isCompleted ? <HiCheck /> : index + 1}
+                    </div>
+                    <span className="wizard-step-label">{step.title}</span>
+                  </button>
+                  {index < STEPS.length - 1 && (
+                    <div className={`wizard-step-connector ${isCompleted ? 'completed' : ''}`}></div>
+                  )}
                 </div>
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={handleAddProduct}
-                  disabled={gramsToAdd <= 0}
-                  style={{ minWidth: '120px' }}
-                  data-tour="add-product"
-                >
-                  <HiOutlinePlus style={{ marginRight: '8px' }} />
-                  Agregar
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="sale-create-section">
-            <div className="sale-create-section-header">
-              <HiOutlineShoppingCart className="sale-create-section-icon" />
-              <h2 className="sale-create-section-title">Productos en el Ticket</h2>
-            </div>
-            <TicketItemsList
-              items={items}
-              onUpdate={updateItemGrams}
-              onUpdateDiscount={updateItemDiscount}
-              onRemove={removeItem}
-              onValidate={validateItemWithStock}
-              getProductStock={getProductStock}
-            />
+              );
+            })}
           </div>
         </div>
+        <div className="wizard-navigation">
+          <Button
+            variant="secondary"
+            onClick={handleBack}
+            icon={<HiChevronLeft />}
+            disabled={isProcessing}
+          >
+            {currentStep === 0 ? 'Cancelar' : 'Anterior'}
+          </Button>
+          {currentStep < 2 && (
+            <Button
+              variant="primary"
+              onClick={handleNext}
+              disabled={!canGoToStep((currentStep + 1) as Step) || isProcessing}
+              icon={<HiChevronRight />}
+            >
+              Siguiente
+            </Button>
+          )}
+        </div>
+        <div className="wizard-actions">
+          <Button
+            variant="secondary"
+            onClick={() => setShowPendingSalesModal(true)}
+            icon={<HiOutlineClock />}
+          >
+            Pedidos Pendientes
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleReset}
+            icon={<HiOutlineRefresh />}
+            className="wizard-btn-clean"
+          >
+            Limpiar todo
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
-        <div className="sale-create-sidebar">
+  const renderStep0 = () => (
+    <div className="wizard-step-content wizard-step-0">
+      <div className="sale-create-section wizard-section-full">
+        <div className="sale-create-section-header">
+          <HiOutlineUser className="sale-create-section-icon" />
+          <h2 className="sale-create-section-title">Selecciona un Socio</h2>
+        </div>
+        <CustomerPicker
+          ref={customerSearchRef}
+          selectedCustomer={customer}
+          onSelect={setCustomer}
+        />
+      </div>
+
+      {customer && (
+        <div className="sale-create-section wizard-section-full">
+          <div className="sale-create-section-header">
+            <HiOutlineCube className="sale-create-section-icon" />
+            <h2 className="sale-create-section-title">Opciones Rápidas para {customer.displayName}</h2>
+          </div>
+          <RecommendedProductsGallery
+            customerId={customer.id}
+            onProductSelect={handleProductSelect}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStep1 = () => (
+    <div className="wizard-step-content wizard-step-1">
+      <div className="sale-create-main">
+        <div className="sale-create-section">
+          <div className="sale-create-section-header">
+            <HiOutlineCube className="sale-create-section-icon" />
+            <h2 className="sale-create-section-title">Buscar Productos</h2>
+          </div>
+          <ProductPicker
+            ref={productSearchRef}
+            selectedProduct={selectedProduct}
+            onSelect={handleProductSelect}
+          />
+          {selectedProduct && (
+            <div className="sale-create-product-form">
+              <div className="sale-create-dispense-input">
+                <div onKeyDown={(e) => {
+                  if (e.key === 'Enter' && gramsToAdd > 0) {
+                    e.preventDefault();
+                    handleAddProduct();
+                  }
+                }}>
+                  <ProductDispenseInput
+                    product={selectedProduct}
+                    availableStock={getProductStock(selectedProduct.id)}
+                    onGramsChange={setGramsToAdd}
+                    gramsInputRef={gramsInputRef}
+                    eurosInputRef={eurosInputRef}
+                  />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleAddProduct}
+                disabled={gramsToAdd <= 0}
+                style={{ minWidth: '120px' }}
+                data-tour="add-product"
+              >
+                <HiOutlinePlus style={{ marginRight: '8px' }} />
+                Agregar
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="sale-create-section">
+          <div className="sale-create-section-header">
+            <HiOutlineShoppingCart className="sale-create-section-icon" />
+            <h2 className="sale-create-section-title">Ticket ({items.length} productos)</h2>
+          </div>
+          <TicketItemsList
+            items={items}
+            onUpdate={updateItemGrams}
+            onRemove={removeItem}
+            onValidate={validateItemWithStock}
+            getProductStock={getProductStock}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="wizard-step-content wizard-step-2">
+      <div className="wizard-step-2-grid">
+        <div className="wizard-step-2-col1">
           <TicketSummary
             customerName={customer?.displayName || null}
             customerBalance={customer?.balance}
             items={items}
             total={total}
+            subtotalBeforeDiscount={subtotalBeforeDiscount}
+            discountAmount={discountAmount}
             cashGiven={cashGiven}
             change={change}
             isValid={isValid}
@@ -789,28 +883,78 @@ export function SaleCreatePage() {
             saveChangeToBalance={saveChangeToBalance}
             balanceUsed={balanceUsed}
             balanceRemaining={balanceRemaining}
+            appliedCoupon={appliedCoupon}
+            manualDiscountPercent={manualDiscountPercent}
             onCashGivenChange={setCashGiven}
             onUseBalanceChange={setUseBalance}
             onBalanceToUseChange={setBalanceToUse}
             onSaveChangeToBalanceChange={setSaveChangeToBalance}
+            onApplyCoupon={applyCoupon}
+            onRemoveCoupon={removeCoupon}
+            onSetManualDiscount={setManualDiscount}
             onProcessSale={handleProcessSale}
             cashGivenError={cashGivenError}
-            cashGivenDenominations={cashGivenDenominations}
-            changeDenominations={changeDenominations}
-            onCashGivenDenominationsChange={setCashGivenDenominations}
+          />
+        </div>
+
+        <div className="wizard-step-2-col2">
+          <WizardSummary
+            customer={customer}
+            items={items}
+            total={total}
+            discountAmount={discountAmount}
+            cashGiven={cashGiven}
+            change={change}
+            useBalance={useBalance}
+            balanceToUse={balanceToUse}
           />
 
-          {change > 0 && !saveChangeToBalance && (
-            <div className="sale-create-denominations-section">
-              <CashDenominationsSelector
-                changeAmount={change}
-                changeDenominations={changeDenominations}
-                onChangeDenominationsChange={setChangeDenominations}
+          {items.length > 0 && (!useBalance || balanceUsed < total) && (
+            <div className="wizard-keypad">
+              <h3 className="wizard-keypad-title">Efectivo recibido</h3>
+              <NumericKeypad
+                value={cashGiven.toString()}
+                onChange={(value) => {
+                  const numValue = parseFloat(value) || 0;
+                  setCashGiven(numValue);
+                }}
+                onSubmit={() => {}}
                 disabled={isProcessing}
+                showSubmit={false}
               />
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 0:
+        return renderStep0();
+      case 1:
+        return renderStep1();
+      case 2:
+        return renderStep2();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <PageHeader 
+        title="Dispensar" 
+        onBack={handleBack}
+        isSaving={isSavingDraft}
+        dataTourBack="back-to-home"
+      />
+
+      {renderProgressBar()}
+
+      <div className="sale-create-container">
+        {renderCurrentStep()}
       </div>
 
       <SaleSuccessModal
@@ -834,33 +978,19 @@ export function SaleCreatePage() {
         onDiscard={handleDiscardDraft}
       />
 
-      {partialChangeData && (
-        <PartialChangeModal
-          isOpen={showPartialChangeModal}
-          changeAmount={partialChangeData.changeAmount}
-          changeDenominations={partialChangeData.changeDenominations}
-          remainingAmount={partialChangeData.remainingAmount}
-          onConfirm={async () => {
-            setShowPartialChangeModal(false);
-            setPartialChangeData(null);
-            // Limpiar denominaciones de cambio ya que todo se guardará en saldo
-            setChangeDenominations(null);
-            // Continuar con el procesamiento de la venta
-            await processSaleInternal();
-          }}
-          onCancel={() => {
-            setShowPartialChangeModal(false);
-            setPartialChangeData(null);
-            setIsProcessing(false);
-            setGlobalLoading(false);
-          }}
-        />
-      )}
-
       <PendingSalesModal
         isOpen={showPendingSalesModal}
         onClose={() => setShowPendingSalesModal(false)}
         onRecover={handleRecoverPendingSale}
+      />
+
+      <CajaClosedModal
+        isOpen={showClosedModal}
+        onClose={() => setShowClosedModal(false)}
+        onReopenSuccess={() => {
+          refreshCajaStatus();
+          setShowClosedModal(false);
+        }}
       />
     </>
   );

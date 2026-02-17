@@ -51,3 +51,13 @@ export async function updateAdminPermissions(
   const request: UpdateAdminPermissionsRequest = { permissions };
   return patch<Admin>(`/admins/${id}/permissions`, request);
 }
+
+/**
+ * Actualiza la configuración de accesibilidad de color de un administrador
+ */
+export async function updateAdminColorAccessibility(
+  id: string,
+  colorAccessibility: 'normal' | 'protanopia' | 'high-contrast'
+): Promise<Admin> {
+  return patch<Admin>(`/admins/${id}/color-accessibility`, { colorAccessibility });
+}

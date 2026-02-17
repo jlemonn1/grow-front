@@ -1,0 +1,33 @@
+.batch-stock-input {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-xs);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-secondary);
+  background: var(--bg-primary);
+}
+
+.batch-stock-input input {
+  border: none;
+  background: transparent;
+  width: 72px;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.batch-stock-input input:focus {
+  outline: none;
+}
+
+.batch-stock-input-unit {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.batch-stock-input input[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

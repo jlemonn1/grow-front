@@ -235,6 +235,33 @@ export function SaleDetailPage() {
           </h2>
           
           <div className="sale-detail-info-grid">
+            {(sale.totalBeforeDiscount !== undefined && sale.totalBeforeDiscount !== null) && (
+              <div className="sale-detail-info-item">
+                <span className="sale-detail-info-label">
+                  Subtotal
+                </span>
+                <span className="sale-detail-info-value" style={{ fontSize: 'var(--font-size-lg)', fontWeight: 500 }}>
+                  {formatMoney(sale.totalBeforeDiscount)}
+                </span>
+              </div>
+            )}
+
+            {(sale.discountAmount !== undefined && sale.discountAmount !== null && sale.discountAmount > 0) && (
+              <div className="sale-detail-info-item">
+                <span className="sale-detail-info-label">
+                  Descuento
+                  {(sale.couponCode || sale.manualDiscountPercent) ? (
+                    <span style={{ marginLeft: 'var(--spacing-xs)', color: 'var(--text-secondary)' }}>
+                      {sale.couponCode ? `(Cupón: ${sale.couponCode})` : sale.manualDiscountPercent ? `(Manual: ${sale.manualDiscountPercent}%)` : ''}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="sale-detail-info-value" style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-error)' }}>
+                  -{formatMoney(sale.discountAmount)}
+                </span>
+              </div>
+            )}
+
             <div className="sale-detail-info-item">
               <span className="sale-detail-info-label">
                 Total

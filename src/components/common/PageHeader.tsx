@@ -4,23 +4,40 @@ import { Button } from './Button';
 import { DraftSavingIndicator } from './DraftSavingIndicator';
 import './PageHeader.css';
 
+export interface PageHeaderAction {
+  label: string;
+  onClick: () => void;
+  icon?: IconType;
+  dataTour?: string;
+  variant?: 'primary' | 'secondary' | 'danger';
+  loading?: boolean;
+  disabled?: boolean;
+}
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-    icon?: IconType;
-    dataTour?: string;
-  };
+  action?: PageHeaderAction;
+  extraActions?: PageHeaderAction[];
   onBack?: () => void;
   isSaving?: boolean;
   dataTourBack?: string;
 }
 
-export function PageHeader({ title, subtitle, action, onBack, isSaving, dataTourBack }: PageHeaderProps) {
-  const ActionIcon = action?.icon;
-  
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+  extraActions,
+  onBack,
+  isSaving,
+  dataTourBack,
+}: PageHeaderProps) {
+  const actionButtons = [
+    ...(action ? [action] : []),
+    ...(extraActions ?? []),
+  ];
+
   return (
     <div className="page-header">
       <div className="page-header-content">
@@ -42,11 +59,25 @@ export function PageHeader({ title, subtitle, action, onBack, isSaving, dataTour
           </div>
           <DraftSavingIndicator isSaving={isSaving} />
         </div>
-        {action && (
-          <Button onClick={action.onClick} variant="primary" data-tour={action.dataTour}>
-            {ActionIcon && <ActionIcon style={{ marginRight: '8px', fontSize: '18px' }} />}
-            {action.label}
-          </Button>
+        {actionButtons.length > 0 && (
+          <div className="page-header-actions">
+            {actionButtons.map((btn, index) => {
+              const Icon = btn.icon;
+              return (
+                <Button
+                  key={`${btn.label}-${index}`}
+                  onClick={btn.onClick}
+                  variant={btn.variant ?? 'primary'}
+                  loading={btn.loading}
+                  disabled={btn.disabled}
+                  data-tour={btn.dataTour}
+                >
+                  {Icon && <Icon style={{ marginRight: '8px', fontSize: '18px' }} />}
+                  {btn.label}
+                </Button>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

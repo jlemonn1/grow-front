@@ -298,9 +298,22 @@ export function generateColorPalette(baseColor: string): ColorPalette {
  * Aplica el sistema de colores a las variables CSS del documento
  * Incluye aplicación de colores neon para efectos futuristas
  * También detecta si el color principal es claro e invierte automáticamente los colores
+ * 
+ * NOTA: Si hay un modo de accesibilidad de color activo (daltonismo), no aplica los colores
+ * del growshop para no interferir con las paletas de accesibilidad.
  */
 export function applyColorSystem(palette: ColorPalette): void {
   const root = document.documentElement;
+  
+  // Verificar si hay un modo de accesibilidad activo
+  const accessibilityMode = root.getAttribute('data-color-accessibility');
+  if (accessibilityMode && accessibilityMode !== 'normal') {
+    console.log('[applyColorSystem] Modo de accesibilidad activo:', accessibilityMode, '- No se aplican colores del growshop');
+    // Solo aplicar el atributo de color invertido si es necesario
+    const isLight = isLightColor(palette.primary, 0.4);
+    root.setAttribute('data-color-inverted', isLight ? 'true' : 'false');
+    return;
+  }
   
   // Extraer valores RGB del color primario para usar en rgba()
   const rgb = hexToRgb(palette.primary);

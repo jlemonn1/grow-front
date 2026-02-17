@@ -14,15 +14,18 @@ import { BalanceAdjustmentModal } from '@/components/customer/BalanceAdjustmentM
 import { BalanceTransferModal } from '@/components/customer/BalanceTransferModal';
 import { BalanceHistoryTable } from '@/components/customer/BalanceHistoryTable';
 import { ShowDniModal } from '@/components/customer/ShowDniModal';
-import { EditCustomerModal } from '@/components/customer/EditCustomerModal';
+import { ContractSignatureModal } from '@/components/customer/ContractSignatureModal';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { QRCodeModal } from '@/components/common/QRCodeModal';
+import { CajaClosedModal } from '@/components/cajafuerte/CajaClosedModal';
 import { Button } from '@/components/common/Button';
 import { useUI } from '@/context/ui.context';
+import { useCajaStatus } from '@/hooks/useCajaStatus';
 import { useAuth } from '@/context/auth.context';
 import { useDemo } from '@/context/demo.context';
 import { useCustomers } from '@/context/customers.context';
 import { useTicket } from '@/context/ticket.context';
+import { useConfig } from '@/context/config.context';
 import { customersService } from '@/services/customers.service';
 import { AdminPermission } from '@/types/models';
 import type { Customer, CustomerSale, CustomerSummary } from '@/types/models';
@@ -36,8 +39,9 @@ export function CustomerDetailPage() {
   const { showToast } = useUI();
   const { hasPermission } = useAuth();
   const { isDemoMode, demoData } = useDemo();
-  const { getCustomerById } = useCustomers();
+const { getCustomerById } = useCustomers();
   const { setCustomer: setTicketCustomer } = useTicket();
+  const { config } = useConfig();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [sales, setSales] = useState<CustomerSale[]>([]);
@@ -54,7 +58,17 @@ export function CustomerDetailPage() {
   const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false);
   const [showTransferBalanceModal, setShowTransferBalanceModal] = useState(false);
   const [showDniModal, setShowDniModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+
+const [showContractModal, setShowContractModal] = useState(false);
+  const [isSigningContract, setIsSigningContract] = useState(false);
+  const [isClearingGuarantor, setIsClearingGuarantor] = useState(false);
+  const [showClearBalanceModal, setShowClearBalanceModal] = useState(false);
+  const [isClearingBalance, setIsClearingBalance] = useState(false);
+  const [showClosedModal, setShowClosedModal] = useState(false);
+  
+  // Hook para verificar estado de caja
+  const { isTodayClosed, refreshStatus: refreshCajaStatus } = useCajaStatus();
+  
   const [salesPagination, setSalesPagination] = useState({
     page: 0,
     size: 25,
@@ -299,7 +313,7 @@ export function CustomerDetailPage() {
     }
   };
 
-  const handleBalanceTransferred = () => {
+const handleBalanceTransferred = () => {
     // Recargar datos del cliente
     if (id) {
       customersService.getById(id).then(setCustomer).catch(() => {
@@ -308,15 +322,78 @@ export function CustomerDetailPage() {
     }
   };
 
-  const handleCustomerUpdated = (updatedCustomer: Customer) => {
-    setCustomer(updatedCustomer);
-    setShowEditModal(false);
+  const handleClearBalance = async () => {
+    if (!id || !customer) return;
+
+    setIsClearingBalance(true);
+    try {
+      await customersService.clearBalance(id);
+      showToast('Saldo vaciado exitosamente', 'success');
+      // Recargar datos del cliente
+      const updatedCustomer = await customersService.getById(id);
+      setCustomer(updatedCustomer);
+      setShowClearBalanceModal(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al vaciar saldo';
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsClearingBalance(false);
+    }
   };
+
+  const handleContractSigned = useCallback(async (signatureDataUrl: string) => {
+    if (!customer) return;
+    setIsSigningContract(true);
+    try {
+      const updated = await customersService.update(customer.id, {
+        contractSignatureDataUrl: signatureDataUrl,
+      });
+      setCustomer(updated);
+      showToast('Contrato firmado correctamente', 'success');
+      setShowContractModal(false);
+    } catch (err) {
+      showToast('Error al firmar contrato', 'error');
+    } finally {
+      setIsSigningContract(false);
+    }
+  }, [customer, showToast]);
+
+  const handleClearGuarantor = useCallback(async () => {
+    if (!customer) return;
+    setIsClearingGuarantor(true);
+    try {
+      const updated = await customersService.update(customer.id, { guarantorId: null });
+      setCustomer(updated);
+      showToast('Aval desvinculado', 'success');
+    } catch (err) {
+      showToast('Error al desvincular el aval', 'error');
+    } finally {
+      setIsClearingGuarantor(false);
+    }
+  }, [customer, showToast]);
 
   const isSubscriptionExpired = (): boolean => {
     if (!customer?.subscriptionEndDate) return false;
     return new Date(customer.subscriptionEndDate) < new Date();
   };
+
+  const baseApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+  const profileImageUrl = customer?.profilePictureUrl
+    ? (customer.profilePictureUrl.startsWith('http')
+      ? customer.profilePictureUrl
+      : `${baseApiUrl}${customer.profilePictureUrl}`)
+    : null;
+  const contractSignatureUrl = customer?.contractSignatureUrl
+    ? (customer.contractSignatureUrl.startsWith('http')
+      ? customer.contractSignatureUrl
+      : `${baseApiUrl}${customer.contractSignatureUrl}`)
+    : null;
+  const contractReady = Boolean(
+    customer?.address?.trim() &&
+    customer?.estimatedMonthlyConsumptionGrams &&
+    customer?.guarantorId &&
+    customer?.guarantorStatus === 'AVAILABLE'
+  );
 
   const salesColumns: ColumnDef<CustomerSale>[] = [
     {
@@ -352,33 +429,75 @@ export function CustomerDetailPage() {
           Ver detalle
         </Link>
       ),
-    },
+},
   ];
 
-  const tabs: Tab[] = [
+  const enableCustomerBalance = config?.enableCustomerBalance ?? true;
+
+  const allTabs: Tab[] = [
     {
       id: 'info',
       label: 'Información',
       content: customer ? (
         <div className="customer-info-section" data-tour="customer-tab-info">
-          {customer.profilePictureUrl && (
-            <div className="customer-profile-picture-container">
-              <img 
-                src={customer.profilePictureUrl.startsWith('http') 
-                  ? customer.profilePictureUrl 
-                  : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${customer.profilePictureUrl}`} 
-                alt={customer.displayName}
-                className="customer-profile-picture"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+          <div className="customer-info-header-row">
+            <div className="customer-detail-avatar">
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt={customer.displayName}
+                  className="customer-detail-avatar-image"
+                />
+              ) : (
+                <div className="customer-avatar-placeholder">
+                  {customer.displayName?.charAt(0) || 'S'}
+                </div>
+              )}
             </div>
-          )}
+            <div className="customer-detail-header-content">
+              <div className="customer-detail-title-row">
+                <h3>{customer.displayName}</h3>
+                {customer.pin && (
+                  <span className="customer-detail-pin">PIN: {customer.pin}</span>
+                )}
+              </div>
+              <div className="customer-contract-actions">
+                <Button
+                  variant="primary"
+                  onClick={() => setShowContractModal(true)}
+                  disabled={!contractReady || isSigningContract}
+                  loading={isSigningContract}
+                  data-tour="sign-contract"
+                >
+                  {customer.contractSignatureUrl ? 'Actualizar firma' : 'Firmar contrato'}
+                </Button>
+              </div>
+              {!contractReady && (
+                <p className="contract-hint">
+                  Completa dirección, consumo y aval para firmar el contrato.
+                </p>
+              )}
+              {customer.contractSignedAt && (
+                <p className="customer-contract-status">
+                  Firma registrada el {formatDateTime(customer.contractSignedAt)}
+                </p>
+              )}
+            </div>
+          </div>
           <div className="customer-info-grid">
             <div className="customer-info-item">
-              <span className="customer-info-label">Nombre:</span>
-              <span className="customer-info-value">{customer.displayName}</span>
+              <span className="customer-info-label">Dirección:</span>
+              <span className="customer-info-value">
+                {customer.address || 'Pendiente'}
+              </span>
+            </div>
+            <div className="customer-info-item">
+              <span className="customer-info-label">Consumo estimado:</span>
+              <span className="customer-info-value">
+                {customer.estimatedMonthlyConsumptionGrams
+                  ? `${customer.estimatedMonthlyConsumptionGrams} g/mes`
+                  : '-'}
+              </span>
             </div>
             {customer.phone && (
               <div className="customer-info-item">
@@ -436,8 +555,46 @@ export function CustomerDetailPage() {
                 {formatMoney(customer.balance || 0)}
               </span>
             </div>
+            <div className="customer-info-item customer-info-item-full">
+              <span className="customer-info-label">Socio aval:</span>
+              <div className="customer-guarantor-content">
+                <span>
+                  {customer.guarantorDisplayName || 'No asignado'}
+                </span>
+                {customer.guarantorStatus === 'UNAVAILABLE' && (
+                  <span className="customer-guarantor-badge">Socio no disponible</span>
+                )}
+                {customer.guarantorId && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleClearGuarantor}
+                    loading={isClearingGuarantor}
+                    disabled={isClearingGuarantor}
+                  >
+                    Eliminar aval
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="customer-balance-section">
+          <div className="customer-contract-card">
+            <div className="customer-contract-card-header">
+              <h3>Contrato jurado</h3>
+              <span className="customer-contract-card-status">
+                {customer.contractSignatureUrl ? 'Firmado' : 'Pendiente'}
+              </span>
+            </div>
+            {contractSignatureUrl ? (
+              <img
+                src={contractSignatureUrl}
+                alt="Firma del contrato"
+                className="customer-contract-signature"
+              />
+            ) : (
+              <p className="contract-hint">Aún no se ha registrado una firma.</p>
+            )}
+          </div>
+<div className="customer-balance-section">
             <h3 className="customer-balance-title">Saldo</h3>
             <div className="customer-info-grid">
               <div className="customer-info-item">
@@ -446,23 +603,65 @@ export function CustomerDetailPage() {
                   {formatMoney(customer.balance || 0)}
                 </span>
               </div>
+              {customer.balanceLocked && (
+                <div className="customer-info-item">
+                  <span className="customer-info-label">Estado:</span>
+                  <span className="customer-info-value customer-balance-value" style={{ color: 'var(--color-warning)' }}>
+                    Bloqueado (pendiente de vaciar)
+                  </span>
+                </div>
+              )}
             </div>
-            <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', gap: 'var(--spacing-md)' }}>
-              <Button 
-                variant="primary" 
-                onClick={() => setShowAdjustBalanceModal(true)}
-                data-tour="adjust-balance"
-              >
-                Ajustar saldo
-              </Button>
-              <Button 
-                variant="secondary" 
-                onClick={() => setShowTransferBalanceModal(true)}
-                data-tour="transfer-balance"
-              >
-                Transferir saldo
-              </Button>
-            </div>
+            {!config?.enableCustomerBalance ? (
+              // Saldo deshabilitado: solo mostrar Vaciar saldo si está bloqueado
+              customer.balanceLocked && customer.balance && customer.balance > 0 ? (
+                <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', gap: 'var(--spacing-md)' }}>
+                  <Button 
+                    variant="danger" 
+                    onClick={() => {
+                      if (isTodayClosed) {
+                        setShowClosedModal(true);
+                      } else {
+                        setShowClearBalanceModal(true);
+                      }
+                    }}
+                    data-tour="clear-balance"
+                  >
+                    Vaciar saldo ({formatMoney(customer.balance || 0)})
+                  </Button>
+                </div>
+              ) : null
+            ) : (
+              // Saldo habilitado: mostrar botones de ajustar y transferir
+              <div style={{ marginTop: 'var(--spacing-md)', display: 'flex', gap: 'var(--spacing-md)' }}>
+                <Button 
+                  variant="primary" 
+                  onClick={() => {
+                    if (isTodayClosed) {
+                      setShowClosedModal(true);
+                    } else {
+                      setShowAdjustBalanceModal(true);
+                    }
+                  }}
+                  data-tour="adjust-balance"
+                >
+                  Ajustar saldo
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => {
+                    if (isTodayClosed) {
+                      setShowClosedModal(true);
+                    } else {
+                      setShowTransferBalanceModal(true);
+                    }
+                  }}
+                  data-tour="transfer-balance"
+                >
+                  Transferir saldo
+                </Button>
+              </div>
+            )}
           </div>
           <div className="customer-subscription-section">
             <h3 className="customer-subscription-title">Suscripción</h3>
@@ -503,16 +702,16 @@ export function CustomerDetailPage() {
               </div>
             )}
           </div>
-          {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
-            <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-md)' }}>
-              <Button variant="primary" onClick={() => setShowEditModal(true)}>
-                Editar socio
-              </Button>
-              <Button variant="danger" onClick={handleDelete}>
-                Eliminar socio
-              </Button>
-            </div>
-          )}
+            {hasPermission(AdminPermission.GESTIONAR_CLIENTES) && (
+              <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-md)' }}>
+                <Button variant="primary" onClick={() => navigate(`/customers/${id}/edit`)}>
+                  Editar socio
+                </Button>
+                <Button variant="danger" onClick={handleDelete}>
+                  Eliminar socio
+                </Button>
+              </div>
+            )}
         </div>
       ) : null,
     },
@@ -570,7 +769,7 @@ export function CustomerDetailPage() {
         </div>
       ),
     },
-    {
+{
       id: 'balance-history',
       label: 'Historial de Saldo',
       content: customer ? (
@@ -580,6 +779,9 @@ export function CustomerDetailPage() {
       ) : null,
     },
   ];
+
+  // Filtrar pestañas según configuración
+  const tabs = enableCustomerBalance ? allTabs : allTabs.filter(tab => tab.id !== 'balance-history');
 
   if (loading) {
     return (
@@ -608,6 +810,7 @@ export function CustomerDetailPage() {
       </>
     );
   }
+
 
   return (
     <>
@@ -680,14 +883,38 @@ export function CustomerDetailPage() {
         />
       )}
 
-      {showEditModal && customer && (
-        <EditCustomerModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          customer={customer}
-          onUpdated={handleCustomerUpdated}
+
+{showContractModal && customer && (
+        <ContractSignatureModal
+          isOpen={showContractModal}
+          onClose={() => setShowContractModal(false)}
+          onSigned={handleContractSigned}
+          isSaving={isSigningContract}
         />
       )}
+
+      {showClearBalanceModal && customer && (
+        <ConfirmDeleteModal
+          isOpen={showClearBalanceModal}
+          onClose={() => !isClearingBalance && setShowClearBalanceModal(false)}
+          onConfirm={handleClearBalance}
+          title="Vaciar saldo"
+          message={`¿Estás seguro de que deseas vaciar el saldo de ${formatMoney(customer.balance || 0)} de ${customer.displayName}? Esta acción no se puede deshacer.`}
+          itemName={`Vaciar saldo de ${customer.displayName}`}
+          confirmLabel="Vaciar saldo"
+          isDeleting={isClearingBalance}
+          variant="danger"
+        />
+      )}
+
+      <CajaClosedModal
+        isOpen={showClosedModal}
+        onClose={() => setShowClosedModal(false)}
+        onReopenSuccess={() => {
+          refreshCajaStatus();
+          setShowClosedModal(false);
+        }}
+      />
     </>
   );
 }
