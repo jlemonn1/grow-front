@@ -45,6 +45,9 @@ export interface Product {
   description?: string;
   imageUrl: string;
   measurementType: ProductMeasurementType;
+  onSale?: boolean;
+  salePricePerGram?: number;
+  saleDiscountPercent?: number;
   createdAt?: string;
 }
 
@@ -122,6 +125,9 @@ export interface UpdateProductRequest {
   description?: string;
   imageUrl?: string;
   measurementType?: ProductMeasurementType;
+  onSale?: boolean;
+  salePricePerGram?: number;
+  saleDiscountPercent?: number;
 }
 
 export interface StockMovement {
