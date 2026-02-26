@@ -61,6 +61,7 @@ export function SaleCreatePage() {
     balanceRemaining,
     appliedCoupon,
     manualDiscountPercent,
+    manualDiscountType,
     setUseBalance,
     setBalanceToUse,
     setSaveChangeToBalance,
@@ -429,6 +430,7 @@ export function SaleCreatePage() {
         })),
         couponCode: appliedCoupon?.code,
         manualDiscountPercent: manualDiscountPercent ?? undefined,
+        manualDiscountType: manualDiscountPercent != null ? manualDiscountType : undefined,
       };
 
       // Crear venta
@@ -885,6 +887,7 @@ export function SaleCreatePage() {
             balanceRemaining={balanceRemaining}
             appliedCoupon={appliedCoupon}
             manualDiscountPercent={manualDiscountPercent}
+            manualDiscountType={manualDiscountType}
             onCashGivenChange={setCashGiven}
             onUseBalanceChange={setUseBalance}
             onBalanceToUseChange={setBalanceToUse}

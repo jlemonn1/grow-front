@@ -109,15 +109,22 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
 
           const pin = extractPinFromQR(decodedText);
           
+          const isValidPin = (code: string): boolean => {
+            if (code.length < 4 || code.length > 6) return false;
+            if (!/^[0-9A-Za-z]+$/.test(code)) return false;
+            // Debe tener al menos una letra
+            return /[a-zA-Z]/.test(code);
+          };
+          
           if (pin) {
-            if (pin.length === 4 && /^[0-9A-Za-z]{4}$/.test(pin)) {
+            if (isValidPin(pin)) {
               handleQRScan(pin);
             } else {
               setError('Formato de PIN inválido');
               showToast('El QR escaneado no tiene un formato válido', 'error');
             }
           } else {
-            if (decodedText.length === 4 && /^[0-9A-Za-z]{4}$/.test(decodedText)) {
+            if (isValidPin(decodedText)) {
               handleQRScan(decodedText);
             } else {
               setError('Formato de QR inválido');

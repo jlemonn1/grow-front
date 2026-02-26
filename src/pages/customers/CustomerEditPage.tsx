@@ -189,6 +189,12 @@ export function CustomerEditPage() {
         return 'El nombre es obligatorio';
       }
     }
+    if (name === 'phone') {
+      const strValue = value as string;
+      if (!strValue.trim()) {
+        return 'El teléfono es obligatorio';
+      }
+    }
     if (name === 'address') {
       const strValue = value as string;
       if (!strValue.trim()) {
@@ -565,6 +571,7 @@ export function CustomerEditPage() {
                       onChange={(e) => handleChange('phone', e.target.value)}
                       onBlur={() => handleBlur('phone')}
                       error={errors.phone}
+                      required
                       disabled={isSubmitting}
                       placeholder="Ej: 612 345 678"
                     />
@@ -580,7 +587,6 @@ export function CustomerEditPage() {
                       onChange={(e) => handleChange('address', e.target.value)}
                       onBlur={() => handleBlur('address')}
                       error={errors.address}
-                      required
                       disabled={isSubmitting}
                       placeholder="Ej: Calle Mayor 123"
                     />

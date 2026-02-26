@@ -7,7 +7,7 @@ import { useConfig } from '@/context/config.context';
 import { CouponInput } from './CouponInput';
 import { ManualDiscountInput } from './ManualDiscountInput';
 import type { TicketItem } from '@/types/models';
-import type { AppliedCoupon } from '@/context/ticket.context';
+import type { AppliedCoupon, ManualDiscountType } from '@/context/ticket.context';
 import './TicketSummary.css';
 
 interface TicketSummaryProps {
@@ -28,13 +28,14 @@ interface TicketSummaryProps {
   balanceRemaining: number;
   appliedCoupon: AppliedCoupon | null;
   manualDiscountPercent: number | null;
+  manualDiscountType: ManualDiscountType;
   onCashGivenChange: (amount: number) => void;
   onUseBalanceChange: (use: boolean) => void;
   onBalanceToUseChange: (amount: number) => void;
   onSaveChangeToBalanceChange: (save: boolean) => void;
   onApplyCoupon: (coupon: AppliedCoupon) => void;
   onRemoveCoupon: () => void;
-  onSetManualDiscount: (percent: number | null) => void;
+  onSetManualDiscount: (value: number | null, type: ManualDiscountType) => void;
   onProcessSale: () => void;
   cashGivenError?: string;
 }
@@ -57,6 +58,7 @@ function TicketSummaryComponent({
   balanceRemaining,
   appliedCoupon,
   manualDiscountPercent,
+  manualDiscountType,
   onCashGivenChange: _onCashGivenChange,
   onUseBalanceChange,
   onBalanceToUseChange,
@@ -130,7 +132,9 @@ function TicketSummaryComponent({
               {!appliedCoupon && (
                 <ManualDiscountInput
                   discountPercent={manualDiscountPercent}
+                  discountType={manualDiscountType}
                   onApplyDiscount={onSetManualDiscount}
+                  maxDiscountValue={subtotalBeforeDiscount}
                 />
               )}
             </div>

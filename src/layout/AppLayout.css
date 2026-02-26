@@ -58,7 +58,7 @@
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.5) 100%);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 99;
+    z-index: 150;
     animation: fadeIn 0.2s ease-in-out;
     margin: 0;
     padding: 0;

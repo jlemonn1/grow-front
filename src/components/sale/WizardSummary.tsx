@@ -50,6 +50,7 @@ export function WizardSummary({
             <div key={index} className="wizard-summary-item-row">
               <span className="wizard-summary-item-name">{item.product?.name || 'Producto'}</span>
               <span className="wizard-summary-item-qty">{item.grams.toFixed(1)}g</span>
+              <span className="wizard-summary-item-price">{formatMoney(item.grams * item.pricePerGram)}</span>
             </div>
           ))}
         </div>

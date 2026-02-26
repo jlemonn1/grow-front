@@ -5,6 +5,8 @@ import { hasToken } from '@/services/auth.service';
 
 type QuickSaleMode = 'modal' | 'redirect';
 
+type ThemeMode = 'light' | 'dark' | 'system';
+
 interface ConfigContextValue {
   config: GrowConfiguration | null;
   loading: boolean;
@@ -29,21 +31,26 @@ interface ConfigProviderProps {
 }
 
 /**
- * Obtiene el tema del sistema o del localStorage
+ * Obtiene el tema resuelto (light o dark) basándose en la configuración
  */
-function getInitialTheme(): 'light' | 'dark' {
-  // Verificar localStorage primero
-  const savedTheme = localStorage.getItem('theme-mode');
-  if (savedTheme === 'light' || savedTheme === 'dark') {
-    return savedTheme;
-  }
+function getResolvedTheme(backendThemeMode: ThemeMode | undefined): 'light' | 'dark' {
+  if (backendThemeMode === 'light') return 'light';
+  if (backendThemeMode === 'dark') return 'dark';
   
-  // Detectar tema del sistema
+  // system: detectar tema del sistema
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
-  
-  // Por defecto: modo claro
+  return 'light';
+}
+
+/**
+ * Obtiene el tema inicial: usa el del sistema por defecto (antes de cargar backend)
+ */
+function getInitialTheme(): 'light' | 'dark' {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
   return 'light';
 }
 
@@ -102,6 +109,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
         primaryColor: '#3bd420',
         showCashDetails: true,
         enableCustomerBalance: true,
+        themeMode: 'system' as const,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -142,10 +150,27 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     }
   }, [config]);
 
-  const handleSetThemeMode = useCallback((mode: 'light' | 'dark') => {
+  const handleSetThemeMode = useCallback(async (mode: 'light' | 'dark') => {
     setThemeModeState(mode);
     setThemeMode(mode);
-  }, []);
+    
+    // Guardar en el backend si hay configuración
+    if (config) {
+      try {
+        const updatedConfig = await configService.updateConfiguration({
+          growName: config.growName,
+          logoUrl: config.logoUrl,
+          primaryColor: config.primaryColor,
+          showCashDetails: config.showCashDetails,
+          enableCustomerBalance: config.enableCustomerBalance,
+          themeMode: mode,
+        });
+        setConfig(updatedConfig);
+      } catch (err) {
+        console.error('Error guardando themeMode:', err);
+      }
+    }
+  }, [config]);
 
   const handleSetQuickSaleMode = useCallback((mode: QuickSaleMode) => {
     localStorage.setItem(QUICK_SALE_MODE_KEY, mode);
@@ -164,6 +189,15 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
       applyColorSystem(palette);
     }
   }, [config?.primaryColor]);
+
+  // Aplicar tema cuando cambia el themeMode del backend
+  useEffect(() => {
+    if (config?.themeMode) {
+      const resolvedTheme = getResolvedTheme(config.themeMode);
+      setThemeModeState(resolvedTheme);
+      setThemeMode(resolvedTheme);
+    }
+  }, [config?.themeMode]);
 
   // Cargar configuración al montar solo si hay token
   useEffect(() => {
@@ -225,9 +259,11 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     return () => window.removeEventListener('color-accessibility:normal', handleNormalMode);
   }, [config?.primaryColor]);
 
-  // Escuchar cambios del tema del sistema
+  // Escuchar cambios del tema del sistema solo si themeMode es "system"
   useEffect(() => {
-    if (!localStorage.getItem('theme-mode')) {
+    const currentThemeMode = config?.themeMode;
+    
+    if (currentThemeMode === 'system' || !currentThemeMode) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? 'dark' : 'light';
@@ -238,7 +274,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, []);
+  }, [config?.themeMode]);
 
   // Escuchar cambios en el modo de venta rápida desde localStorage (otras pestañas o cambios directos)
   useEffect(() => {

@@ -226,7 +226,7 @@
 @media (max-width: 768px) {
   .side-nav {
     width: 240px;
-    z-index: 100; /* Reducir z-index en tablet para que los modales aparezcan por encima */
+    z-index: 200;
   }
 
   .side-nav-label {
@@ -238,7 +238,7 @@
   .side-nav {
     transform: translateX(-100%);
     transition: transform var(--transition-base);
-    z-index: 100;
+    z-index: 200;
     box-shadow: 4px 0 20px rgba(var(--color-primary-rgb, 37, 99, 235), 0.2),
                 8px 0 40px rgba(var(--color-primary-rgb, 37, 99, 235), 0.1);
   }

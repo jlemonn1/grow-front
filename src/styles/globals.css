@@ -101,18 +101,6 @@
   --border-color: #475569;
 }
 
-/* Inversión automática cuando el color principal es claro */
-/* Esto invierte los colores globales para mejorar el contraste */
-[data-color-inverted="true"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-light: #94a3b8;
-  --border-color: #475569;
-}
-
 /* Transición suave para cambios de tema */
 *,
 *::before,

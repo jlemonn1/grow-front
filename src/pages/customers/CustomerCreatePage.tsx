@@ -103,7 +103,7 @@ export function CustomerCreatePage() {
   }, [selectedGuarantor]);
 
   const validatePinFormat = (pin: string): boolean => {
-    if (!pin || pin.length !== 4) {
+    if (!pin || pin.length < 4 || pin.length > 6) {
       return false;
     }
     let digitCount = 0;
@@ -117,7 +117,8 @@ export function CustomerCreatePage() {
         return false;
       }
     }
-    return digitCount === 2 && letterCount === 2;
+    // Debe tener al menos una letra, puede tener números pero no solo números
+    return letterCount >= 1;
   };
 
   const validateField = (name: keyof FormData, value: string | number): string | undefined => {
@@ -136,7 +137,7 @@ export function CustomerCreatePage() {
         return 'El PIN es obligatorio';
       }
       if (!validatePinFormat(strValue)) {
-        return 'El PIN debe tener exactamente 2 números y 2 letras';
+        return 'El PIN debe tener entre 4 y 6 caracteres, con al menos una letra';
       }
     }
     if (name === 'subscriptionPrice') {
@@ -145,10 +146,10 @@ export function CustomerCreatePage() {
         return 'El precio de suscripción debe ser al menos 0.01';
       }
     }
-    if (name === 'address') {
+    if (name === 'phone') {
       const strValue = value as string;
       if (!strValue.trim()) {
-        return 'La dirección es obligatoria';
+        return 'El teléfono es obligatorio';
       }
     }
     if (name === 'estimatedMonthlyConsumptionGrams') {
@@ -218,7 +219,7 @@ export function CustomerCreatePage() {
   useEffect(() => {
     const checkPinAvailability = async () => {
       const pin = formData.pin.trim().toUpperCase();
-      if (!pin || pin.length !== 4 || !validatePinFormat(pin)) {
+      if (!pin || pin.length < 4 || pin.length > 6 || !validatePinFormat(pin)) {
         setPinSuggestions([]);
         return;
       }
@@ -562,6 +563,7 @@ export function CustomerCreatePage() {
                       onChange={(e) => handleChange('phone', e.target.value)}
                       onBlur={() => handleBlur('phone')}
                       error={errors.phone}
+                      required
                       disabled={isSubmitting}
                       placeholder="Ej: 612 345 678"
                       data-tour="customer-phone-input"
@@ -578,7 +580,6 @@ export function CustomerCreatePage() {
                       onChange={(e) => handleChange('address', e.target.value)}
                       onBlur={() => handleBlur('address')}
                       error={errors.address}
-                      required
                       disabled={isSubmitting}
                       placeholder="Ej: Calle Mayor 123"
                       data-tour="customer-address-input"

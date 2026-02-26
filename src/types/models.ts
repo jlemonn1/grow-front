@@ -100,6 +100,7 @@ export interface Sale {
   changeSavedToBalance?: number;
   couponCode?: string;
   manualDiscountPercent?: number;
+  manualDiscountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
   totalBeforeDiscount?: number;
   discountAmount?: number;
   createdBy?: Admin;
@@ -195,6 +196,7 @@ export interface CreateSaleRequest {
   items: CreateSaleItemRequest[];
   couponCode?: string;
   manualDiscountPercent?: number;
+  manualDiscountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
   createdAt?: string; // Fecha personalizada opcional (ISO 8601)
 }
 

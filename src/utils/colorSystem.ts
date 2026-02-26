@@ -309,9 +309,6 @@ export function applyColorSystem(palette: ColorPalette): void {
   const accessibilityMode = root.getAttribute('data-color-accessibility');
   if (accessibilityMode && accessibilityMode !== 'normal') {
     console.log('[applyColorSystem] Modo de accesibilidad activo:', accessibilityMode, '- No se aplican colores del growshop');
-    // Solo aplicar el atributo de color invertido si es necesario
-    const isLight = isLightColor(palette.primary, 0.4);
-    root.setAttribute('data-color-inverted', isLight ? 'true' : 'false');
     return;
   }
   
@@ -323,10 +320,6 @@ export function applyColorSystem(palette: ColorPalette): void {
     // Fallback: valores RGB del color por defecto (#3bd420 = rgb(59, 212, 32))
     root.style.setProperty('--color-primary-rgb', '59, 212, 32');
   }
-  
-  // Detectar si el color principal es claro y establecer atributo para inversión automática
-  const isLight = isLightColor(palette.primary, 0.4);
-  root.setAttribute('data-color-inverted', isLight ? 'true' : 'false');
   
   // Colores base
   root.style.setProperty('--color-primary', palette.primary);

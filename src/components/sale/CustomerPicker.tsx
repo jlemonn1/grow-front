@@ -58,20 +58,13 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const getSearchType = useCallback((query: string): 'name' | 'phone' | 'pin' | 'any' => {
     if (query.length < 3) return 'any';
     
-    const trimmed = query.trim();
-    const isAllNumbers = /^\d+$/.test(trimmed);
-    const isAllLetters = /^[a-zA-Z]+$/.test(trimmed);
-    const hasNumbersAndLetters = /[0-9]/.test(trimmed) && /[a-zA-Z]/.test(trimmed);
-    
-    if (isAllNumbers) {
-      return 'phone';
-    } else if (isAllLetters) {
-      return 'name';
-    } else if (hasNumbersAndLetters && trimmed.length <= 4) {
-      return 'pin';
+    // Con 6+ caracteres buscamos en todos los campos
+    if (query.length >= 6) {
+      return 'any';
     }
     
-    return 'any';
+    // Con 3-5 caracteres solo buscamos por PIN
+    return 'pin';
   }, []);
 
   // Búsqueda con debounce - solo buscar si hay 3+ caracteres y no hay cliente seleccionado
@@ -109,6 +102,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
       try {
         const response = await customersService.search({ 
           q: trimmed, 
+          type: detectedType === 'any' ? undefined : detectedType,
           page: 0, 
           size: 10 
         });

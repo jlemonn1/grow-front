@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { useState, useEffect, ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SideNav } from './SideNav';
@@ -14,6 +15,8 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps = {}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const isNewSalePage = location.pathname === '/sales/new';
 
   const openMobileMenu = () => setIsMobileMenuOpen(true);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -58,7 +61,7 @@ export function AppLayout({ children }: AppLayoutProps = {}) {
           {children || <Outlet />}
         </main>
       </div>
-      <QuickSaleButton />
+      {!isNewSalePage && <QuickSaleButton />}
       <ToastHost />
     </div>
   );

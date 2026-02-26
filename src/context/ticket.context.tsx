@@ -13,6 +13,8 @@ export interface AppliedCoupon {
   discountValue: number;
 }
 
+export type ManualDiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
 interface TicketContextValue {
   customer: Customer | null;
   items: TicketItem[];
@@ -30,6 +32,7 @@ interface TicketContextValue {
   balanceRemaining: number;
   appliedCoupon: AppliedCoupon | null;
   manualDiscountPercent: number | null;
+  manualDiscountType: ManualDiscountType;
   addItem: (product: Product, grams: number) => void;
   updateItem: (index: number, grams: number) => void;
   removeItem: (index: number) => void;
@@ -40,7 +43,7 @@ interface TicketContextValue {
   setSaveChangeToBalance: (save: boolean) => void;
   applyCoupon: (coupon: AppliedCoupon) => void;
   removeCoupon: () => void;
-  setManualDiscount: (percent: number | null) => void;
+  setManualDiscount: (value: number | null, type: ManualDiscountType) => void;
   validateItem: (index: number, availableStock: number) => void;
   validateAll: (getProductStock: (productId: string, excludeItemIndex?: number) => number) => void;
   reset: () => void;
@@ -75,6 +78,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const [balanceRemaining, setBalanceRemaining] = useState<number>(0);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [manualDiscountPercent, setManualDiscountPercent] = useState<number | null>(null);
+  const [manualDiscountType, setManualDiscountType] = useState<ManualDiscountType>('PERCENTAGE');
   
   // Ref para evitar guardar durante la carga de un borrador
   const isLoadingDraftRef = useRef(false);
@@ -97,7 +101,11 @@ export function TicketProvider({ children }: TicketProviderProps) {
         discount = Math.min(appliedCoupon.discountValue, itemsTotal);
       }
     } else if (manualDiscountPercent && manualDiscountPercent > 0) {
-      discount = itemsTotal * (manualDiscountPercent / 100);
+      if (manualDiscountType === 'PERCENTAGE') {
+        discount = itemsTotal * (manualDiscountPercent / 100);
+      } else {
+        discount = Math.min(manualDiscountPercent, itemsTotal);
+      }
     }
     
     const newTotal = Math.max(0, itemsTotal - discount);
@@ -583,15 +591,17 @@ export function TicketProvider({ children }: TicketProviderProps) {
   const applyCoupon = useCallback((coupon: AppliedCoupon) => {
     setAppliedCoupon(coupon);
     setManualDiscountPercent(null); // Limpiar descuento manual si hay cupón
+    setManualDiscountType('PERCENTAGE');
   }, []);
 
   const removeCoupon = useCallback(() => {
     setAppliedCoupon(null);
   }, []);
 
-  const setManualDiscount = useCallback((percent: number | null) => {
-    setManualDiscountPercent(percent);
-    if (percent !== null) {
+  const setManualDiscount = useCallback((value: number | null, type: ManualDiscountType) => {
+    setManualDiscountPercent(value);
+    setManualDiscountType(type);
+    if (value !== null) {
       setAppliedCoupon(null); // Limpiar cupón si hay descuento manual
     }
   }, []);
@@ -611,6 +621,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     setBalanceRemaining(0);
     setAppliedCoupon(null);
     setManualDiscountPercent(null);
+    setManualDiscountType('PERCENTAGE');
     // Limpiar localStorage al resetear
     localStorage.removeItem(TICKET_STORAGE_KEY);
   }, []);
@@ -638,7 +649,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
   // Recalcular totales cuando cambian items, cashGiven, customer, useBalance, balanceToUse, cupones o descuentos
   useEffect(() => {
     calculateTotals();
-  }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent, calculateTotals]);
+  }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent, manualDiscountType, calculateTotals]);
 
   const value: TicketContextValue = {
     customer,
@@ -657,6 +668,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     balanceRemaining,
     appliedCoupon,
     manualDiscountPercent,
+    manualDiscountType,
     addItem,
     updateItem,
     removeItem,

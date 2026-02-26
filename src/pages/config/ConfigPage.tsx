@@ -20,7 +20,7 @@ import { triggerCompleteReset } from '@/services/panic.service';
 import './ConfigPage.css';
 
 export function ConfigPage() {
-  const { config, loading, updateConfiguration, refreshConfiguration, needsFunctionalOnboarding, needsOnboarding, quickSaleMode, setQuickSaleMode } = useConfig();
+  const { config, loading, updateConfiguration, refreshConfiguration, needsFunctionalOnboarding, needsOnboarding, quickSaleMode, setQuickSaleMode, setThemeMode } = useConfig();
   const { showToast } = useUI();
   const { currentAdmin, refreshUser, logout } = useAuth();
   const { mode: colorAccessibilityMode, isAccessibilityMode } = useColorAccessibility();
@@ -44,6 +44,7 @@ export function ConfigPage() {
     primaryColor: '#3bd420',
     showCashDetails: true,
     enableCustomerBalance: true,
+    themeMode: 'system',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -89,6 +90,7 @@ export function ConfigPage() {
         primaryColor: config.primaryColor,
         showCashDetails: config.showCashDetails,
         enableCustomerBalance: config.enableCustomerBalance ?? true,
+        themeMode: config.themeMode ?? 'system',
       });
       setLastSaved(new Date());
       isInitialLoadRef.current = true;
@@ -284,7 +286,7 @@ export function ConfigPage() {
 
   // Mantener los refs actualizados (ya no necesitamos el listener de scroll)
 
-  const handleChange = useCallback((field: keyof UpdateGrowConfigurationRequest, value: string | boolean | null) => {
+  const handleChange = useCallback((field: keyof UpdateGrowConfigurationRequest, value: string | boolean | null | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Limpiar error del campo si existe
     if (errors[field]) {
@@ -873,6 +875,62 @@ export function ConfigPage() {
                     </div>
                   </>
                 )}
+              </div>
+            </div>
+
+            <div className="form-field" style={{ marginTop: '2rem' }}>
+              <label className="form-label">
+                Tema de la aplicación
+              </label>
+              <div className="config-radio-group">
+                <label className="config-radio-option">
+                  <input
+                    type="radio"
+                    name="themeMode"
+                    value="system"
+                    checked={formData.themeMode === 'system'}
+                    onChange={() => {
+                      handleChange('themeMode', 'system');
+                      setThemeMode('light');
+                    }}
+                  />
+                  <span className="config-radio-label">
+                    <strong>Automático</strong>
+                    <span className="config-radio-description">
+                      Seguir el tema del sistema (claro u oscuro según configuración del dispositivo)
+                    </span>
+                  </span>
+                </label>
+                <label className="config-radio-option">
+                  <input
+                    type="radio"
+                    name="themeMode"
+                    value="light"
+                    checked={formData.themeMode === 'light'}
+                    onChange={() => handleChange('themeMode', 'light')}
+                  />
+                  <span className="config-radio-label">
+                    <strong>Claro</strong>
+                    <span className="config-radio-description">
+                      Siempre usar tema claro
+                    </span>
+                  </span>
+                </label>
+                <label className="config-radio-option">
+                  <input
+                    type="radio"
+                    name="themeMode"
+                    value="dark"
+                    checked={formData.themeMode === 'dark'}
+                    onChange={() => handleChange('themeMode', 'dark')}
+                  />
+                  <span className="config-radio-label">
+                    <strong>Oscuro</strong>
+                    <span className="config-radio-description">
+                      Siempre usar tema oscuro
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
           </FormSection>

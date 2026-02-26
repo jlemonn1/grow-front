@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useRef } from 'react';
-import { HiSparkles } from 'react-icons/hi2';
+import { HiSparkles, HiSun, HiMoon } from 'react-icons/hi2';
 import { useConfig } from '@/context/config.context';
 import { useAuth } from '@/context/auth.context';
 import { useUI } from '@/context/ui.context';
@@ -15,7 +15,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ title, onMenuToggle, isMenuOpen = false }: TopBarProps) {
-  const { config } = useConfig();
+  const { config, themeMode, setThemeMode } = useConfig();
   const { currentUser } = useAuth();
   const { showToast } = useUI();
   const [isPanicModeReady, setIsPanicModeReady] = useState(false);
@@ -111,6 +111,15 @@ export function TopBar({ title, onMenuToggle, isMenuOpen = false }: TopBarProps)
         </div>
         {title && <h2 className="top-bar-title">{title}</h2>}
         <div className="top-bar-actions">
+          <button
+            type="button"
+            className="top-bar-theme-toggle"
+            onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
+            title={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            aria-label="Cambiar tema"
+          >
+            {themeMode === 'dark' ? <HiSun size={18} /> : <HiMoon size={18} />}
+          </button>
           {currentUser && (
             <span 
               className="top-bar-username" 

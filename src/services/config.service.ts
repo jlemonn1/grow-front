@@ -7,6 +7,7 @@ export interface GrowConfiguration {
   primaryColor: string;
   showCashDetails: boolean;
   enableCustomerBalance: boolean;
+  themeMode: 'light' | 'dark' | 'system';
   createdAt: string;
   updatedAt: string;
 }
@@ -17,6 +18,7 @@ export interface UpdateGrowConfigurationRequest {
   primaryColor: string;
   showCashDetails: boolean;
   enableCustomerBalance: boolean;
+  themeMode?: 'light' | 'dark' | 'system';
 }
 
 export const configService = {

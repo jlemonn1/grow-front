@@ -16,6 +16,7 @@ import type { PageResponse } from '@/types/api';
 
 export interface ListCustomersParams {
   q?: string;
+  type?: 'any' | 'pin' | 'name' | 'phone';
   page?: number;
   size?: number;
 }
@@ -129,6 +130,9 @@ export const customersService = {
 
     if (params?.q) {
       queryParams.append('q', params.q);
+    }
+    if (params?.type && params.type !== 'any') {
+      queryParams.append('type', params.type);
     }
     if (params?.page !== undefined) {
       queryParams.append('page', params.page.toString());

@@ -4,35 +4,59 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/forms/Input';
 import './ManualDiscountInput.css';
 
+type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
 interface ManualDiscountInputProps {
   discountPercent: number | null;
-  onApplyDiscount: (percent: number | null) => void;
+  discountType: DiscountType;
+  onApplyDiscount: (value: number | null, type: DiscountType) => void;
+  maxDiscountValue?: number;
 }
 
-export function ManualDiscountInput({ discountPercent, onApplyDiscount }: ManualDiscountInputProps) {
-  const [percent, setPercent] = useState<string>(discountPercent?.toString() || '');
+export function ManualDiscountInput({ 
+  discountPercent, 
+  discountType, 
+  onApplyDiscount, 
+  maxDiscountValue = 100 
+}: ManualDiscountInputProps) {
+  const [value, setValue] = useState<string>(discountPercent?.toString() || '');
+  const [type, setType] = useState<DiscountType>(discountType);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Sincronizar con prop externa
   useEffect(() => {
     if (!isEditing) {
-      setPercent(discountPercent?.toString() || '');
+      setValue(discountPercent?.toString() || '');
+      setType(discountType);
     }
-  }, [discountPercent, isEditing]);
+  }, [discountPercent, discountType, isEditing]);
 
   const handleApply = () => {
-    const value = parseFloat(percent);
-    if (isNaN(value) || value < 0 || value > 100) {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) {
       return;
     }
-    onApplyDiscount(value > 0 ? value : null);
+    
+    if (type === 'PERCENTAGE' && numValue > 100) {
+      return;
+    }
+    
+    if (type === 'FIXED_AMOUNT' && maxDiscountValue > 0 && numValue > maxDiscountValue) {
+      return;
+    }
+    
+    onApplyDiscount(numValue > 0 ? numValue : null, type);
     setIsEditing(false);
   };
 
   const handleRemove = () => {
-    onApplyDiscount(null);
-    setPercent('');
+    onApplyDiscount(null, 'PERCENTAGE');
+    setValue('');
     setIsEditing(false);
+  };
+
+  const handleTypeChange = (newType: DiscountType) => {
+    setType(newType);
+    setValue('');
   };
 
   if (discountPercent !== null && !isEditing) {
@@ -40,7 +64,12 @@ export function ManualDiscountInput({ discountPercent, onApplyDiscount }: Manual
       <div className="discount-applied">
         <div className="discount-info">
           <HiOutlineTag className="discount-icon" />
-          <span className="discount-value">{discountPercent}% de descuento</span>
+          <span className="discount-value">
+            {discountType === 'PERCENTAGE' 
+              ? `${discountPercent}% de descuento` 
+              : `${discountPercent.toFixed(2)}€ de descuento`
+            }
+          </span>
         </div>
         <div className="discount-actions">
           <Button
@@ -65,15 +94,31 @@ export function ManualDiscountInput({ discountPercent, onApplyDiscount }: Manual
 
   return (
     <div className="discount-input-container">
+      <div className="discount-toggle">
+        <button
+          type="button"
+          className={`toggle-btn ${type === 'PERCENTAGE' ? 'active' : ''}`}
+          onClick={() => handleTypeChange('PERCENTAGE')}
+        >
+          %
+        </button>
+        <button
+          type="button"
+          className={`toggle-btn ${type === 'FIXED_AMOUNT' ? 'active' : ''}`}
+          onClick={() => handleTypeChange('FIXED_AMOUNT')}
+        >
+          €
+        </button>
+      </div>
       <div className="discount-input-row">
         <div className="discount-input-wrapper">
           <Input
             type="number"
             placeholder="0"
             min="0"
-            max="100"
-            value={percent}
-            onChange={(e) => setPercent(e.target.value)}
+            max={type === 'PERCENTAGE' ? '100' : maxDiscountValue.toString()}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 handleApply();
@@ -81,12 +126,12 @@ export function ManualDiscountInput({ discountPercent, onApplyDiscount }: Manual
             }}
             className="discount-input"
           />
-          <span className="discount-suffix">%</span>
+          <span className="discount-suffix">{type === 'PERCENTAGE' ? '%' : '€'}</span>
         </div>
         <Button
           variant="secondary"
           onClick={handleApply}
-          disabled={!percent || parseFloat(percent) < 0 || parseFloat(percent) > 100}
+          disabled={!value || parseFloat(value) < 0 || (type === 'PERCENTAGE' && parseFloat(value) > 100) || (type === 'FIXED_AMOUNT' && maxDiscountValue > 0 && parseFloat(value) > maxDiscountValue)}
           icon={<HiOutlineCheck />}
         >
           Aplicar
@@ -96,14 +141,20 @@ export function ManualDiscountInput({ discountPercent, onApplyDiscount }: Manual
             variant="secondary"
             onClick={() => {
               setIsEditing(false);
-              setPercent(discountPercent?.toString() || '');
+              setValue(discountPercent?.toString() || '');
+              setType(discountType);
             }}
           >
             Cancelar
           </Button>
         )}
       </div>
-      <span className="discount-hint">Descuento sobre el total de la venta</span>
+      <span className="discount-hint">
+        {type === 'PERCENTAGE' 
+          ? 'Descuento sobre el total de la venta' 
+          : `Cantidad fija de descuento (max ${maxDiscountValue.toFixed(2)}€)`
+        }
+      </span>
     </div>
   );
 }
