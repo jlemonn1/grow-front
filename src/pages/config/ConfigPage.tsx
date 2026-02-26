@@ -382,7 +382,8 @@ export function ConfigPage() {
       formData.logoUrl !== config.logoUrl ||
       formData.primaryColor !== config.primaryColor ||
       formData.showCashDetails !== config.showCashDetails ||
-      formData.enableCustomerBalance !== config.enableCustomerBalance;
+      formData.enableCustomerBalance !== config.enableCustomerBalance ||
+      formData.themeMode !== (config.themeMode ?? 'system');
 
     if (!hasChanges) {
       return;
