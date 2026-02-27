@@ -4,7 +4,7 @@ import { buildResourceUrl } from '@/utils/apiUrl';
 import './ProductImage.css';
 
 interface ProductImageProps {
-  imageUrl: string;
+  imageUrl: string | null | undefined;
   alt?: string;
   size?: 'small' | 'medium' | 'large';
   className?: string;
@@ -27,6 +27,15 @@ export function ProductImage({
   const handleImageLoad = () => {
     setImageLoading(false);
   };
+
+  // Si no hay URL de imagen, mostrar placeholder
+  if (!imageUrl) {
+    return (
+      <div className={`product-image product-image-${size} product-image-placeholder ${className}`}>
+        <span className="product-image-placeholder-icon"><HiCube /></span>
+      </div>
+    );
+  }
 
   // Construir URL completa si es relativa
   const fullImageUrl = buildResourceUrl(imageUrl);
