@@ -33,7 +33,7 @@ interface TicketContextValue {
   appliedCoupon: AppliedCoupon | null;
   manualDiscountPercent: number | null;
   manualDiscountType: ManualDiscountType;
-  addItem: (product: Product, grams: number) => void;
+  addItem: (product: Product, grams: number, actualWeighedGrams?: number) => void;
   updateItem: (index: number, grams: number) => void;
   removeItem: (index: number) => void;
   setCustomer: (customer: Customer | null) => void;
@@ -167,7 +167,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     setIsValid(hasValidCustomer && hasItems && allItemsValid && paymentSufficient);
   }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent]);
 
-  const addItem = useCallback((product: Product, grams: number) => {
+  const addItem = useCallback((product: Product, grams: number, actualWeighedGrams?: number) => {
     if (grams <= 0) {
       return;
     }
@@ -179,6 +179,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
       productId: product.id,
       product,
       grams,
+      actualWeighedGrams,
       pricePerGram,
       subtotal,
       validationState: 'checking',

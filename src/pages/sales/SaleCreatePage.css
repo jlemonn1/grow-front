@@ -128,9 +128,24 @@
   padding-top: var(--spacing-lg, 20px);
   border-top: 1px solid var(--border-color, #e0e0e0);
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-md, 16px);
-  align-items: flex-end;
+  align-items: flex-start;
+  justify-content: flex-start;
   position: relative;
+}
+
+.sale-create-product-form > .sale-create-dispense-input {
+  flex: 1 1 400px;
+  min-width: 280px;
+}
+
+.sale-create-product-form > button {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  min-width: 140px;
+  height: 48px;
+  font-size: var(--font-size-base);
 }
 
 .sale-create-product-form::before {

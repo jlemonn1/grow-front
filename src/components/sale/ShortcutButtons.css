@@ -1,29 +1,29 @@
 .shortcut-buttons {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
+  gap: 6px;
+  padding: 6px;
   background-color: var(--color-background-secondary);
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius-md);
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   box-sizing: border-box;
 }
 
 .shortcut-button {
   flex: 1;
-  padding: 6px 4px;
+  padding: 8px 8px;
   background-color: var(--color-background-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-sm);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   min-width: 0;
-  height: 32px;
+  height: 36px;
   text-align: center;
   display: flex;
   align-items: center;
@@ -37,6 +37,35 @@
 /* Desktop: ≥1280px */
 @media (min-width: 1280px) {
   .shortcut-buttons {
+    gap: 8px;
+    padding: 8px;
+    min-height: 48px;
+  }
+  
+  .shortcut-button {
+    padding: 10px 12px;
+    height: 40px;
+    font-size: var(--font-size-base);
+  }
+}
+
+/* Tablet Large: 1024px - 1279px */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .shortcut-buttons {
+    gap: 6px;
+    padding: 6px;
+    min-height: 44px;
+  }
+  
+  .shortcut-button {
+    padding: 8px 8px;
+    height: 38px;
+  }
+}
+
+/* Tablet: 768px - 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .shortcut-buttons {
     gap: 4px;
     padding: 4px;
     min-height: 40px;
@@ -44,51 +73,24 @@
   
   .shortcut-button {
     padding: 6px 4px;
-    height: 32px;
-  }
-}
-
-/* Tablet Large: 1024px - 1279px */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .shortcut-buttons {
-    gap: 3px;
-    padding: 3px;
-    min-height: 38px;
-  }
-  
-  .shortcut-button {
-    padding: 6px 3px;
-    height: 32px;
-  }
-}
-
-/* Tablet: 768px - 1023px */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .shortcut-buttons {
-    gap: 2px;
-    padding: 2px;
-    min-height: 36px;
-  }
-  
-  .shortcut-button {
-    padding: 5px 2px;
-    height: 32px;
-    font-size: var(--font-size-xs, 12px);
+    height: 36px;
+    font-size: var(--font-size-sm);
   }
 }
 
 /* Mobile Large: 480px - 767px */
 @media (min-width: 480px) and (max-width: 767px) {
   .shortcut-buttons {
-    gap: 4px;
-    padding: 4px;
-    min-height: 44px;
+    gap: 6px;
+    padding: 6px;
+    min-height: 48px;
   }
   
   .shortcut-button {
-    padding: 8px 4px;
-    height: 36px;
-    min-width: 44px;
+    padding: 10px 8px;
+    height: 40px;
+    min-width: 48px;
+    font-size: var(--font-size-base);
   }
 }
 
@@ -102,8 +104,9 @@
   
   .shortcut-button {
     padding: 8px 4px;
-    height: 36px;
-    min-width: 44px;
+    height: 38px;
+    min-width: 40px;
+    font-size: var(--font-size-sm);
   }
 }
 

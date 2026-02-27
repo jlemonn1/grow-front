@@ -81,7 +81,7 @@ export function useTicket() {
   /**
    * Agrega un producto al ticket con validación inicial
    */
-  const addProductToTicket = useCallback(async (product: Product, grams: number) => {
+  const addProductToTicket = useCallback(async (product: Product, grams: number, actualWeighedGrams?: number) => {
     // Obtener producto actualizado si no está en cache
     let currentProduct: Product | undefined = products.find(p => p.id === product.id);
     if (!currentProduct) {
@@ -111,7 +111,7 @@ export function useTicket() {
     );
     
     // Agregar el item
-    ticket.addItem(currentProduct, grams);
+    ticket.addItem(currentProduct, grams, actualWeighedGrams);
     
     // Validar inmediatamente usando el stock calculado antes de agregar
     // El índice es correcto porque sabemos que el nuevo item estará en newItemIndex

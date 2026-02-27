@@ -39,7 +39,7 @@ interface FormErrors {
 type Step = 0 | 1 | 2;
 
 const STEPS = [
-  { id: 0 as Step, title: 'Básico', fields: ['displayName', 'phone', 'address'] as (keyof FormData)[] },
+  { id: 0 as Step, title: 'Básico', fields: ['displayName', 'phone'] as (keyof FormData)[] },
   { id: 1 as Step, title: 'Tipo y Consumo', fields: ['customerType', 'estimatedMonthlyConsumptionGrams'] as (keyof FormData)[] },
   { id: 2 as Step, title: 'Contrato', fields: [] as (keyof FormData)[] },
 ];
@@ -67,6 +67,7 @@ export function CustomerEditPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [dniPicture, setDniPicture] = useState<File | null>(null);
@@ -169,6 +170,7 @@ export function CustomerEditPage() {
       navigate('/customers');
     } finally {
       setLoading(false);
+      setDataLoaded(true);
     }
   }, [id, navigate, showToast, baseApiUrl]);
 
@@ -193,12 +195,6 @@ export function CustomerEditPage() {
       const strValue = value as string;
       if (!strValue.trim()) {
         return 'El teléfono es obligatorio';
-      }
-    }
-    if (name === 'address') {
-      const strValue = value as string;
-      if (!strValue.trim()) {
-        return 'La dirección es obligatoria';
       }
     }
     if (name === 'estimatedMonthlyConsumptionGrams') {
@@ -233,11 +229,17 @@ export function CustomerEditPage() {
   };
 
   const stepErrors = useMemo(() => {
+    if (!dataLoaded) {
+      return STEPS.reduce((acc, step) => {
+        acc[step.id] = {};
+        return acc;
+      }, {} as Record<Step, FormErrors>);
+    }
     return STEPS.reduce((acc, step) => {
       acc[step.id] = validateStep(step.id);
       return acc;
     }, {} as Record<Step, FormErrors>);
-  }, [formData, selectedGuarantor, guarantorIsActive]);
+  }, [formData, selectedGuarantor, guarantorIsActive, dataLoaded]);
 
   const isStepComplete = (step: Step): boolean => {
     return Object.keys(stepErrors[step] || {}).length === 0;
@@ -270,6 +272,11 @@ export function CustomerEditPage() {
   }, []);
 
   const handleNext = () => {
+    if (!dataLoaded) {
+      showToast('Cargando datos del socio...', 'error');
+      return;
+    }
+
     const currentErrors = stepErrors[currentStep];
     if (currentErrors && Object.keys(currentErrors).length > 0) {
       const firstErrorField = Object.keys(currentErrors)[0] as keyof FormErrors;
@@ -317,6 +324,11 @@ export function CustomerEditPage() {
 
   const handleSave = async (): Promise<boolean> => {
     if (!id || !customer) return false;
+
+    if (!dataLoaded) {
+      showToast('Cargando datos del socio...', 'error');
+      return false;
+    }
 
     for (const step of STEPS) {
       if (step.id < 2) {

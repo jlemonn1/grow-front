@@ -1,7 +1,8 @@
 .dispense-field-layout {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-xs);
   width: 100%;
 }
 
@@ -15,12 +16,15 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  justify-content: flex-start;
 }
 
 /* Desktop: ≥1280px */
 @media (min-width: 1280px) {
   .dispense-field-layout {
-    gap: var(--spacing-sm);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
   }
   
   .dispense-field-layout-input {
@@ -31,6 +35,8 @@
 /* Tablet Large: 1024px - 1279px */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .dispense-field-layout {
+    flex-direction: column;
+    align-items: flex-start;
     gap: var(--spacing-xs);
   }
   
@@ -42,6 +48,8 @@
 /* Tablet: 768px - 1023px */
 @media (min-width: 768px) and (max-width: 1023px) {
   .dispense-field-layout {
+    flex-direction: column;
+    align-items: flex-start;
     gap: var(--spacing-xs);
   }
   

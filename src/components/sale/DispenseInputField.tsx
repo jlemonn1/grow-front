@@ -10,7 +10,7 @@ interface DispenseInputFieldProps {
   onChange: (value: number) => void;
   error?: string;
   inputRef?: React.RefObject<HTMLInputElement>;
-  shortcuts: ReactNode;
+  shortcuts?: ReactNode;
   min?: number;
   step?: number;
   placeholder?: string;

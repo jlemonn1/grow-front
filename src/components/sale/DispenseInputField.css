@@ -7,7 +7,41 @@
 
 .dispense-input-field-label {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin-bottom: 0;
+}
+
+.dispense-number-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  background: var(--color-background-primary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dispense-number-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(94, 92, 230, 0.2);
+}
+
+.dispense-number-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.dispense-number-input::-webkit-outer-spin-button,
+.dispense-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.dispense-number-input {
+  -moz-appearance: textfield;
 }

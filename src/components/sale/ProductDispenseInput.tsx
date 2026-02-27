@@ -5,6 +5,7 @@ import { getMeasurementLongLabel, getMeasurementShortLabel } from '@/utils/measu
 import { DispenseInputField } from './DispenseInputField';
 import { ShortcutButtons } from './ShortcutButtons';
 import { DispenseInfoCompact } from './DispenseInfoCompact';
+import { WeighedInput } from './WeighedInput';
 import type { Product } from '@/types/models';
 import './ProductDispenseInput.css';
 
@@ -13,6 +14,7 @@ interface ProductDispenseInputProps {
   availableStock: number;
   initialGrams?: number;
   onGramsChange?: (grams: number) => void;
+  onActualWeighedGramsChange?: (grams: number) => void;
   gramsInputRef?: React.RefObject<HTMLInputElement>;
   eurosInputRef?: React.RefObject<HTMLInputElement>;
 }
@@ -22,15 +24,18 @@ export function ProductDispenseInput({
   availableStock,
   initialGrams,
   onGramsChange,
+  onActualWeighedGramsChange,
   gramsInputRef,
   eurosInputRef,
 }: ProductDispenseInputProps) {
   const {
     grams,
     euros,
+    actualWeighedGrams,
     error,
     setGrams,
     setEuros,
+    setActualWeighedGrams,
     effectivePricePerGram,
   } = useProductDispense({
     product,
@@ -44,6 +49,13 @@ export function ProductDispenseInput({
       onGramsChange(grams);
     }
   }, [grams, onGramsChange]);
+
+  // Notificar cambios de cantidad pesada al componente padre
+  useEffect(() => {
+    if (onActualWeighedGramsChange) {
+      onActualWeighedGramsChange(actualWeighedGrams);
+    }
+  }, [actualWeighedGrams, onActualWeighedGramsChange]);
 
   if (!product) {
     return null;
@@ -101,6 +113,14 @@ export function ProductDispenseInput({
               activeValue={euros}
             />
           }
+        />
+        <WeighedInput
+          baseValue={grams}
+          value={actualWeighedGrams}
+          min={grams}
+          max={Math.min(grams + 0.1, availableStock)}
+          onChange={setActualWeighedGrams}
+          unit={measurementSuffix}
         />
       </div>
       

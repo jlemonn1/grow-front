@@ -10,6 +10,37 @@ export interface ListSalesParams {
   size?: number;
 }
 
+export interface ProductSalesSummary {
+  productId: string;
+  productName: string;
+  categoryName: string;
+  totalGrams: number;
+  totalRecaudado: number;
+}
+
+/**
+ * Obtiene el resumen de ventas agrupadas por producto.
+ * Si no se proporcionan fechas, el backend usa el mes actual.
+ */
+export async function getProductsSummary(
+  from?: string,
+  to?: string
+): Promise<ProductSalesSummary[]> {
+  const queryParams = new URLSearchParams();
+
+  if (from) {
+    queryParams.append('from', from);
+  }
+  if (to) {
+    queryParams.append('to', to);
+  }
+
+  const queryString = queryParams.toString();
+  const endpoint = `/sales/products-summary${queryString ? `?${queryString}` : ''}`;
+
+  return get<ProductSalesSummary[]>(endpoint);
+}
+
 /**
  * Lista ventas con filtros opcionales y paginación
  */

@@ -49,6 +49,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const selectedMeasurementSuffix = getMeasurementShortLabel(selectedProduct?.measurementType ?? 'WEIGHT');
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
+  const [actualWeighedGrams, setActualWeighedGrams] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [_loadingTopProducts, setLoadingTopProducts] = useState(false);
@@ -483,14 +484,15 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
         return;
       }
 
-      await addProductToTicket(product, gramsToAdd);
+      await addProductToTicket(product, gramsToAdd, actualWeighedGrams > 0 ? actualWeighedGrams : undefined);
       setSelectedProduct(null);
       setGramsToAdd(0);
+      setActualWeighedGrams(0);
       showToast('Producto agregado', 'success');
     } catch (error) {
       showToast('Error al obtener el producto', 'error');
     }
-  }, [selectedProduct, gramsToAdd, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
+  }, [selectedProduct, gramsToAdd, actualWeighedGrams, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
   const handleTopProductClick = useCallback(async (topProduct: TopProduct) => {
     try {
@@ -678,6 +680,7 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
                       product={selectedProduct}
                       availableStock={getProductStock(selectedProduct.id)}
                       onGramsChange={setGramsToAdd}
+                      onActualWeighedGramsChange={setActualWeighedGrams}
                     />
                   </div>
                   <div className="quick-sale-add-actions">

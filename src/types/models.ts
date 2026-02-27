@@ -172,6 +172,7 @@ export interface TicketItem {
   productId: string;
   product: Product | null; // Snapshot del producto al agregar
   grams: number;
+  actualWeighedGrams?: number; // Cantidad real pesada (para stock)
   pricePerGram: number; // Snapshot del precio
   subtotal: number; // grams × pricePerGram
   validationState: 'valid' | 'invalid' | 'checking';
@@ -181,6 +182,7 @@ export interface TicketItem {
 export interface CreateSaleItemRequest {
   productId: string;
   grams: number;
+  actualWeighedGrams?: number;
 }
 
 // Mapa de denominaciones (ej: { "50": 1, "20": 2, "0.5": 3 })

@@ -11,9 +11,11 @@ interface UseProductDispenseOptions {
 interface UseProductDispenseReturn {
   grams: number;
   euros: number;
+  actualWeighedGrams: number;
   error: string | undefined;
   setGrams: (value: number) => void;
   setEuros: (value: number) => void;
+  setActualWeighedGrams: (value: number) => void;
   isValid: boolean;
   effectivePricePerGram: number;
   measurementLabel: string;
@@ -38,6 +40,7 @@ export function useProductDispense({
 }: UseProductDispenseOptions): UseProductDispenseReturn {
   const [grams, setGramsState] = useState<number>(initialGrams);
   const [euros, setEurosState] = useState<number>(0);
+  const [actualWeighedGrams, setActualWeighedGramsState] = useState<number>(0);
   const [error, setError] = useState<string | undefined>();
   
   // Ref para evitar loops infinitos en la sincronización
@@ -149,6 +152,8 @@ export function useProductDispense({
       // Actualizar ambos valores
       setGramsState(calculatedGrams);
       setEurosState(roundedEuros);
+      // Resetear actualWeighedGrams cuando se calcula desde euros
+      setActualWeighedGramsState(0);
     } else {
       setGramsState(0);
       setEurosState(0);
@@ -159,16 +164,32 @@ export function useProductDispense({
     requestAnimationFrame(() => {
       isUpdatingFromEurosRef.current = false;
     });
-  }, [effectivePricePerGram, validateGrams, roundToTwoDecimals]);
+  }, [effectivePricePerGram, validateGrams, roundToTwoDecimals, measurementLabel]);
+
+  // Actualizar cantidad real pesada y mantener euros (no recalcular)
+  const setActualWeighedGrams = useCallback((value: number) => {
+    const roundedValue = roundToTwoDecimals(value);
+    
+    // Validar contra stock disponible
+    const validationError = validateGrams(roundedValue);
+    setError(validationError);
+    
+    setActualWeighedGramsState(roundedValue);
+    
+    // IMPORTANTE: No recalculamos los euros - mantenemos el precio original
+    // El usuario pesó más/menos pero paga lo mismo
+  }, [validateGrams, roundToTwoDecimals]);
   
   const isValid = grams > 0 && error === undefined;
   
   return {
     grams,
     euros,
+    actualWeighedGrams,
     error,
     setGrams,
     setEuros,
+    setActualWeighedGrams,
     isValid,
     effectivePricePerGram,
     measurementLabel,

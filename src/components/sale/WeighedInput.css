@@ -1,0 +1,101 @@
+.weighed-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+}
+
+.weighed-input-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8e8e93;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.weighed-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #1c1c1e;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid #38383a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.weighed-input-wrapper:focus-within {
+  border-color: #5e5ce6;
+  box-shadow: 0 0 0 3px rgba(94, 92, 230, 0.2);
+}
+
+.weighed-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 32px;
+  border: none;
+  background: #2c2c2e;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.weighed-btn:hover:not(:disabled) {
+  background: #3a3a3c;
+}
+
+.weighed-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.weighed-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.weighed-btn-decrement {
+  color: #ff453a;
+}
+
+.weighed-btn-increment {
+  color: #30d158;
+}
+
+.weighed-input {
+  flex: 1;
+  width: 50px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.weighed-input::-webkit-outer-spin-button,
+.weighed-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.weighed-input:disabled {
+  opacity: 0.5;
+}
+
+.weighed-input-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: #636366;
+  margin-right: 4px;
+}

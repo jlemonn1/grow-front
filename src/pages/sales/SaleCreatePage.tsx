@@ -89,6 +89,7 @@ export function SaleCreatePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const selectedMeasurementSuffix = getMeasurementShortLabel(selectedProduct?.measurementType ?? 'WEIGHT');
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
+  const [actualWeighedGrams, setActualWeighedGrams] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cashGivenError, setCashGivenError] = useState<string | undefined>();
   const [successSale, setSuccessSale] = useState<Sale | null>(null);
@@ -373,14 +374,15 @@ export function SaleCreatePage() {
         return;
       }
 
-      await addProductToTicket(product, gramsToAdd);
+      await addProductToTicket(product, gramsToAdd, actualWeighedGrams > 0 ? actualWeighedGrams : undefined);
       setSelectedProduct(null);
       setGramsToAdd(0);
+      setActualWeighedGrams(0);
       showToast('Producto agregado al ticket', 'success');
     } catch (error) {
       showToast('Error al obtener el producto', 'error');
     }
-  }, [selectedProduct, gramsToAdd, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
+  }, [selectedProduct, gramsToAdd, actualWeighedGrams, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
   // Procesar venta (función interna que realmente hace el procesamiento)
   const processSaleInternal = useCallback(async () => {
@@ -427,6 +429,7 @@ export function SaleCreatePage() {
         items: items.map(item => ({
           productId: item.productId,
           grams: item.grams,
+          actualWeighedGrams: item.actualWeighedGrams,
         })),
         couponCode: appliedCoupon?.code,
         manualDiscountPercent: manualDiscountPercent ?? undefined,
@@ -828,6 +831,7 @@ export function SaleCreatePage() {
                     product={selectedProduct}
                     availableStock={getProductStock(selectedProduct.id)}
                     onGramsChange={setGramsToAdd}
+                    onActualWeighedGramsChange={setActualWeighedGrams}
                     gramsInputRef={gramsInputRef}
                     eurosInputRef={eurosInputRef}
                   />
