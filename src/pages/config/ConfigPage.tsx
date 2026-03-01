@@ -464,7 +464,7 @@ export function ConfigPage() {
           '⚠️ RESET COMPLETO ⚠️\n\n' +
           'Estás a punto de ejecutar un reset completo de la base de datos.\n\n' +
           'Esto borrará ABSOLUTAMENTE TODO incluyendo:\n' +
-          '- Todas las ventas\n' +
+          '- Todas las dispensaciones\n' +
           '- Todos los productos\n' +
           '- Todos los clientes\n' +
           '- Todos los administradores\n' +

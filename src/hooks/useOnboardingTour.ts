@@ -33,7 +33,7 @@ export const TOUR_STEPS_PHASE1: TourStep[] = [
     route: '/sales/new',
     selector: '[data-tour="page-header-title"]',
     title: 'Página de Dispensar',
-    description: 'Aquí puedes realizar ventas: seleccionar clientes, agregar productos y procesar la transacción.',
+    description: 'Aquí puedes realizar dispensaciones: seleccionar clientes, agregar productos y procesar la transacción.',
     position: 'bottom',
     waitForElement: true,
     delay: 500,

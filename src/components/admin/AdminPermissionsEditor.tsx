@@ -14,7 +14,7 @@ interface AdminPermissionsEditorProps {
 }
 
 const PERMISSION_LABELS: Record<string, string> = {
-  [AdminPermission.DISPENSAR]: 'Realizar ventas y dispensaciones',
+  [AdminPermission.DISPENSAR]: 'Realizar dispensaciones',
   [AdminPermission.GESTIONAR_PRODUCTOS]: 'Crear y editar productos',
   [AdminPermission.GESTIONAR_STOCK]: 'Añadir stock y recargar inventario',
   [AdminPermission.GESTIONAR_CLIENTES]: 'Crear y editar socios',

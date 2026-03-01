@@ -165,7 +165,7 @@ function getTransactionTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     'ADD': 'Añadido',
     'WITHDRAW': 'Retirado',
-    'SALE_INPUT': 'Venta',
+    'SALE_INPUT': 'Dispensación',
     'SALE_OUTPUT': 'Cambio'
   };
   return labels[type] || type;

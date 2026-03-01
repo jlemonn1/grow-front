@@ -3,6 +3,7 @@ import { Input } from '@/components/forms/Input';
 import { ProductImage } from '@/components/common/ProductImage';
 import { listProducts } from '@/services/products.service';
 import { listCategories } from '@/services/categories.service';
+import { customersService } from '@/services/customers.service';
 import type { Product, Category } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { getMeasurementShortLabel } from '@/utils/measurement';
@@ -11,6 +12,7 @@ import './ProductPicker.css';
 interface ProductPickerProps {
   selectedProduct: Product | null;
   onSelect: (product: Product | null) => void;
+  customerId?: string | null;
 }
 
 export interface ProductPickerRef {
@@ -18,7 +20,7 @@ export interface ProductPickerRef {
 }
 
 const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
-  ({ selectedProduct, onSelect }, ref) => {
+  ({ selectedProduct, onSelect, customerId }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -26,14 +28,15 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
         inputRef.current?.focus();
       },
     }));
-  const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [showCategories, setShowCategories] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [results, setResults] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [showResults, setShowResults] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(false);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+    const [showCategories, setShowCategories] = useState(false);
+    const [quickOptions, setQuickOptions] = useState<Product[]>([]);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -50,6 +53,26 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     };
     loadCategories();
   }, []);
+
+  // Cargar quick options del socio cuando hay customerId
+  useEffect(() => {
+    if (!customerId) {
+      setQuickOptions([]);
+      return;
+    }
+
+    const loadQuickOptions = async () => {
+      try {
+        const recommended = await customersService.getRecommendedProducts(customerId);
+        setQuickOptions(recommended.slice(0, 6));
+      } catch (error) {
+        console.error('Error al cargar quick options:', error);
+        setQuickOptions([]);
+      }
+    };
+
+    loadQuickOptions();
+  }, [customerId]);
 
   // Limpiar estados internos cuando selectedProduct cambia a null
   useEffect(() => {
@@ -252,6 +275,30 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
           </button>
         )}
       </div>
+
+      {customerId && quickOptions.length > 0 && !searchQuery.trim() && !selectedProduct && (
+        <div className="product-picker-quick-options">
+          <div className="product-picker-quick-options-scroll">
+            {quickOptions.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                className="product-picker-quick-option-chip"
+                onClick={() => handleSelect(product)}
+                aria-label={`Agregar ${product.name}`}
+              >
+                <ProductImage
+                  imageUrl={product.imageUrl}
+                  alt={product.name}
+                  size="small"
+                  className="product-picker-quick-option-image"
+                />
+                <span className="product-picker-quick-option-name">{product.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showCategories && (
         <div className="product-picker-results" role="listbox" id="product-picker-categories">

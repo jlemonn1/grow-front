@@ -46,7 +46,7 @@ export function SaleDetailPage() {
         }
 
         if (!saleData) {
-          setError('Venta no encontrada');
+          setError('Dispensación no encontrada');
           setLoading(false);
           return;
         }
@@ -72,9 +72,9 @@ export function SaleDetailPage() {
         }
       } catch (err: any) {
         if (err.status === 404) {
-          setError('Venta no encontrada');
+          setError('Dispensación no encontrada');
         } else {
-          setError(err.message || 'Error al cargar la venta');
+          setError(err.message || 'Error al cargar la dispensación');
         }
       } finally {
         setLoading(false);
@@ -91,7 +91,7 @@ export function SaleDetailPage() {
   if (loading) {
     return (
       <>
-        <PageHeader title="Cargando venta..." onBack={handleBack} />
+        <PageHeader title="Cargando dispensación..." onBack={handleBack} />
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -107,7 +107,7 @@ export function SaleDetailPage() {
   if (error || !sale) {
     return (
       <>
-        <PageHeader title="Venta no encontrada" onBack={handleBack} />
+        <PageHeader title="Dispensación no encontrada" onBack={handleBack} />
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -115,9 +115,9 @@ export function SaleDetailPage() {
           minHeight: '400px' 
         }}>
           <EmptyState
-            message={error || 'La venta que buscas no existe'}
+            message={error || 'La dispensación que buscas no existe'}
             action={{
-              label: 'Volver a ventas',
+              label: 'Volver a dispensaciones',
               onClick: () => navigate('/sales'),
             }}
           />
@@ -354,10 +354,10 @@ export function SaleDetailPage() {
           </div>
         </div>
 
-        {/* Items de la venta */}
+        {/* Items de la dispensación */}
         <div className="sale-detail-section" style={{ marginBottom: 0 }}>
           <h2 className="sale-detail-section-title">
-            Items de la Venta ({sale.items?.length || 0})
+            Items de la Dispensación ({sale.items?.length || 0})
           </h2>
           
           {sale.items && sale.items.length > 0 ? (
@@ -367,7 +367,7 @@ export function SaleDetailPage() {
               textAlign: 'center',
               padding: 'var(--spacing-xl)',
             }}>
-              No hay items en esta venta
+              No hay items en esta dispensación
             </p>
           )}
         </div>

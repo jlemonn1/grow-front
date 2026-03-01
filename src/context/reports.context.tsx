@@ -139,7 +139,7 @@ export function ReportsProvider({ children }: ReportsProviderProps) {
         timestamp: Date.now(),
       };
     } catch (err: any) {
-      setError(err.message || 'Error al cargar resumen de ventas');
+      setError(err.message || 'Error al cargar resumen de dispensaciones');
       setSalesSummary(null);
       throw err;
     } finally {

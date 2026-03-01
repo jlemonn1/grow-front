@@ -161,7 +161,7 @@ export function HomePage() {
     {
       path: '/sales/new',
       title: 'Dispensar',
-      description: 'Dispensar productos y gestionar ventas rápidamente',
+      description: 'Dispensar productos y gestionar dispensaciones rápidamente',
       icon: <HiCurrencyEuro />,
     },
     {

@@ -16,7 +16,7 @@ function getMovementTypeLabel(type: string): string {
     case 'RECHARGE':
       return 'Recarga';
     case 'SALE_OUT':
-      return 'Venta';
+      return 'Dispensación';
     default:
       return type;
   }

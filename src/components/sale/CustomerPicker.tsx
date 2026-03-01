@@ -1,7 +1,7 @@
 import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiQrCode } from 'react-icons/hi2';
-import { HiSearch, HiPhone, HiKey, HiPencil, HiDocumentText } from 'react-icons/hi';
+import { HiSearch, HiPhone, HiKey, HiPencil, HiDocumentText, HiUser, HiIdentification } from 'react-icons/hi';
 import { Input } from '@/components/forms/Input';
 import { QRScannerModal } from '@/components/common/QRScannerModal';
 
@@ -11,6 +11,9 @@ import { formatMoney } from '@/utils/money';
 import type { Customer } from '@/types/models';
 import { CustomerAvatar } from '@/components/common/CustomerAvatar';
 import './CustomerPicker.css';
+
+type SearchType = 'name' | 'phone' | 'pin' | 'dni' | 'any';
+type SearchMode = 'auto' | 'manual';
 
 interface CustomerPickerProps {
   selectedCustomer: Customer | null;
@@ -35,8 +38,12 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const [results, setResults] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [searchType, setSearchType] = useState<'name' | 'phone' | 'pin' | 'any' | null>(null);
+  const [searchType, setSearchType] = useState<SearchType | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  
+  // Estado para modo manual de búsqueda
+  const [searchMode, setSearchMode] = useState<SearchMode>('auto');
+  const [manualSearchType, setManualSearchType] = useState<SearchType | null>(null);
 
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
 
@@ -54,8 +61,8 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     }
   }, [selectedCustomer]);
 
-  // Detectar tipo de búsqueda
-  const getSearchType = useCallback((query: string): 'name' | 'phone' | 'pin' | 'any' => {
+  // Detectar tipo de búsqueda automática
+  const getAutoSearchType = useCallback((query: string): SearchType => {
     if (query.length < 3) return 'any';
     
     // Con 6+ caracteres buscamos en todos los campos
@@ -94,15 +101,21 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
       return;
     }
 
-    const detectedType = getSearchType(trimmed);
-    setSearchType(detectedType);
+    // Determinar el tipo de búsqueda según el modo
+    let finalSearchType: SearchType;
+    if (searchMode === 'manual' && manualSearchType) {
+      finalSearchType = manualSearchType;
+    } else {
+      finalSearchType = getAutoSearchType(trimmed);
+    }
+    setSearchType(finalSearchType);
 
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const response = await customersService.search({ 
           q: trimmed, 
-          type: detectedType === 'any' ? undefined : detectedType,
+          type: finalSearchType === 'any' ? undefined : finalSearchType,
           page: 0, 
           size: 10 
         });
@@ -117,7 +130,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, getSearchType, selectedCustomer]);
+  }, [searchQuery, getAutoSearchType, selectedCustomer, searchMode, manualSearchType]);
 
   const handleSelect = useCallback((customer: Customer) => {
     onSelect(customer);
@@ -135,6 +148,21 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
     setShowResults(false);
   }, [onSelect]);
 
+  const handleChipClick = useCallback((type: SearchType) => {
+    if (searchMode === 'manual' && manualSearchType === type) {
+      setSearchMode('auto');
+      setManualSearchType(null);
+    } else {
+      setSearchMode('manual');
+      setManualSearchType(type);
+    }
+  }, [searchMode, manualSearchType]);
+
+  const handleClearFilter = useCallback(() => {
+    setSearchMode('auto');
+    setManualSearchType(null);
+  }, []);
+
   const handleQRScan = useCallback((customer: Customer) => {
     handleSelect(customer);
     setShowQRScanner(false);
@@ -146,6 +174,52 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
 
   return (
     <div className="customer-picker" role="combobox" aria-expanded={showResults} aria-haspopup="listbox">
+      {/* Chips de selección de tipo de búsqueda */}
+      <div className="customer-picker-chips">
+        <button
+          type="button"
+          className={`customer-picker-chip ${searchType === 'pin' || (searchMode === 'manual' && manualSearchType === 'pin') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'pin' ? 'manual' : ''}`}
+          onClick={() => handleChipClick('pin')}
+        >
+          <HiKey />
+          <span>PIN</span>
+        </button>
+        <button
+          type="button"
+          className={`customer-picker-chip ${searchType === 'name' || (searchMode === 'manual' && manualSearchType === 'name') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'name' ? 'manual' : ''}`}
+          onClick={() => handleChipClick('name')}
+        >
+          <HiUser />
+          <span>Nombre</span>
+        </button>
+        <button
+          type="button"
+          className={`customer-picker-chip ${searchType === 'phone' || (searchMode === 'manual' && manualSearchType === 'phone') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'phone' ? 'manual' : ''}`}
+          onClick={() => handleChipClick('phone')}
+        >
+          <HiPhone />
+          <span>Teléfono</span>
+        </button>
+        <button
+          type="button"
+          className={`customer-picker-chip ${searchType === 'dni' || (searchMode === 'manual' && manualSearchType === 'dni') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'dni' ? 'manual' : ''}`}
+          onClick={() => handleChipClick('dni')}
+        >
+          <HiIdentification />
+          <span>DNI</span>
+        </button>
+        {searchMode === 'manual' && (
+          <button
+            type="button"
+            className="customer-picker-chip-clear"
+            onClick={handleClearFilter}
+            aria-label="Quitar filtro y volver a automático"
+            title="Quitar filtro y volver a automático"
+          >
+            ×
+          </button>
+        )}
+      </div>
       <div className="customer-picker-input-wrapper">
         <Input
           ref={inputRef}
@@ -191,25 +265,31 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
             {searchType === 'name' && (
               <>
                 <HiSearch className="customer-picker-search-type-icon" />
-                Buscando por nombre
+                Buscando por nombre {searchMode === 'manual' && '(manual)'}
               </>
             )}
             {searchType === 'phone' && (
               <>
                 <HiPhone className="customer-picker-search-type-icon" />
-                Buscando por teléfono
+                Buscando por teléfono {searchMode === 'manual' && '(manual)'}
               </>
             )}
             {searchType === 'pin' && (
               <>
                 <HiKey className="customer-picker-search-type-icon" />
-                Buscando por PIN
+                Buscando por PIN {searchMode === 'manual' && '(manual)'}
+              </>
+            )}
+            {searchType === 'dni' && (
+              <>
+                <HiIdentification className="customer-picker-search-type-icon" />
+                Buscando por DNI {searchMode === 'manual' && '(manual)'}
               </>
             )}
             {searchType === 'any' && (
               <>
                 <HiSearch className="customer-picker-search-type-icon" />
-                Buscando en todos los campos
+                Buscando en todos los campos {searchMode === 'manual' && '(manual)'}
               </>
             )}
           </div>

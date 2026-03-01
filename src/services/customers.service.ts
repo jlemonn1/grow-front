@@ -16,7 +16,7 @@ import type { PageResponse } from '@/types/api';
 
 export interface ListCustomersParams {
   q?: string;
-  type?: 'any' | 'pin' | 'name' | 'phone';
+  type?: 'any' | 'pin' | 'name' | 'phone' | 'dni';
   page?: number;
   size?: number;
 }

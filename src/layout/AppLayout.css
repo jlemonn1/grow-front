@@ -18,6 +18,7 @@
   min-height: 100%;
   max-height: 100%;
   overflow: hidden;
+  transition: margin-left var(--transition-base);
 }
 
 .app-layout-content {
@@ -38,12 +39,35 @@
   display: none;
 }
 
-@media (max-width: 768px) {
+/* ============================================
+   TABLET: 641px - 768px
+   ============================================ */
+@media (min-width: 641px) and (max-width: 768px) {
   .app-layout-main {
     margin-left: 240px;
   }
+
+  .app-layout:has(.side-nav.collapsed) .app-layout-main {
+    margin-left: 64px;
+  }
 }
 
+/* ============================================
+   PC DESKTOP: > 768px
+   ============================================ */
+@media (min-width: 769px) {
+  .app-layout-main {
+    margin-left: 280px;
+  }
+
+  .app-layout:has(.side-nav.collapsed) .app-layout-main {
+    margin-left: 72px;
+  }
+}
+
+/* ============================================
+   MÓVIL: <= 640px
+   ============================================ */
 @media (max-width: 640px) {
   .app-layout-main {
     margin-left: 0;
@@ -75,7 +99,6 @@
   }
 }
 
-/* Respecto por preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   .app-layout-content,
   .app-layout-overlay {

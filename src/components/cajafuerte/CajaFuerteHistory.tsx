@@ -16,7 +16,7 @@ const TRANSACTION_TYPE_OPTIONS = [
   { value: '', label: 'Todos los tipos' },
   { value: 'ADD', label: 'Añadir' },
   { value: 'WITHDRAW', label: 'Retirar' },
-  { value: 'SALE_INPUT', label: 'Entrada por venta' },
+  { value: 'SALE_INPUT', label: 'Entrada por dispensación' },
   { value: 'SALE_OUTPUT', label: 'Salida por cambio' },
 ];
 

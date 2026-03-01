@@ -572,11 +572,11 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       setShowAddMore(false);
       setCashGivenDenominations({});
 
-      showToast('Venta completada exitosamente', 'success');
+      showToast('Dispensación completada exitosamente', 'success');
       onClose();
     } catch (error) {
       console.error('Error al procesar venta:', error);
-      showToast('Error al procesar la venta', 'error');
+      showToast('Error al procesar la dispensación', 'error');
     } finally {
       setIsProcessing(false);
       setGlobalLoading(false);

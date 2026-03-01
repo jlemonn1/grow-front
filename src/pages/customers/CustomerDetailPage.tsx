@@ -175,7 +175,7 @@ const [showContractModal, setShowContractModal] = useState(false);
       }
       setHasLoadedSales(true);
     } catch (err) {
-      showToast('Error al cargar historial de ventas', 'error');
+      showToast('Error al cargar historial de dispensaciones', 'error');
       setHasLoadedSales(true);
     } finally {
       setLoadingSales(false);
@@ -256,7 +256,7 @@ const [showContractModal, setShowContractModal] = useState(false);
     if (!customer) return;
     // Pre-cargar el cliente en el ticket
     setTicketCustomer(customer);
-    // Navegar a la página de ventas
+    // Navegar a la página de dispensación
     navigate('/sales/new');
   }, [customer, setTicketCustomer, navigate]);
 
@@ -729,7 +729,7 @@ const handleBalanceTransferred = () => {
               message="Este socio aún no tiene pedidos registrados"
               icon={<HiShoppingCart />}
               action={{
-                label: 'Crear primera venta',
+                label: 'Crear primera dispensación',
                 onClick: handleCreateFirstSale,
               }}
             />
@@ -746,7 +746,7 @@ const handleBalanceTransferred = () => {
               }}
               onPageChange={handleSalesPageChange}
               onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-              emptyMessage="No hay ventas registradas para este socio"
+              emptyMessage="No hay dispensaciones registradas para este socio"
               renderCard={(sale, isExpanded, onToggleExpand) => (
                 <SaleHistoryCard
                   sale={sale}

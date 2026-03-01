@@ -15,7 +15,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
   if (items.length === 0) {
     return (
       <div className="sale-items-table-empty">
-        <p>No hay items en esta venta</p>
+        <p>No hay items en esta dispensación</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export function SaleItemsTable({ items }: SaleItemsTableProps) {
         columns={columns}
         data={items}
         loading={false}
-        emptyMessage="No hay items en esta venta"
+        emptyMessage="No hay items en esta dispensación"
         renderCard={(item, isExpanded, onToggleExpand) => (
           <SaleItemCard
             item={item}

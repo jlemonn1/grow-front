@@ -15,7 +15,7 @@ interface BalanceHistoryTableProps {
 const getTransactionTypeLabel = (type: BalanceTransaction['type']): string => {
   switch (type) {
     case 'SALE_USED':
-      return 'Usado en venta';
+      return 'Usado en dispensación';
     case 'MANUAL_ADJUSTMENT':
       return 'Ajuste manual';
     case 'CHANGE_SAVED':

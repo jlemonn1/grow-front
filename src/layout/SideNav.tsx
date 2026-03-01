@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { HiHome, HiCurrencyEuro, HiDocumentText, HiCube, HiUser, HiChartBar, HiCog, HiUsers, HiLockClosed, HiTicket } from 'react-icons/hi';
-import { HiArrowRightOnRectangle, HiSparkles } from 'react-icons/hi2';
+import { HiArrowRightOnRectangle, HiSparkles, HiChevronLeft, HiChevronRight } from 'react-icons/hi2';
 import { useUI } from '@/context/ui.context';
 import { useConfig } from '@/context/config.context';
 import { useAuth } from '@/context/auth.context';
@@ -13,9 +13,11 @@ interface SideNavProps {
   isOpen?: boolean;
   onClose?: () => void;
   onNavigate?: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
-export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
+export function SideNav({ isOpen = false, onClose, onNavigate, isExpanded = true, onToggleExpand }: SideNavProps) {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const { config } = useConfig();
@@ -51,7 +53,7 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
     // Caja - requiere DISPENSAR
     if (hasPermission(AdminPermission.DISPENSAR)) {
       items.push({ path: '/sales/new', label: 'Dispensar', icon: <HiCurrencyEuro /> });
-      items.push({ path: '/sales', label: 'Ventas', icon: <HiDocumentText /> });
+      items.push({ path: '/sales', label: 'Dispensaciones', icon: <HiDocumentText /> });
     }
 
     // Productos - siempre visible, pero solo crear/editar requiere permiso
@@ -104,23 +106,25 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
 
   return (
     <nav 
-      className={`side-nav ${isOpen ? 'open' : ''}`}
+      className={`side-nav ${isOpen ? 'open' : ''} ${!isMobile && !isExpanded ? 'collapsed' : ''}`}
       id="side-nav"
       aria-label="Navegación principal"
       aria-hidden={isMobile ? !isOpen : false}
     >
       <div className="side-nav-header">
-        <button
-          type="button"
-          className="side-nav-close-button"
-          onClick={onClose}
-          aria-label="Cerrar menú de navegación"
-        >
-          <span aria-hidden="true">×</span>
-        </button>
+        {isMobile && isOpen && (
+          <button
+            type="button"
+            className="side-nav-close-button"
+            onClick={onClose}
+            aria-label="Cerrar menú de navegación"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
         <Link 
           to="/home" 
-          className="side-nav-logo"
+          className={`side-nav-logo ${!isMobile && !isExpanded ? 'side-nav-logo-collapsed' : ''}`}
           onClick={handleNavClick}
           aria-label="Ir a inicio"
         >
@@ -133,8 +137,19 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
           ) : (
             <span className="side-nav-logo-icon"><HiSparkles /></span>
           )}
-          <span className="side-nav-logo-text">{config?.growName || 'Growshop'}</span>
+          {isMobile || isExpanded ? <span className="side-nav-logo-text">{config?.growName || 'Growshop'}</span> : null}
         </Link>
+        {!isMobile && onToggleExpand && (
+          <button
+            type="button"
+            className={`side-nav-toggle ${!isExpanded ? 'side-nav-toggle-collapsed' : ''}`}
+            onClick={onToggleExpand}
+            aria-label={isExpanded ? 'Colapsar menú' : 'Expandir menú'}
+            title={isExpanded ? 'Colapsar menú' : 'Expandir menú'}
+          >
+            <span aria-hidden="true">{isExpanded ? <HiChevronLeft /> : <HiChevronRight />}</span>
+          </button>
+        )}
       </div>
       <ul className="side-nav-list">
         {navItems.map((item) => (
@@ -147,7 +162,7 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
               onClick={handleNavClick}
             >
               <span className="side-nav-icon" aria-hidden="true">{item.icon}</span>
-              <span className="side-nav-label">{item.label}</span>
+              {isMobile || isExpanded ? <span className="side-nav-label">{item.label}</span> : null}
             </NavLink>
           </li>
         ))}
@@ -160,7 +175,7 @@ export function SideNav({ isOpen = false, onClose, onNavigate }: SideNavProps) {
           aria-label="Cerrar sesión"
         >
           <span className="side-nav-icon" aria-hidden="true"><HiArrowRightOnRectangle /></span>
-          <span className="side-nav-label">Cerrar sesión</span>
+          {isMobile || isExpanded ? <span className="side-nav-label">Cerrar sesión</span> : null}
         </button>
       </div>
     </nav>

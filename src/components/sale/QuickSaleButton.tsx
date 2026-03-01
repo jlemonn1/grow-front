@@ -58,7 +58,7 @@ export function QuickSaleButton() {
               setIsModalOpen(true);
             }
           }}
-          aria-label="Venta rápida"
+          aria-label="Dispensación rápida"
           type="button"
         >
           {/* SVG para la animación láser del círculo */}

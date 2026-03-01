@@ -108,7 +108,7 @@ export function SalesPage() {
         .filter((id, index, self) => self.indexOf(id) === index);
       await loadCustomerNames(customerIds);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar las ventas');
+      setError(err.message || 'Error al cargar las dispensaciones');
     } finally {
       setLoading(false);
     }
@@ -200,7 +200,7 @@ export function SalesPage() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-        <PageHeader title="Ventas" />
+        <PageHeader title="Dispensaciones" />
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
           <Button
             variant={viewMode === 'dispensas' ? 'primary' : 'secondary'}
@@ -296,7 +296,7 @@ export function SalesPage() {
               } : undefined}
               onPageChange={handlePageChange}
               onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
-              emptyMessage="No hay ventas disponibles"
+              emptyMessage="No hay dispensaciones disponibles"
               getRowDataTour={(sale) => `sale-row-${sale.id}`}
               renderCard={(sale, isExpanded, onToggleExpand) => (
                 <SaleCard

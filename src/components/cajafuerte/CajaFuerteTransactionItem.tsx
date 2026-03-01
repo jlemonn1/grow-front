@@ -15,7 +15,7 @@ const getTransactionTypeLabel = (type: CajaFuerteTransactionType): string => {
     case 'WITHDRAW':
       return 'Retirar';
     case 'SALE_INPUT':
-      return 'Entrada por venta';
+      return 'Entrada por dispensación';
     case 'SALE_OUTPUT':
       return 'Salida por cambio';
     default:

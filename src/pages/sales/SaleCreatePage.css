@@ -302,6 +302,30 @@
   .sale-create-checkout-layout {
     grid-template-columns: 1fr 280px;
   }
+
+  .wizard-step-content.wizard-step-1 .sale-create-main {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-step-content.wizard-step-1 .sale-create-main .sale-create-section:last-child {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .wizard-step-content.wizard-step-1 .sale-create-main {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md, 16px);
+  }
+  
+  .wizard-step-content.wizard-step-1 .sale-create-main .sale-create-section {
+    width: 100%;
+  }
+  
+  .wizard-step-content.wizard-step-1 .sale-create-main .sale-create-section:last-child {
+    order: -1;
+  }
 }
 
 @media (max-width: 900px) {
@@ -520,9 +544,23 @@
 }
 
 .wizard-step-content.wizard-step-1 .sale-create-main {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--spacing-lg, 24px);
+  align-items: start;
+  min-height: 0;
+}
+
+.wizard-step-content.wizard-step-1 .sale-create-main .sale-create-section:first-child {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg, 24px);
+}
+
+.wizard-step-content.wizard-step-1 .sale-create-main .sale-create-section:last-child {
+  position: sticky;
+  top: var(--spacing-lg, 24px);
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
 /* Wizard Step 2 Grid - Optimizado para iPad horizontal */

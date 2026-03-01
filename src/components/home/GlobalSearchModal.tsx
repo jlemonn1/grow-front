@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiQrCode } from 'react-icons/hi2';
-import { HiSearch, HiPhone, HiKey } from 'react-icons/hi';
+import { HiSearch, HiPhone, HiKey, HiUser, HiIdentification } from 'react-icons/hi';
 import { Input } from '@/components/forms/Input';
 import { GlobalSearchResultItem } from './GlobalSearchResultItem';
 import { QRScannerModal } from '@/components/common/QRScannerModal';
@@ -11,6 +11,9 @@ import { customersService } from '@/services/customers.service';
 import { useTicket } from '@/hooks/useTicket';
 import type { Product, Customer } from '@/types/models';
 import './GlobalSearchModal.css';
+
+type SearchType = 'name' | 'phone' | 'pin' | 'dni' | 'any';
+type SearchMode = 'auto' | 'manual';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -25,8 +28,12 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState<'name' | 'phone' | 'pin' | 'any' | null>(null);
+  const [searchType, setSearchType] = useState<SearchType | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  
+  // Estado para modo manual de búsqueda
+  const [searchMode, setSearchMode] = useState<SearchMode>('auto');
+  const [manualSearchType, setManualSearchType] = useState<SearchType | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,14 +54,16 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
       setProducts([]);
       setCustomers([]);
       setSearchType(null);
+      setSearchMode('auto');
+      setManualSearchType(null);
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     }
   }, [isOpen]);
 
-  // Detectar tipo de búsqueda
-  const getSearchType = useCallback((query: string): 'name' | 'phone' | 'pin' | 'any' => {
+  // Detectar tipo de búsqueda automática
+  const getAutoSearchType = useCallback((query: string): SearchType => {
     if (query.length < 3) return 'any';
     
     const trimmed = query.trim();
@@ -71,6 +80,21 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     }
     
     return 'any';
+  }, []);
+
+  const handleChipClick = useCallback((type: SearchType) => {
+    if (searchMode === 'manual' && manualSearchType === type) {
+      setSearchMode('auto');
+      setManualSearchType(null);
+    } else {
+      setSearchMode('manual');
+      setManualSearchType(type);
+    }
+  }, [searchMode, manualSearchType]);
+
+  const handleClearFilter = useCallback(() => {
+    setSearchMode('auto');
+    setManualSearchType(null);
   }, []);
 
   // Easter egg: detectar búsqueda de "onboarding"
@@ -106,8 +130,14 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
       return;
     }
 
-    const detectedType = getSearchType(trimmed);
-    setSearchType(detectedType);
+    // Determinar el tipo de búsqueda según el modo
+    let finalSearchType: SearchType;
+    if (searchMode === 'manual' && manualSearchType) {
+      finalSearchType = manualSearchType;
+    } else {
+      finalSearchType = getAutoSearchType(trimmed);
+    }
+    setSearchType(finalSearchType);
 
     // Limpiar timeout anterior
     if (searchTimeoutRef.current) {
@@ -121,7 +151,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
         // Buscar en paralelo productos y clientes
         const [productsResponse, customersResponse] = await Promise.all([
           listProducts({ q: trimmed, page: 0, size: 10 }),
-          customersService.search({ q: trimmed, page: 0, size: 10 }),
+          customersService.search({ q: trimmed, type: finalSearchType === 'any' ? undefined : finalSearchType, page: 0, size: 10 }),
         ]);
 
         const sortedProducts = [...productsResponse.content].sort((a, b) => {
@@ -146,7 +176,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, getSearchType]);
+  }, [searchQuery, getAutoSearchType, searchMode, manualSearchType]);
 
   // Manejar tecla ESC
   useEffect(() => {
@@ -233,6 +263,53 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
         </div>
 
         <div className="global-search-modal-body">
+          {/* Chips de selección de tipo de búsqueda */}
+          <div className="global-search-modal-chips">
+            <button
+              type="button"
+              className={`global-search-chip ${searchType === 'pin' || (searchMode === 'manual' && manualSearchType === 'pin') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'pin' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('pin')}
+            >
+              <HiKey />
+              <span>PIN</span>
+            </button>
+            <button
+              type="button"
+              className={`global-search-chip ${searchType === 'name' || (searchMode === 'manual' && manualSearchType === 'name') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'name' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('name')}
+            >
+              <HiUser />
+              <span>Nombre</span>
+            </button>
+            <button
+              type="button"
+              className={`global-search-chip ${searchType === 'phone' || (searchMode === 'manual' && manualSearchType === 'phone') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'phone' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('phone')}
+            >
+              <HiPhone />
+              <span>Teléfono</span>
+            </button>
+            <button
+              type="button"
+              className={`global-search-chip ${searchType === 'dni' || (searchMode === 'manual' && manualSearchType === 'dni') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'dni' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('dni')}
+            >
+              <HiIdentification />
+              <span>DNI</span>
+            </button>
+            {searchMode === 'manual' && (
+              <button
+                type="button"
+                className="global-search-chip-clear"
+                onClick={handleClearFilter}
+                aria-label="Quitar filtro y volver a automático"
+                title="Quitar filtro y volver a automático"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
           <div className="global-search-modal-input-wrapper">
             <Input
               ref={inputRef}
@@ -262,25 +339,31 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                 {searchType === 'name' && (
                   <>
                     <HiSearch className="global-search-modal-search-type-icon" />
-                    Buscando por nombre
+                    Buscando por nombre {searchMode === 'manual' && '(manual)'}
                   </>
                 )}
                 {searchType === 'phone' && (
                   <>
                     <HiPhone className="global-search-modal-search-type-icon" />
-                    Buscando por teléfono
+                    Buscando por teléfono {searchMode === 'manual' && '(manual)'}
                   </>
                 )}
                 {searchType === 'pin' && (
                   <>
                     <HiKey className="global-search-modal-search-type-icon" />
-                    Buscando por PIN
+                    Buscando por PIN {searchMode === 'manual' && '(manual)'}
+                  </>
+                )}
+                {searchType === 'dni' && (
+                  <>
+                    <HiIdentification className="global-search-modal-search-type-icon" />
+                    Buscando por DNI {searchMode === 'manual' && '(manual)'}
                   </>
                 )}
                 {searchType === 'any' && (
                   <>
                     <HiSearch className="global-search-modal-search-type-icon" />
-                    Búsqueda general
+                    Búsqueda general {searchMode === 'manual' && '(manual)'}
                   </>
                 )}
               </div>

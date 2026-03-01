@@ -15,11 +15,22 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps = {}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
+    const saved = localStorage.getItem('sidebarExpanded');
+    return saved !== 'false';
+  });
   const location = useLocation();
   const isNewSalePage = location.pathname === '/sales/new';
 
   const openMobileMenu = () => setIsMobileMenuOpen(true);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarExpanded(prev => {
+      localStorage.setItem('sidebarExpanded', String(!prev));
+      return !prev;
+    });
+  };
 
   // Prevenir scroll del body cuando el menú está abierto en móvil
   useEffect(() => {
@@ -43,6 +54,8 @@ export function AppLayout({ children }: AppLayoutProps = {}) {
         isOpen={isMobileMenuOpen} 
         onClose={closeMobileMenu}
         onNavigate={closeMobileMenu}
+        isExpanded={isSidebarExpanded}
+        onToggleExpand={toggleSidebar}
       />
       {isMobileMenuOpen && (
         <div 

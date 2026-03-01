@@ -543,7 +543,7 @@ export function SaleCreatePage() {
         }
 
         // Otros errores
-        showToast(apiError.message || 'Error al procesar la venta', 'error');
+        showToast(apiError.message || 'Error al procesar la dispensación', 'error');
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         showToast(errorMessage, 'error');
@@ -817,6 +817,7 @@ export function SaleCreatePage() {
             ref={productSearchRef}
             selectedProduct={selectedProduct}
             onSelect={handleProductSelect}
+            customerId={customer?.id}
           />
           {selectedProduct && (
             <div className="sale-create-product-form">

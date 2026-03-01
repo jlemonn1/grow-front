@@ -21,7 +21,7 @@ export function DraftRecoveryModal({ isOpen, draft, onRecover, onDiscard }: Draf
     <Modal 
       isOpen={isOpen} 
       onClose={onDiscard} 
-      title="Borrador de Venta Encontrado"
+      title="Borrador de Dispensación Encontrado"
       showCloseButton={false}
       closeOnOverlayClick={false}
       closeOnEscape={false}
@@ -29,7 +29,7 @@ export function DraftRecoveryModal({ isOpen, draft, onRecover, onDiscard }: Draf
       <div className="draft-recovery-modal">
         <div className="draft-recovery-content">
           <p className="draft-recovery-message">
-            Se encontró un borrador de venta guardado anteriormente.
+            Se encontró un borrador de dispensación guardado anteriormente.
           </p>
           
           <div className="draft-recovery-summary">

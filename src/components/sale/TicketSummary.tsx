@@ -300,7 +300,7 @@ function TicketSummaryComponent({
           style={{ width: '100%' }}
           data-tour="confirm-sale"
         >
-          {isProcessing ? 'Procesando...' : 'Procesar Venta'}
+          {isProcessing ? 'Procesando...' : 'Dispensar'}
         </Button>
       </div>
     </div>

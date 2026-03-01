@@ -14,6 +14,95 @@
   box-sizing: border-box;
 }
 
+/* Chips de selección de tipo de búsqueda */
+.customers-page-chips {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.customers-page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  white-space: nowrap;
+}
+
+.customers-page-chip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.customers-page-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--border-led-color);
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+/* Chip activo en modo automático (ilumina según lo que busca) */
+.customers-page-chip.active {
+  color: var(--neon-primary);
+  border-color: var(--border-led-color);
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.1);
+  box-shadow: 0 0 12px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+  animation: chipAutoGlow 2s ease-in-out infinite;
+}
+
+/* Chip activo en modo manual */
+.customers-page-chip.manual {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5), 0 0 24px rgba(245, 158, 11, 0.3);
+  animation: none;
+}
+
+@keyframes chipAutoGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--neon-glow-primary);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--neon-glow-primary), 0 0 32px var(--neon-glow-secondary);
+  }
+}
+
+/* Botón para quitar filtro manual */
+.customers-page-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--color-error);
+  background: var(--bg-primary);
+  border: 1px solid var(--color-error);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+  margin-left: auto;
+}
+
+.customers-page-chip-clear:hover {
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  transform: scale(1.1);
+}
+
 .customers-page-search-hint {
   margin-top: var(--spacing-xs);
   font-size: 0.875rem;

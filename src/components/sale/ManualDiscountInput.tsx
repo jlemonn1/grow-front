@@ -151,7 +151,7 @@ export function ManualDiscountInput({
       </div>
       <span className="discount-hint">
         {type === 'PERCENTAGE' 
-          ? 'Descuento sobre el total de la venta' 
+          ? 'Descuento sobre el total de la dispensación' 
           : `Cantidad fija de descuento (max ${maxDiscountValue.toFixed(2)}€)`
         }
       </span>

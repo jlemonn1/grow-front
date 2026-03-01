@@ -19,7 +19,11 @@ import type { Customer } from '@/types/models';
 import type { PageResponse } from '@/types/api';
 import { formatDateTime } from '@/utils/dates';
 import { formatMoney } from '@/utils/money';
+import { HiPhone, HiKey, HiUser, HiIdentification } from 'react-icons/hi';
 import './CustomersPage.css';
+
+type SearchType = 'name' | 'phone' | 'pin' | 'dni' | 'any';
+type SearchMode = 'auto' | 'manual';
 
 export function CustomersPage() {
   const navigate = useNavigate();
@@ -38,6 +42,9 @@ export function CustomersPage() {
   const contextPagination = isVisitorMode ? { page: 0, size: 25, total: 0, totalPages: 0 } : customersContext.pagination;
   const loadCustomers = isVisitorMode ? (() => Promise.resolve()) : customersContext.loadCustomers;
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<SearchType | null>(null);
+  const [searchMode, setSearchMode] = useState<SearchMode>('auto');
+  const [manualSearchType, setManualSearchType] = useState<SearchType | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; customer: Customer | null }>({
     isOpen: false,
     customer: null,
@@ -62,7 +69,7 @@ export function CustomersPage() {
   const pagination = isVisitorMode ? visitorPagination : contextPagination;
 
   // Cargar clientes (públicos o normales según el modo)
-  const loadCustomersData = useCallback(async (params?: { q?: string; page?: number; size?: number }) => {
+  const loadCustomersData = useCallback(async (params?: { q?: string; type?: SearchType; page?: number; size?: number }) => {
     if (isVisitorMode) {
       setVisitorLoading(true);
       setVisitorError(null);
@@ -87,8 +94,8 @@ export function CustomersPage() {
     }
   }, [isVisitorMode, loadCustomers]);
 
-  // Detectar tipo de búsqueda
-  const getSearchType = (query: string): 'name' | 'phone' | 'pin' | 'any' => {
+  // Detectar tipo de búsqueda automática
+  const getAutoSearchType = (query: string): SearchType => {
     if (query.length < 3) return 'any';
     
     const trimmed = query.trim();
@@ -107,6 +114,22 @@ export function CustomersPage() {
     return 'any';
   };
 
+  // Manejar clic en chips
+  const handleChipClick = useCallback((type: SearchType) => {
+    if (searchMode === 'manual' && manualSearchType === type) {
+      setSearchMode('auto');
+      setManualSearchType(null);
+    } else {
+      setSearchMode('manual');
+      setManualSearchType(type);
+    }
+  }, [searchMode, manualSearchType]);
+
+  const handleClearFilter = useCallback(() => {
+    setSearchMode('auto');
+    setManualSearchType(null);
+  }, []);
+
   // Cargar clientes al montar
   useEffect(() => {
     // Si estamos en modo demo o modo normal, cargar datos
@@ -123,13 +146,27 @@ export function CustomersPage() {
       return;
     }
 
+    // Determinar tipo de búsqueda
+    let finalSearchType: SearchType;
+    if (searchMode === 'manual' && manualSearchType) {
+      finalSearchType = manualSearchType;
+    } else {
+      finalSearchType = getAutoSearchType(searchQuery);
+    }
+    setSearchType(finalSearchType);
+
     const timer = setTimeout(() => {
-      loadCustomersData({ q: searchQuery || undefined, page: 0, size: 25 });
+      loadCustomersData({ 
+        q: searchQuery || undefined, 
+        type: finalSearchType === 'any' ? undefined : finalSearchType,
+        page: 0, 
+        size: 25 
+      });
     }, 300);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  }, [searchQuery, searchMode, manualSearchType]);
 
   const handlePageChange = useCallback((page: number) => {
     loadCustomersData({ q: searchQuery || undefined, page, size: 25 });
@@ -240,6 +277,53 @@ export function CustomersPage() {
       
       <div className="customers-page-container" style={{ marginTop: 'var(--spacing-lg)' }}>
         <div className="customers-page-search">
+          {/* Chips de selección de tipo de búsqueda */}
+          <div className="customers-page-chips">
+            <button
+              type="button"
+              className={`customers-page-chip ${searchType === 'pin' || (searchMode === 'manual' && manualSearchType === 'pin') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'pin' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('pin')}
+            >
+              <HiKey />
+              <span>PIN</span>
+            </button>
+            <button
+              type="button"
+              className={`customers-page-chip ${searchType === 'name' || (searchMode === 'manual' && manualSearchType === 'name') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'name' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('name')}
+            >
+              <HiUser />
+              <span>Nombre</span>
+            </button>
+            <button
+              type="button"
+              className={`customers-page-chip ${searchType === 'phone' || (searchMode === 'manual' && manualSearchType === 'phone') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'phone' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('phone')}
+            >
+              <HiPhone />
+              <span>Teléfono</span>
+            </button>
+            <button
+              type="button"
+              className={`customers-page-chip ${searchType === 'dni' || (searchMode === 'manual' && manualSearchType === 'dni') ? 'active' : ''} ${searchMode === 'manual' && manualSearchType === 'dni' ? 'manual' : ''}`}
+              onClick={() => handleChipClick('dni')}
+            >
+              <HiIdentification />
+              <span>DNI</span>
+            </button>
+            {searchMode === 'manual' && (
+              <button
+                type="button"
+                className="customers-page-chip-clear"
+                onClick={handleClearFilter}
+                aria-label="Quitar filtro y volver a automático"
+                title="Quitar filtro y volver a automático"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          
           <Input
             type="text"
             placeholder="Buscar por nombre, PIN o teléfono (mín. 3 caracteres)..."
@@ -255,9 +339,11 @@ export function CustomersPage() {
           )}
           {searchQuery.length >= 3 && (
             <div className="customers-page-search-hint">
-              Buscando: {getSearchType(searchQuery) === 'name' ? 'por nombre' : 
-                        getSearchType(searchQuery) === 'phone' ? 'por teléfono' :
-                        getSearchType(searchQuery) === 'pin' ? 'por PIN' : 'en todos los campos'}
+              Buscando: {searchType === 'name' ? 'por nombre' : 
+                        searchType === 'phone' ? 'por teléfono' :
+                        searchType === 'pin' ? 'por PIN' :
+                        searchType === 'dni' ? 'por DNI' : 'en todos los campos'}
+              {searchMode === 'manual' && ' (manual)'}
             </div>
           )}
         </div>
