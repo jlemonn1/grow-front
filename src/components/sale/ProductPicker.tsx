@@ -87,7 +87,12 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
             page: 0, 
             size: 100 
           });
-          setResults(response.content);
+          const sortedResults = [...response.content].sort((a, b) => {
+            if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+            if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+            return 0;
+          });
+          setResults(sortedResults);
           setShowResults(true);
           setShowCategories(false);
         } catch (error) {
@@ -127,7 +132,12 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
           params.categoryId = selectedCategoryId;
         }
         const response = await listProducts(params);
-        setResults(response.content);
+        const sortedResults = [...response.content].sort((a, b) => {
+          if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+          if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+          return 0;
+        });
+        setResults(sortedResults);
         setShowResults(true);
       } catch (error) {
         console.error('Error al buscar productos:', error);

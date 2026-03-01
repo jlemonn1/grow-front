@@ -79,8 +79,14 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
       const start = page * size;
       const end = start + size;
       const paginatedProducts = filteredProducts.slice(start, end);
+      
+      const sortedProducts = [...paginatedProducts].sort((a, b) => {
+        if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+        if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+        return 0;
+      });
 
-      setProducts(paginatedProducts);
+      setProducts(sortedProducts);
       setPagination({
         page: page,
         size: size,
@@ -127,8 +133,14 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
       const start = page * size;
       const end = start + size;
       const paginatedProducts = filteredProducts.slice(start, end);
+      
+      const sortedProducts = [...paginatedProducts].sort((a, b) => {
+        if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+        if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+        return 0;
+      });
 
-      setProducts(paginatedProducts);
+      setProducts(sortedProducts);
       setPagination({
         page: page,
         size: size,
@@ -148,7 +160,12 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
 
     try {
       const response: PageResponse<Product> = await listProducts(searchParams);
-      setProducts(response.content);
+      const sortedProducts = [...response.content].sort((a, b) => {
+        if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+        if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+        return 0;
+      });
+      setProducts(sortedProducts);
       setPagination({
         page: response.number,
         size: response.size,

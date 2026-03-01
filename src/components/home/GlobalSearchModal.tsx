@@ -124,7 +124,13 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
           customersService.search({ q: trimmed, page: 0, size: 10 }),
         ]);
 
-        setProducts(productsResponse.content);
+        const sortedProducts = [...productsResponse.content].sort((a, b) => {
+          if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+          if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+          return 0;
+        });
+
+        setProducts(sortedProducts);
         setCustomers(customersResponse.content);
       } catch (error) {
         console.error('Error al buscar:', error);

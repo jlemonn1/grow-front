@@ -72,7 +72,12 @@ export function ProductsPage() {
       setVisitorError(null);
       try {
         const response: PageResponse<Product> = await listProductsPublic(params);
-        setVisitorProducts(response.content);
+        const sortedProducts = [...response.content].sort((a, b) => {
+          if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+          if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+          return 0;
+        });
+        setVisitorProducts(sortedProducts);
         setVisitorPagination({
           page: response.number,
           size: response.size,
