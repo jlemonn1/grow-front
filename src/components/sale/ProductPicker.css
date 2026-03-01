@@ -68,34 +68,9 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  max-height: 320px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   animation: slideDownExpand 0.2s ease-out forwards;
   min-width: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-led-color) transparent;
-}
-
-/* Estilos para el scrollbar webkit */
-.product-picker-results::-webkit-scrollbar {
-  width: 8px;
-}
-
-.product-picker-results::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 4px;
-}
-
-.product-picker-results::-webkit-scrollbar-thumb {
-  background: var(--border-led-color);
-  border-radius: 4px;
-  box-shadow: 0 0 4px var(--neon-glow-primary);
-  transition: all var(--transition-base);
-}
-
-.product-picker-results::-webkit-scrollbar-thumb:hover {
-  background: var(--neon-primary);
 }
 
 @keyframes slideDownExpand {
@@ -106,6 +81,31 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.product-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
+@media (min-width: 480px) {
+  .product-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .product-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -120,6 +120,140 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* Product Picker Card (Grid) */
+.product-picker-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-sm);
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.product-picker-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--border-radius-sm);
+  border: 2px solid transparent;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  pointer-events: none;
+}
+
+.product-picker-card:hover {
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.product-picker-card:hover::before {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.product-picker-card.selected {
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.12);
+}
+
+.product-picker-card.selected::before {
+  border-color: var(--neon-primary);
+  box-shadow: 0 0 12px var(--neon-glow-primary), 0 0 24px var(--neon-glow-secondary);
+}
+
+.product-picker-card.selected .product-picker-card-name {
+  color: var(--neon-primary);
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--neon-glow-primary);
+}
+
+.product-picker-card.out-of-stock {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.product-picker-card.out-of-stock:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.product-picker-card.out-of-stock::before {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.product-picker-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.product-picker-card-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--border-radius-sm);
+}
+
+.product-picker-card-out-of-stock-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.product-picker-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.product-picker-card-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--transition-fast), text-shadow var(--transition-glow);
+}
+
+.product-picker-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+}
+
+.product-picker-card-price {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.product-picker-card-stock {
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.product-picker-card-stock.stock-zero {
+  color: var(--color-error);
 }
 
 .product-picker-item {

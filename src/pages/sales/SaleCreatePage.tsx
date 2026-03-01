@@ -9,6 +9,7 @@ import { TicketItemsList } from '@/components/sale/TicketItemsList';
 import { TicketSummary } from '@/components/sale/TicketSummary';
 import { WizardSummary } from '@/components/sale/WizardSummary';
 import { NumericKeypad } from '@/components/common/NumericKeypad';
+import { SaleCreateMain } from '@/components/sale/SaleCreateMain';
 
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
 import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
@@ -29,6 +30,7 @@ import { useCajaStatus } from '@/hooks/useCajaStatus';
 import type { ValidationError, ApiError } from '@/types/api';
 import type { CreateSaleRequest, Product, Sale, SaleDraft, PendingSale } from '@/types/models';
 import './SaleCreatePage.css';
+import '@/components/sale/SaleCreateMain.css';
 
 type Step = 0 | 1 | 2;
 
@@ -807,7 +809,7 @@ export function SaleCreatePage() {
 
   const renderStep1 = () => (
     <div className="wizard-step-content wizard-step-1">
-      <div className="sale-create-main">
+      <SaleCreateMain>
         <div className="sale-create-section">
           <div className="sale-create-section-header">
             <HiOutlineCube className="sale-create-section-icon" />
@@ -866,7 +868,7 @@ export function SaleCreatePage() {
             getProductStock={getProductStock}
           />
         </div>
-      </div>
+      </SaleCreateMain>
     </div>
   );
 

@@ -1,11 +1,11 @@
 import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Input } from '@/components/forms/Input';
 import { ProductImage } from '@/components/common/ProductImage';
+import { ProductPickerGrid } from './ProductPickerGrid';
 import { listProducts } from '@/services/products.service';
 import { listCategories } from '@/services/categories.service';
 import { customersService } from '@/services/customers.service';
 import type { Product, Category } from '@/types/models';
-import { formatMoney } from '@/utils/money';
 import { getMeasurementShortLabel } from '@/utils/measurement';
 import './ProductPicker.css';
 
@@ -370,52 +370,11 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
               No se encontraron productos
             </div>
           ) : (
-            <ul className="product-picker-list">
-                {results.map((product) => {
-                  const measurementSuffix = getMeasurementShortLabel(product.measurementType);
-                  return (
-                  <li
-                  key={product.id}
-                  id={`product-${product.id}`}
-                  className={`product-picker-item ${
-                    selectedProduct?.id === product.id ? 'selected' : ''
-                  } ${product.stockGrams <= 0 ? 'out-of-stock' : ''}`}
-                  data-tour={`product-row-${product.id}`}
-                  onMouseDown={(e) => {
-                    // Prevenir que el blur del input cierre el dropdown antes del click
-                    e.preventDefault();
-                  }}
-                  onClick={() => handleSelect(product)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelect(product);
-                    }
-                  }}
-                  role="option"
-                  aria-selected={selectedProduct?.id === product.id}
-                  aria-disabled={product.stockGrams <= 0}
-                  tabIndex={0}
-                >
-                  <ProductImage 
-                    imageUrl={product.imageUrl} 
-                    alt={product.name}
-                    size="small"
-                    className="product-picker-item-image"
-                  />
-                  <div className="product-picker-item-info">
-                    <div className="product-picker-item-name">{product.name}</div>
-                    <div className="product-picker-item-details">
-                      <span>{formatMoney(product.pricePerGram)}/{measurementSuffix}</span>
-                      <span className={`product-picker-stock ${product.stockGrams <= 0 ? 'stock-zero' : ''}`}>
-                        Stock: {product.stockGrams}{measurementSuffix}
-                      </span>
-                    </div>
-                  </div>
-                  </li>
-                );
-                })}
-            </ul>
+            <ProductPickerGrid
+              products={results}
+              selectedProduct={selectedProduct}
+              onSelect={handleSelect}
+            />
           )}
         </div>
       )}
