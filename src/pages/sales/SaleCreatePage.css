@@ -5,7 +5,7 @@
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
-  padding: 0 var(--spacing-md, 16px);
+  padding: var(--spacing-md, 16px);
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   transition: all var(--transition-base), box-shadow var(--transition-glow);
 }
