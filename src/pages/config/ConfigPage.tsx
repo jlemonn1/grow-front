@@ -51,12 +51,6 @@ export function ConfigPage() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoadRef = useRef(true);
   
-  // Estados para el easter egg de datos de prueba (solo para admin principal)
-  const [_clickCount, setClickCount] = useState(0);
-  const [scrollListenerActive, setScrollListenerActive] = useState(false);
-  const [loadingTestData, setLoadingTestData] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
-  
   // Estados para el easter egg de reset completo (secuencia de colores)
   const [colorSequence, setColorSequence] = useState<string[]>([]);
   const sequenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,112 +161,6 @@ export function ConfigPage() {
       setIsRegistering(false);
     }
   };
-
-  // Función para cargar datos de prueba (solo para admin principal)
-  const loadTestData = useCallback(async () => {
-    // Verificar que sea admin principal
-    if (!currentAdmin?.isMainAdmin) {
-      return;
-    }
-    
-    if (loadingTestData || dataLoaded) return;
-    
-    setLoadingTestData(true);
-    setScrollListenerActive(false);
-    showToast('Cargando datos de prueba...', 'info');
-
-    try {
-      const result = await loadTestDataForOnboarding();
-      setDataLoaded(true);
-      showToast(
-        `¡Easter egg activado! Se crearon ${result.customers} clientes, ${result.products} productos y ${result.sales} ventas.`,
-        'success'
-      );
-    } catch (error) {
-      console.error('Error cargando datos de prueba:', error);
-      showToast('Error al cargar datos de prueba', 'error');
-      setScrollListenerActive(false);
-    } finally {
-      setLoadingTestData(false);
-    }
-  }, [currentAdmin, loadingTestData, dataLoaded, showToast]);
-
-  // Usar refs para mantener los valores actuales sin depender del closure
-  const scrollListenerActiveRef = useRef(false);
-  const loadingTestDataRef = useRef(false);
-  const dataLoadedRef = useRef(false);
-
-  useEffect(() => {
-    scrollListenerActiveRef.current = scrollListenerActive;
-  }, [scrollListenerActive]);
-
-  useEffect(() => {
-    loadingTestDataRef.current = loadingTestData;
-  }, [loadingTestData]);
-
-  useEffect(() => {
-    dataLoadedRef.current = dataLoaded;
-  }, [dataLoaded]);
-
-  // Detectar clics en el título (solo para admin principal)
-  useEffect(() => {
-    // Solo activar el easter egg si es admin principal y no se han cargado datos
-    if (!currentAdmin?.isMainAdmin || dataLoaded) return;
-    
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let titleElement: HTMLElement | null = null;
-
-    const handleTitleClick = (e: MouseEvent) => {
-      e.stopPropagation();
-      setClickCount((prev) => {
-        const newCount = prev + 1;
-        console.log('Click en título detectado, contador:', newCount);
-        if (newCount === 3) {
-          console.log('¡3 clics alcanzados! La luz roja debería aparecer. Haz un cuarto clic para activar.');
-          setScrollListenerActive(true);
-        } else if (newCount >= 4) {
-          // Usar los refs para tener los valores actuales
-          if (scrollListenerActiveRef.current && !loadingTestDataRef.current && !dataLoadedRef.current) {
-            console.log('¡Cuarto clic! Activando carga de datos...');
-            loadTestData();
-          } else {
-            console.log('Cuarto clic detectado pero condiciones no cumplidas:', {
-              scrollActive: scrollListenerActiveRef.current,
-              loading: loadingTestDataRef.current,
-              loaded: dataLoadedRef.current
-            });
-          }
-        }
-        return newCount;
-      });
-    };
-
-    // Esperar a que el DOM esté listo antes de buscar el elemento
-    const findAndAttachListener = () => {
-      titleElement = document.querySelector('.page-header-title') as HTMLElement;
-      if (!titleElement) {
-        // Si no se encuentra, intentar de nuevo después de un breve delay
-        timeoutId = setTimeout(findAndAttachListener, 100);
-        return;
-      }
-
-      console.log('Listener de clics agregado al título');
-      titleElement.addEventListener('click', handleTitleClick);
-    };
-
-    findAndAttachListener();
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (titleElement) {
-        titleElement.removeEventListener('click', handleTitleClick);
-      }
-    };
-  }, [currentAdmin, dataLoaded, scrollListenerActive, loadingTestData, loadTestData]);
-
-  // Mantener los refs actualizados (ya no necesitamos el listener de scroll)
 
   const handleChange = useCallback((field: keyof UpdateGrowConfigurationRequest, value: string | boolean | null | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
