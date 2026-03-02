@@ -93,12 +93,24 @@ export function InventoryPage() {
     return `${product.todaySalesOut}${unit}`;
   };
 
+  const calculateNewStock = (product: InventoryProduct, action: string, value: string) => {
+    const grams = Number(value.replace(',', '.'));
+    if (isNaN(grams)) return null;
+    
+    if (action === 'recharge') {
+      return product.stockGrams + grams;
+    } else if (action === 'set') {
+      return grams;
+    }
+    return null;
+  };
+
   if (loading && products.length === 0) {
     return (
       <>
         <PageHeader title="Inventario" />
         <div className="inventory-page-container">
-          <p>Cargando...</p>
+          <p style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Cargando...</p>
         </div>
       </>
     );
@@ -111,7 +123,7 @@ export function InventoryPage() {
       <div className="inventory-page-container" style={{ marginTop: 'var(--spacing-lg)' }}>
         <div className="inventory-page-header">
           <div className={`inventory-page-counter ${isAllChecked ? 'checked' : ''}`}>
-            <span>{checkedCount}/{totalCount} verificados</span>
+            <span>{checkedCount}/{totalCount}</span>
           </div>
           
           <div className="inventory-page-actions">
@@ -141,35 +153,51 @@ export function InventoryPage() {
             {categoryProducts.map(product => {
               const state = productStates[product.id];
               const isChecked = state?.checked || false;
+              const action = state?.action;
+              const actionGrams = state?.grams;
 
               return (
                 <div 
                   key={product.id} 
                   className={`inventory-product-card ${isChecked ? 'checked' : ''}`}
                 >
-                  <div className="inventory-product-header">
+                  <div className="inventory-product-info">
                     <h4 className="inventory-product-name">{product.name}</h4>
-                    {isChecked && (
-                      <span style={{ color: 'var(--color-success)' }}>✓</span>
-                    )}
-                  </div>
-                  
-                  <div className="inventory-product-stock">
-                    <span className="inventory-stock-current">
-                      Stock: {getStockLabel(product)}
-                    </span>
-                    <span className="inventory-stock-sales">
-                      Salidas hoy: {getSalesLabel(product)}
-                    </span>
+                    
+                    <div className="inventory-product-stats">
+                      <span className="inventory-stock-current">
+                        <span className="label">Stock:</span>
+                        <strong>{getStockLabel(product)}</strong>
+                      </span>
+                      <span className="inventory-stock-sales">
+                        <span className="label">Hoy:</span>
+                        {getSalesLabel(product)}
+                      </span>
+                    </div>
                   </div>
 
-                  {isChecked ? (
+                  {isChecked && action && actionGrams !== undefined ? (
                     <div className="inventory-product-actions">
+                      <span className={`inventory-stock-change ${action.toLowerCase()}`}>
+                        {action === 'RECHARGE' && <span>+{actionGrams}</span>}
+                        {action === 'SET' && <span>→{actionGrams}</span>}
+                        <span style={{ opacity: 0.7 }}>{getMeasurementShortLabel(product.measurementType)}</span>
+                      </span>
                       <button 
                         className="inventory-btn inventory-btn-uncheck"
                         onClick={() => uncheckProduct(product.id)}
                       >
-                        ✕ Deshacer
+                        ✕
+                      </button>
+                    </div>
+                  ) : isChecked ? (
+                    <div className="inventory-product-actions">
+                      <span className="inventory-btn-checked-badge">✓</span>
+                      <button 
+                        className="inventory-btn inventory-btn-uncheck"
+                        onClick={() => uncheckProduct(product.id)}
+                      >
+                        ✕
                       </button>
                     </div>
                   ) : (
@@ -178,19 +206,19 @@ export function InventoryPage() {
                         className="inventory-btn inventory-btn-check"
                         onClick={() => checkProduct(product.id)}
                       >
-                        ✓ Check
+                        ✓
                       </button>
                       <button 
                         className="inventory-btn"
                         onClick={() => openRechargeModal(product)}
                       >
-                        + Recargar
+                        +
                       </button>
                       <button 
                         className="inventory-btn"
                         onClick={() => openSetModal(product)}
                       >
-                        = Establecer
+                        =
                       </button>
                     </div>
                   )}
@@ -201,7 +229,7 @@ export function InventoryPage() {
         ))}
 
         {products.length === 0 && !loading && (
-          <p>No hay productos disponibles</p>
+          <p style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay productos disponibles</p>
         )}
       </div>
 
@@ -214,6 +242,12 @@ export function InventoryPage() {
             <p className="inventory-modal-product">
               {modalProduct.name}
             </p>
+            <p className="inventory-modal-hint">
+              Stock actual: {getStockLabel(modalProduct)}
+              {modalValue && (
+                <> → Nuevo: <strong>{calculateNewStock(modalProduct, modalType, modalValue)}{getMeasurementShortLabel(modalProduct.measurementType)}</strong></>
+              )}
+            </p>
             <input
               type="number"
               className="inventory-modal-input"
@@ -225,11 +259,11 @@ export function InventoryPage() {
               min="0"
             />
             <div className="inventory-modal-actions">
-              <button className="inventory-btn inventory-btn-secondary" onClick={closeModal}>
+              <button className="inventory-btn-secondary" onClick={closeModal}>
                 Cancelar
               </button>
               <button 
-                className="inventory-btn inventory-btn-primary" 
+                className="inventory-btn-primary" 
                 onClick={handleModalSubmit}
                 disabled={!modalValue || Number(modalValue) < 0}
               >
