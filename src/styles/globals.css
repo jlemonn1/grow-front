@@ -24,7 +24,8 @@
   --color-info-rgb: 59, 130, 246;
 
   /* Colores de fondo (modo claro por defecto, override en modo oscuro) */
-  --bg-dark: #1e293b;
+  /*--bg-dark: #1e293b; */
+  --bg-dark: #000000;
   --text-inverse: #ffffff;
   --border-radius: 8px;
   --border-radius-sm: 4px;
@@ -93,7 +94,8 @@
 /* Modo oscuro */
 [data-theme="dark"] {
   --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
+  /*--bg-secondary: #1e293b;*/
+  --bg-secondary: #000000;
   --bg-tertiary: #334155;
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;

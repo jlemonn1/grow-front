@@ -557,7 +557,8 @@
 
 .wizard-summary-customer strong,
 .wizard-summary-items strong {
-  color: var(--text-primary, #1e293b);
+  /*color: var(--text-primary, #1e293b);*/
+  color: var(--text-primary, #0000);
 }
 
 /* Responsive - Tablet iPad horizontal (1024px) */
