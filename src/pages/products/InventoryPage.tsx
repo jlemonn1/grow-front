@@ -31,6 +31,7 @@ export function InventoryPage() {
   const [modalProduct, setModalProduct] = useState<InventoryProduct | null>(null);
   const [modalValue, setModalValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     loadInventory();
@@ -41,6 +42,20 @@ export function InventoryPage() {
   };
 
   const handleFinish = async () => {
+    if (!isAllChecked) {
+      setShowConfirmModal(true);
+      return;
+    }
+    setSubmitting(true);
+    const success = await complete();
+    if (success) {
+      navigate('/products');
+    }
+    setSubmitting(false);
+  };
+
+  const handleConfirmFinish = async () => {
+    setShowConfirmModal(false);
     setSubmitting(true);
     const success = await complete();
     if (success) {
@@ -132,7 +147,7 @@ export function InventoryPage() {
             </Button>
             <Button 
               onClick={handleFinish} 
-              disabled={!isAllChecked || submitting}
+              disabled={submitting}
               loading={submitting}
             >
               Terminar
@@ -268,6 +283,33 @@ export function InventoryPage() {
                 disabled={!modalValue || Number(modalValue) < 0}
               >
                 Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="inventory-modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="inventory-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="inventory-modal-title">
+              ¿Terminar inventario?
+            </h3>
+            <p className="inventory-modal-product">
+              Solo se procesarán los {checkedCount} productos verificados de {totalCount}.
+            </p>
+            <p className="inventory-modal-hint">
+              Los productos sin verificar no se modificarán.
+            </p>
+            <div className="inventory-modal-actions">
+              <button className="inventory-btn-secondary" onClick={() => setShowConfirmModal(false)}>
+                Volver
+              </button>
+              <button 
+                className="inventory-btn-primary" 
+                onClick={handleConfirmFinish}
+              >
+                Terminar igual
               </button>
             </div>
           </div>
