@@ -131,16 +131,6 @@ export function InventoryPage() {
     return filtered;
   }, [groupedProducts, productStates, searchQuery, filterType]);
 
-  const filteredCheckedCount = useMemo(() => {
-    return Object.values(filteredGroupedProducts)
-      .flat()
-      .filter(p => productStates[p.id]?.checked)
-      .length;
-  }, [filteredGroupedProducts, productStates]);
-
-  const filteredTotalCount = useMemo(() => {
-    return Object.values(filteredGroupedProducts).flat().length;
-  }, [filteredGroupedProducts]);
 
   const getStockLabel = (product: InventoryProduct) => {
     const unit = getMeasurementShortLabel(product.measurementType);
