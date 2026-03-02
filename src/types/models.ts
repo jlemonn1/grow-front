@@ -633,3 +633,24 @@ export interface ValidateCouponResponse {
   discountValue?: number;
   message: string;
 }
+
+export type InventoryAction = 'CHECK' | 'RECHARGE' | 'SET';
+
+export interface InventoryItem {
+  productId: string;
+  action: InventoryAction;
+  grams?: number;
+}
+
+export interface CompleteInventoryRequest {
+  items: InventoryItem[];
+}
+
+export interface InventoryProduct {
+  id: string;
+  name: string;
+  categoryName: string;
+  stockGrams: number;
+  measurementType: ProductMeasurementType;
+  todaySalesOut: number;
+}

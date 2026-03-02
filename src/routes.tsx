@@ -11,6 +11,7 @@ import { ProductsPage } from './pages/products/ProductsPage';
 import { ProductCreatePage } from './pages/products/ProductCreatePage';
 import { ProductDetailPage } from './pages/products/ProductDetailPage';
 import { ProductEditPage } from './pages/products/ProductEditPage';
+import { InventoryPage } from './pages/products/InventoryPage';
 import { CustomersPage } from './pages/customers/CustomersPage';
 import { CustomerCreatePage } from './pages/customers/CustomerCreatePage';
 import { CustomerEditPage } from './pages/customers/CustomerEditPage';
@@ -69,6 +70,7 @@ export function AppRoutes() {
         <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="products/:id/edit" element={<ProductEditPage />} />
+        <Route path="products/inventory" element={<InventoryPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/new" element={<CustomerCreatePage />} />
         <Route path="customers/:id" element={<CustomerDetailPage />} />

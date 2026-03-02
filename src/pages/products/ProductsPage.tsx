@@ -217,6 +217,12 @@ export function ProductsPage() {
     dataTour: 'bulk-stock',
   };
 
+  const inventoryAction: PageHeaderAction = {
+    label: 'Inventario',
+    variant: 'secondary',
+    onClick: () => navigate('/products/inventory'),
+  };
+
   const batchConfirmAction: PageHeaderAction = {
     label: 'Confirmar recargas',
     onClick: handleBatchSubmit,
@@ -234,7 +240,7 @@ export function ProductsPage() {
   const extraActions = canManageStock
     ? batchMode
       ? [batchConfirmAction, batchCancelAction]
-      : [batchEnableAction]
+      : [inventoryAction, batchEnableAction]
     : undefined;
 
   const baseColumns = useMemo<ColumnDef<Product>[]>(() => [
