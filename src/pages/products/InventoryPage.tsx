@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
@@ -8,6 +8,7 @@ import type { InventoryProduct } from '@/types/models';
 import './InventoryPage.css';
 
 type ModalType = 'recharge' | 'set' | null;
+type FilterType = 'all' | 'pending' | 'checked';
 
 export function InventoryPage() {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ export function InventoryPage() {
   const [modalValue, setModalValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
 
   useEffect(() => {
     loadInventory();
@@ -98,6 +101,47 @@ export function InventoryPage() {
 
   const isAllChecked = checkedCount === totalCount && totalCount > 0;
 
+  const filteredGroupedProducts = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    const filtered: { [category: string]: InventoryProduct[] } = {};
+    
+    Object.entries(groupedProducts).forEach(([category, categoryProducts]) => {
+      const filteredProducts = categoryProducts.filter(product => {
+        const matchesSearch = !query || 
+          product.name.toLowerCase().includes(query) || 
+          product.categoryName.toLowerCase().includes(query);
+        
+        const state = productStates[product.id];
+        const isChecked = state?.checked || false;
+        
+        const matchesFilter = 
+          filterType === 'all' || 
+          (filterType === 'pending' && !isChecked) || 
+          (filterType === 'checked' && isChecked);
+        
+        return matchesSearch && matchesFilter;
+      });
+      
+      if (filteredProducts.length > 0) {
+        filtered[category] = filteredProducts;
+      }
+    });
+    
+    return filtered;
+  }, [groupedProducts, productStates, searchQuery, filterType]);
+
+  const filteredCheckedCount = useMemo(() => {
+    return Object.values(filteredGroupedProducts)
+      .flat()
+      .filter(p => productStates[p.id]?.checked)
+      .length;
+  }, [filteredGroupedProducts, productStates]);
+
+  const filteredTotalCount = useMemo(() => {
+    return Object.values(filteredGroupedProducts).flat().length;
+  }, [filteredGroupedProducts]);
+
   const getStockLabel = (product: InventoryProduct) => {
     const unit = getMeasurementShortLabel(product.measurementType);
     return `${product.stockGrams}${unit}`;
@@ -155,13 +199,43 @@ export function InventoryPage() {
           </div>
         </div>
 
+        <div className="inventory-search-bar">
+          <input
+            type="text"
+            className="inventory-search-input"
+            placeholder="Buscar por nombre o categoría..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          <div className="inventory-filter-toggle">
+            <button
+              className={`inventory-filter-btn ${filterType === 'all' ? 'active' : ''}`}
+              onClick={() => setFilterType('all')}
+            >
+              Todos
+            </button>
+            <button
+              className={`inventory-filter-btn ${filterType === 'pending' ? 'active' : ''}`}
+              onClick={() => setFilterType('pending')}
+            >
+              Pendientes
+            </button>
+            <button
+              className={`inventory-filter-btn ${filterType === 'checked' ? 'active' : ''}`}
+              onClick={() => setFilterType('checked')}
+            >
+              Verificados
+            </button>
+          </div>
+        </div>
+
         {error && (
           <div className="products-page-error">
             {error}
           </div>
         )}
 
-        {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+        {Object.entries(filteredGroupedProducts).map(([category, categoryProducts]) => (
           <div key={category} className="inventory-category-section">
             <h3 className="inventory-category-title">{category}</h3>
             
@@ -243,9 +317,11 @@ export function InventoryPage() {
           </div>
         ))}
 
-        {products.length === 0 && !loading && (
+        {products.length === 0 && !loading ? (
           <p style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay productos disponibles</p>
-        )}
+        ) : Object.keys(filteredGroupedProducts).length === 0 ? (
+          <p style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay productos que coincidan con la búsqueda</p>
+        ) : null}
       </div>
 
       {modalType && modalProduct && (
