@@ -49,6 +49,7 @@ export interface Product {
   salePricePerGram?: number;
   saleDiscountPercent?: number;
   createdAt?: string;
+  isActive?: boolean;
 }
 
 export interface Customer {
@@ -117,6 +118,7 @@ export interface CreateProductRequest {
   imageUrl?: string;
   initialStockGrams: number;
   measurementType: ProductMeasurementType;
+  isActive?: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -129,6 +131,7 @@ export interface UpdateProductRequest {
   onSale?: boolean;
   salePricePerGram?: number;
   saleDiscountPercent?: number;
+  isActive?: boolean;
 }
 
 export interface StockMovement {

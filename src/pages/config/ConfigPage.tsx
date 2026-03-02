@@ -13,7 +13,6 @@ import type { UpdateGrowConfigurationRequest } from '@/services/config.service';
 import type { ValidationError } from '@/types/api';
 import { generateColorPalette } from '@/utils/colorSystem';
 import { useColorAccessibility } from '@/hooks/useColorAccessibility';
-import { loadTestDataForOnboarding } from '@/services/testData.service';
 import { useAuth } from '@/context/auth.context';
 import { registerMainAdmin, hasToken } from '@/services/auth.service';
 import { triggerCompleteReset } from '@/services/panic.service';
@@ -148,17 +147,6 @@ export function ConfigPage() {
       await refreshUser();
       await refreshConfiguration();
       setNeedsRegistration(false);
-      
-      // Cargar datos de prueba después de crear el admin principal
-      console.log('[ConfigPage] Cargando datos de prueba después de crear admin principal...');
-      try {
-        const result = await loadTestDataForOnboarding();
-        console.log(`[ConfigPage] ✓ Datos de prueba cargados: ${result.customers} clientes, ${result.products} productos, ${result.sales} ventas`);
-        showToast('Datos de prueba cargados', 'info');
-      } catch (error) {
-        console.error('[ConfigPage] Error cargando datos de prueba:', error);
-        // Continuar aunque falle la carga de datos
-      }
       
       // Esperar un momento para que el contexto se actualice después de refreshConfiguration
       await new Promise(resolve => setTimeout(resolve, 100));
