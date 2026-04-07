@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import './ContractSignatureModal.css';
@@ -83,11 +84,8 @@ export function ContractSignatureModal({
   onSigned,
   isSaving = false,
 }: ContractSignatureModalProps) {
-  const [points, setPoints] = useState<{x: number, y: number}[][]>([]);
-  const [currentPath, setCurrentPath] = useState<{x: number, y: number}[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const sigRef = useRef<SignatureCanvas>(null);
   const [hasSignature, setHasSignature] = useState(false);
-  const svgRef = useRef<SVGSVGElement>(null);
 
   const signatureHint = useMemo(() => {
     if (hasSignature) {
@@ -96,84 +94,22 @@ export function ContractSignatureModal({
     return 'Firma con el dedo o el mouse en el recuadro';
   }, [hasSignature]);
 
-  const getPoint = (e: React.MouseEvent<SVGSVGElement>) => {
-    const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    const viewBox = svg.viewBox.baseVal;
-    const scaleX = viewBox.width / rect.width;
-    const scaleY = viewBox.height / rect.height;
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
-    };
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    const point = getPoint(e);
-    setIsDrawing(true);
-    setCurrentPath([point]);
-    setHasSignature(true);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isDrawing) return;
-    const point = getPoint(e);
-    setCurrentPath(prev => [...prev, point]);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    if (currentPath.length > 0) {
-      setPoints(prev => [...prev, currentPath]);
-      setCurrentPath([]);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    handleMouseUp();
-  };
-
   const handleClear = () => {
-    setPoints([]);
-    setCurrentPath([]);
-    setIsDrawing(false);
+    sigRef.current?.clear();
     setHasSignature(false);
   };
 
   const handleConfirm = () => {
-    if (!svgRef.current || !hasSignature) return;
+    if (!sigRef.current || sigRef.current.isEmpty()) return;
     
-    // Convert SVG to PNG
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 600;
-      canvas.height = 180;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, 600, 180);
-      
-      const dataUrl = canvas.toDataURL('image/png');
-      URL.revokeObjectURL(svgUrl);
-      onSigned(dataUrl);
-    };
-    img.src = svgUrl;
+    const dataUrl = sigRef.current.toDataURL('image/png');
+    onSigned(dataUrl);
   };
 
-  const pathToD = (path: {x: number, y: number}[]) => {
-    if (path.length === 0) return '';
-    return `M ${path[0].x} ${path[0].y} ` + 
-           path.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+  const handleEndStroke = () => {
+    if (!sigRef.current?.isEmpty()) {
+      setHasSignature(true);
+    }
   };
 
   return (
@@ -186,43 +122,16 @@ export function ContractSignatureModal({
         <div className="signature-area">
           <div className="signature-label">{signatureHint}</div>
           <div className="canvas-wrapper">
-            <svg
-              ref={svgRef}
-              className="signature-svg"
-              viewBox="0 0 600 180"
-              preserveAspectRatio="xMidYMid meet"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-            >
-              <rect width="600" height="180" fill="white" />
-              
-              {/* Renderizar paths completados */}
-              {points.map((path, index) => (
-                <path
-                  key={index}
-                  d={pathToD(path)}
-                  stroke="#0f172a"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              ))}
-              
-              {/* Path actual que se está dibujando */}
-              {currentPath.length > 0 && (
-                <path
-                  d={pathToD(currentPath)}
-                  stroke="#0f172a"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              )}
-            </svg>
+            <SignatureCanvas
+              ref={sigRef}
+              penColor="#0f172a"
+              canvasProps={{
+                width: 600,
+                height: 180,
+                className: 'signature-canvas'
+              }}
+              onEnd={handleEndStroke}
+            />
             <div className="canvas-guide-line"></div>
           </div>
           <div className="signature-actions">
