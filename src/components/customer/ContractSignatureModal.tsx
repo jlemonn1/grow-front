@@ -125,9 +125,8 @@ export function ContractSignatureModal({
             <SignatureCanvas
               ref={sigRef}
               penColor="#0f172a"
+              backgroundColor="rgba(255,255,255,1)"
               canvasProps={{
-                width: 600,
-                height: 180,
                 className: 'signature-canvas'
               }}
               onEnd={handleEndStroke}
