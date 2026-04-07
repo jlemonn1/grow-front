@@ -110,7 +110,7 @@ export function QRScannerModal({ isOpen, onClose, onCustomerFound }: QRScannerMo
           const pin = extractPinFromQR(decodedText);
           
           const isValidPin = (code: string): boolean => {
-            if (code.length < 4 || code.length > 6) return false;
+            if (code.length < 2 || code.length > 8) return false;
             if (!/^[0-9A-Za-z]+$/.test(code)) return false;
             // Debe tener al menos una letra
             return /[a-zA-Z]/.test(code);

@@ -107,7 +107,7 @@ export function CustomersPage() {
       return 'phone';
     } else if (isAllLetters) {
       return 'name';
-    } else if (hasNumbersAndLetters && trimmed.length <= 4) {
+} else if (hasNumbersAndLetters && trimmed.length <= 8) {
       return 'pin';
     }
     

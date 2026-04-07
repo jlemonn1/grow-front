@@ -65,12 +65,12 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
   const getAutoSearchType = useCallback((query: string): SearchType => {
     if (query.length < 3) return 'any';
     
-    // Con 6+ caracteres buscamos en todos los campos
-    if (query.length >= 6) {
+// Con 9+ caracteres buscamos en todos los campos
+    if (query.length >= 9) {
       return 'any';
     }
     
-    // Con 3-5 caracteres solo buscamos por PIN
+    // Con 3-8 caracteres solo buscamos por PIN
     return 'pin';
   }, []);
 

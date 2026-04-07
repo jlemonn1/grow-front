@@ -103,7 +103,7 @@ export function CustomerCreatePage() {
   }, [selectedGuarantor]);
 
   const validatePinFormat = (pin: string): boolean => {
-    if (!pin || pin.length < 2 || pin.length > 6) {
+    if (!pin || pin.length < 2 || pin.length > 8) {
       return false;
     }
     let digitCount = 0;
@@ -137,7 +137,7 @@ export function CustomerCreatePage() {
         return 'El PIN es obligatorio';
       }
       if (!validatePinFormat(strValue)) {
-        return 'El PIN debe tener entre 2 y 6 caracteres, con al menos una letra';
+        return 'El PIN debe tener entre 2 y 8 caracteres, con al menos una letra';
       }
     }
     if (name === 'subscriptionPrice') {
@@ -667,7 +667,7 @@ export function CustomerCreatePage() {
                   required
                   disabled={isSubmitting || isCheckingPin}
                   placeholder="Ej: 12AB"
-                  maxLength={4}
+                  maxLength={8}
                   style={{ textTransform: 'uppercase' }}
                   data-tour="customer-pin-input"
                   autoFocus
