@@ -63,14 +63,14 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
 
   // Detectar tipo de búsqueda automática
   const getAutoSearchType = useCallback((query: string): SearchType => {
-    if (query.length < 3) return 'any';
-    
+    if (query.length < 2) return 'any';
+
 // Con 9+ caracteres buscamos en todos los campos
     if (query.length >= 9) {
       return 'any';
     }
-    
-    // Con 3-8 caracteres solo buscamos por PIN
+
+    // Con 2-8 caracteres solo buscamos por PIN
     return 'pin';
   }, []);
 
@@ -93,8 +93,8 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
       return;
     }
 
-    // Solo buscar si hay 3+ caracteres
-    if (trimmed.length < 3) {
+    // Solo buscar si hay 2+ caracteres
+    if (trimmed.length < 2) {
       setResults([]);
       setShowResults(false);
       setSearchType(null);
@@ -224,7 +224,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Buscar por nombre, PIN o teléfono (mín. 3 caracteres)..."
+          placeholder="Buscar por nombre, PIN o teléfono (mín. 2 caracteres)..."
           value={searchQuery}
           data-tour="customer-search-input"
           onChange={(e) => {
@@ -236,7 +236,7 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
           }}
           onFocus={() => {
             // Solo mostrar resultados si hay búsqueda activa y no hay cliente seleccionado
-            if (!selectedCustomer && results.length > 0 && searchQuery.length >= 3) {
+            if (!selectedCustomer && results.length > 0 && searchQuery.length >= 2) {
               setShowResults(true);
             }
           }}
@@ -255,12 +255,12 @@ const CustomerPickerComponent = forwardRef<CustomerPickerRef, CustomerPickerProp
           aria-controls="customer-picker-list"
           aria-activedescendant={selectedCustomer ? `customer-${selectedCustomer.id}` : undefined}
         />
-        {searchQuery.length > 0 && searchQuery.length < 3 && (
+        {searchQuery.length > 0 && searchQuery.length < 2 && (
           <div className="customer-picker-hint">
-            Escribe al menos 3 caracteres para buscar
+            Escribe al menos 2 caracteres para buscar
           </div>
         )}
-        {searchType && searchQuery.length >= 3 && (
+        {searchType && searchQuery.length >= 2 && (
           <div className="customer-picker-search-type">
             {searchType === 'name' && (
               <>
