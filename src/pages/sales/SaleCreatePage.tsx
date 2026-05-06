@@ -91,6 +91,7 @@ export function SaleCreatePage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const selectedMeasurementSuffix = getMeasurementShortLabel(selectedProduct?.measurementType ?? 'WEIGHT');
   const [gramsToAdd, setGramsToAdd] = useState<number>(0);
+  const [eurosToAdd, setEurosToAdd] = useState<number>(0);
   const [actualWeighedGrams, setActualWeighedGrams] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cashGivenError, setCashGivenError] = useState<string | undefined>();
@@ -103,6 +104,20 @@ export function SaleCreatePage() {
   const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
   
+  // Estado local para el keypad de efectivo (string para preservar decimales mientras se escribe)
+  const [cashGivenInput, setCashGivenInput] = useState('');
+  const lastSyncedCashGivenRef = useRef(0);
+  
+  // Sincronizar el estado local del keypad cuando cashGiven cambia desde fuera (ej: borrador, reset)
+  useEffect(() => {
+    // Solo actualizar si el valor cambió desde fuera para no interferir con la escritura
+    if (cashGiven !== lastSyncedCashGivenRef.current) {
+      lastSyncedCashGivenRef.current = cashGiven;
+      const cashGivenStr = cashGiven === 0 ? '' : cashGiven.toString();
+      setCashGivenInput(cashGivenStr);
+    }
+  }, [cashGiven]);
+   
   // Hook para verificar estado de caja
   const { isTodayClosed, refreshStatus: refreshCajaStatus } = useCajaStatus();
   
@@ -376,15 +391,16 @@ export function SaleCreatePage() {
         return;
       }
 
-      await addProductToTicket(product, gramsToAdd, actualWeighedGrams > 0 ? actualWeighedGrams : undefined);
+      await addProductToTicket(product, gramsToAdd, actualWeighedGrams > 0 ? actualWeighedGrams : undefined, eurosToAdd > 0 ? eurosToAdd : undefined);
       setSelectedProduct(null);
       setGramsToAdd(0);
+      setEurosToAdd(0);
       setActualWeighedGrams(0);
       showToast('Producto agregado al ticket', 'success');
     } catch (error) {
       showToast('Error al obtener el producto', 'error');
     }
-  }, [selectedProduct, gramsToAdd, actualWeighedGrams, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
+  }, [selectedProduct, gramsToAdd, eurosToAdd, actualWeighedGrams, ensureProductInContext, getProductStock, addProductToTicket, showToast]);
 
   // Procesar venta (función interna que realmente hace el procesamiento)
   const processSaleInternal = useCallback(async () => {
@@ -432,6 +448,9 @@ export function SaleCreatePage() {
           productId: item.productId,
           grams: item.grams,
           actualWeighedGrams: item.actualWeighedGrams,
+          // Enviar el subtotal exacto si el usuario introdujo euros directamente
+          // De lo contrario, el backend calculará desde gramos
+          lineTotal: item.eurosInput,
         })),
         couponCode: appliedCoupon?.code,
         manualDiscountPercent: manualDiscountPercent ?? undefined,
@@ -657,6 +676,8 @@ export function SaleCreatePage() {
     setCashGivenError(undefined);
     // Asegurar que cashGiven está en 0 (aunque reset() ya lo hace)
     setCashGiven(0);
+    // Limpiar estado local del keypad
+    setCashGivenInput('');
     // Limpiar refs de inputs
     if (gramsInputRef.current) {
       gramsInputRef.current.value = '';
@@ -666,7 +687,7 @@ export function SaleCreatePage() {
     setCompletedSteps(new Set());
     // Mostrar confirmación
     showToast('Todos los campos han sido limpiados', 'success');
-  }, [reset, setCashGiven, showToast]);
+  }, [reset, setCashGiven, showToast, cashGivenInput]);
 
   const canGoToStep = (step: Step): boolean => {
     if (step === 0) return true;
@@ -834,6 +855,7 @@ export function SaleCreatePage() {
                     product={selectedProduct}
                     availableStock={getProductStock(selectedProduct.id)}
                     onGramsChange={setGramsToAdd}
+                    onEurosChange={setEurosToAdd}
                     onActualWeighedGramsChange={setActualWeighedGrams}
                     gramsInputRef={gramsInputRef}
                     eurosInputRef={eurosInputRef}
@@ -923,9 +945,11 @@ export function SaleCreatePage() {
             <div className="wizard-keypad">
               <h3 className="wizard-keypad-title">Efectivo recibido</h3>
               <NumericKeypad
-                value={cashGiven.toString()}
+                value={cashGivenInput}
                 onChange={(value) => {
+                  setCashGivenInput(value);
                   const numValue = parseFloat(value) || 0;
+                  lastSyncedCashGivenRef.current = numValue;
                   setCashGiven(numValue);
                 }}
                 onSubmit={() => {}}
@@ -997,10 +1021,6 @@ export function SaleCreatePage() {
       <CajaClosedModal
         isOpen={showClosedModal}
         onClose={() => setShowClosedModal(false)}
-        onReopenSuccess={() => {
-          refreshCajaStatus();
-          setShowClosedModal(false);
-        }}
       />
     </>
   );

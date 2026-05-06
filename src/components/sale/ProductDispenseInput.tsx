@@ -14,6 +14,7 @@ interface ProductDispenseInputProps {
   availableStock: number;
   initialGrams?: number;
   onGramsChange?: (grams: number) => void;
+  onEurosChange?: (euros: number) => void;
   onActualWeighedGramsChange?: (grams: number) => void;
   gramsInputRef?: React.RefObject<HTMLInputElement>;
   eurosInputRef?: React.RefObject<HTMLInputElement>;
@@ -24,6 +25,7 @@ export function ProductDispenseInput({
   availableStock,
   initialGrams,
   onGramsChange,
+  onEurosChange,
   onActualWeighedGramsChange,
   gramsInputRef,
   eurosInputRef,
@@ -49,6 +51,13 @@ export function ProductDispenseInput({
       onGramsChange(grams);
     }
   }, [grams, onGramsChange]);
+
+  // Notificar cambios de euros al componente padre
+  useEffect(() => {
+    if (onEurosChange) {
+      onEurosChange(euros);
+    }
+  }, [euros, onEurosChange]);
 
   // Notificar cambios de cantidad pesada al componente padre
   useEffect(() => {

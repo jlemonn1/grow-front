@@ -309,6 +309,16 @@
   color: var(--color-warning);
 }
 
+.day-card-transaction-type.SUBSCRIPTION_NEW {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.day-card-transaction-type.SUBSCRIPTION_RENEWAL {
+  background: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
 .day-card-transaction-amount {
   font-family: 'Courier New', monospace;
   font-weight: 600;

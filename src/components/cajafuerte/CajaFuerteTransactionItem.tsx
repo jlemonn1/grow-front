@@ -18,6 +18,10 @@ const getTransactionTypeLabel = (type: CajaFuerteTransactionType): string => {
       return 'Entrada por dispensación';
     case 'SALE_OUTPUT':
       return 'Salida por cambio';
+    case 'SUBSCRIPTION_NEW':
+      return 'Nueva suscripción';
+    case 'SUBSCRIPTION_RENEWAL':
+      return 'Renovación de suscripción';
     default:
       return type;
   }
@@ -27,6 +31,8 @@ const getTransactionTypeColor = (type: CajaFuerteTransactionType): string => {
   switch (type) {
     case 'ADD':
     case 'SALE_INPUT':
+    case 'SUBSCRIPTION_NEW':
+    case 'SUBSCRIPTION_RENEWAL':
       return 'positive';
     case 'WITHDRAW':
     case 'SALE_OUTPUT':
@@ -38,7 +44,7 @@ const getTransactionTypeColor = (type: CajaFuerteTransactionType): string => {
 
 function CajaFuerteTransactionItemComponent({ transaction }: CajaFuerteTransactionItemProps) {
   const typeColor = getTransactionTypeColor(transaction.type);
-  const isPositive = transaction.type === 'ADD' || transaction.type === 'SALE_INPUT';
+  const isPositive = transaction.type === 'ADD' || transaction.type === 'SALE_INPUT' || transaction.type === 'SUBSCRIPTION_NEW' || transaction.type === 'SUBSCRIPTION_RENEWAL';
   const hasNotes = transaction.notes && transaction.notes.trim().length > 0;
   const hasCreatedBy = transaction.createdByUsername && transaction.createdByUsername.trim().length > 0;
 

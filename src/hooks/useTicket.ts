@@ -80,8 +80,10 @@ export function useTicket() {
 
   /**
    * Agrega un producto al ticket con validación inicial
+   * @param eurosInput - Opcional. Euros exactos introducidos por el usuario.
+   *                     Si se proporciona, se usará como subtotal exacto.
    */
-  const addProductToTicket = useCallback(async (product: Product, grams: number, actualWeighedGrams?: number) => {
+  const addProductToTicket = useCallback(async (product: Product, grams: number, actualWeighedGrams?: number, eurosInput?: number) => {
     // Obtener producto actualizado si no está en cache
     let currentProduct: Product | undefined = products.find(p => p.id === product.id);
     if (!currentProduct) {
@@ -110,8 +112,8 @@ export function useTicket() {
       currentProduct.stockGrams
     );
     
-    // Agregar el item
-    ticket.addItem(currentProduct, grams, actualWeighedGrams);
+    // Agregar el item con eurosInput si se proporciona
+    ticket.addItem(currentProduct, grams, actualWeighedGrams, eurosInput);
     
     // Validar inmediatamente usando el stock calculado antes de agregar
     // El índice es correcto porque sabemos que el nuevo item estará en newItemIndex
@@ -120,16 +122,18 @@ export function useTicket() {
 
   /**
    * Actualiza gramos de un item y valida
+   * @param eurosInput - Opcional. Euros exactos introducidos por el usuario.
+   *                     Si se proporciona, se usará como subtotal exacto.
    */
-  const updateItemGrams = useCallback((index: number, grams: number) => {
+  const updateItemGrams = useCallback((index: number, grams: number, eurosInput?: number) => {
     // Calcular stock disponible antes de actualizar
     const item = ticket.items[index];
     if (!item) return;
 
     const availableStock = getProductStock(item.productId, index);
 
-    // Actualizar el item
-    ticket.updateItem(index, grams);
+    // Actualizar el item con eurosInput si se proporciona
+    ticket.updateItem(index, grams, eurosInput);
 
     // Validar inmediatamente con el stock calculado
     ticket.validateItem(index, availableStock);

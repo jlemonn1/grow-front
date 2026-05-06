@@ -31,6 +31,7 @@ export function InventoryPage() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [modalProduct, setModalProduct] = useState<InventoryProduct | null>(null);
   const [modalValue, setModalValue] = useState('');
+  const [modalNote, setModalNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,18 +72,21 @@ export function InventoryPage() {
     setModalProduct(product);
     setModalType('recharge');
     setModalValue('');
+    setModalNote('');
   };
 
   const openSetModal = (product: InventoryProduct) => {
     setModalProduct(product);
     setModalType('set');
     setModalValue(product.stockGrams.toString());
+    setModalNote('');
   };
 
   const closeModal = () => {
     setModalType(null);
     setModalProduct(null);
     setModalValue('');
+    setModalNote('');
   };
 
   const handleModalSubmit = () => {
@@ -91,10 +95,12 @@ export function InventoryPage() {
     const grams = Number(modalValue.replace(',', '.'));
     if (isNaN(grams) || grams < 0) return;
 
+    const note = modalNote.trim() || undefined;
+
     if (modalType === 'recharge') {
-      rechargeProduct(modalProduct.id, grams);
+      rechargeProduct(modalProduct.id, grams, note);
     } else if (modalType === 'set') {
-      setProductStock(modalProduct.id, grams);
+      setProductStock(modalProduct.id, grams, note);
     }
     closeModal();
   };
@@ -338,6 +344,14 @@ export function InventoryPage() {
               autoFocus
               step="0.01"
               min="0"
+            />
+            <input
+              type="text"
+              className="inventory-modal-input inventory-modal-note"
+              placeholder="Nota (opcional)..."
+              value={modalNote}
+              onChange={e => setModalNote(e.target.value)}
+              maxLength={200}
             />
             <div className="inventory-modal-actions">
               <button className="inventory-btn-secondary" onClick={closeModal}>

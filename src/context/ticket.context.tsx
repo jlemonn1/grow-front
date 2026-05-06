@@ -33,8 +33,8 @@ interface TicketContextValue {
   appliedCoupon: AppliedCoupon | null;
   manualDiscountPercent: number | null;
   manualDiscountType: ManualDiscountType;
-  addItem: (product: Product, grams: number, actualWeighedGrams?: number) => void;
-  updateItem: (index: number, grams: number) => void;
+  addItem: (product: Product, grams: number, actualWeighedGrams?: number, eurosInput?: number) => void;
+  updateItem: (index: number, grams: number, eurosInput?: number) => void;
   removeItem: (index: number) => void;
   setCustomer: (customer: Customer | null) => void;
   setCashGiven: (amount: number) => void;
@@ -167,13 +167,18 @@ export function TicketProvider({ children }: TicketProviderProps) {
     setIsValid(hasValidCustomer && hasItems && allItemsValid && paymentSufficient);
   }, [items, cashGiven, customer, useBalance, balanceToUse, appliedCoupon, manualDiscountPercent]);
 
-  const addItem = useCallback((product: Product, grams: number, actualWeighedGrams?: number) => {
+  const addItem = useCallback((product: Product, grams: number, actualWeighedGrams?: number, eurosInput?: number) => {
     if (grams <= 0) {
       return;
     }
 
     const pricePerGram = product.pricePerGram;
-    const subtotal = calculateSubtotal(grams, pricePerGram);
+    
+    // Si el usuario introdujo euros directamente, usar ese valor como subtotal exacto
+    // De lo contrario, calcular desde gramos
+    const subtotal = eurosInput !== undefined 
+      ? eurosInput  // Usar exactamente lo que introdujo el usuario
+      : calculateSubtotal(grams, pricePerGram);
 
     const newItem: TicketItem = {
       productId: product.id,
@@ -184,6 +189,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
       subtotal,
       validationState: 'checking',
       errorMessage: undefined,
+      eurosInput, // Guardar para referencia
     };
 
     setItems((prev) => {
@@ -191,7 +197,7 @@ export function TicketProvider({ children }: TicketProviderProps) {
     });
   }, [calculateSubtotal]);
 
-  const updateItem = useCallback((index: number, grams: number) => {
+  const updateItem = useCallback((index: number, grams: number, eurosInput?: number) => {
     if (grams <= 0) {
       return;
     }
@@ -201,7 +207,11 @@ export function TicketProvider({ children }: TicketProviderProps) {
       const item = updated[index];
       if (!item) return prev;
 
-      const subtotal = calculateSubtotal(grams, item.pricePerGram);
+      // Si se proporciona eurosInput, usarlo como subtotal exacto
+      // De lo contrario, calcular desde gramos
+      const subtotal = eurosInput !== undefined
+        ? eurosInput
+        : calculateSubtotal(grams, item.pricePerGram);
 
       updated[index] = {
         ...item,
@@ -209,6 +219,8 @@ export function TicketProvider({ children }: TicketProviderProps) {
         subtotal,
         validationState: 'checking',
         errorMessage: undefined,
+        // Actualizar eurosInput si se proporciona, mantener el anterior si no
+        eurosInput: eurosInput !== undefined ? eurosInput : item.eurosInput,
       };
       return updated;
     });

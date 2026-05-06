@@ -31,6 +31,7 @@ import { AdminPermission } from '@/types/models';
 import type { Customer, CustomerSale, CustomerSummary } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
+import { buildCustomerImageUrl } from '@/utils/apiUrl';
 import './CustomerDetailPage.css';
 
 export function CustomerDetailPage() {
@@ -377,17 +378,8 @@ const handleBalanceTransferred = () => {
     return new Date(customer.subscriptionEndDate) < new Date();
   };
 
-  const baseApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const profileImageUrl = customer?.profilePictureUrl
-    ? (customer.profilePictureUrl.startsWith('http')
-      ? customer.profilePictureUrl
-      : `${baseApiUrl}${customer.profilePictureUrl}`)
-    : null;
-  const contractSignatureUrl = customer?.contractSignatureUrl
-    ? (customer.contractSignatureUrl.startsWith('http')
-      ? customer.contractSignatureUrl
-      : `${baseApiUrl}${customer.contractSignatureUrl}`)
-    : null;
+  const profileImageUrl = buildCustomerImageUrl(customer?.profilePictureUrl);
+  const contractSignatureUrl = buildCustomerImageUrl(customer?.contractSignatureUrl);
   const contractReady = Boolean(
     customer?.address?.trim() &&
     customer?.estimatedMonthlyConsumptionGrams &&
@@ -498,6 +490,14 @@ const handleBalanceTransferred = () => {
                   ? `${customer.estimatedMonthlyConsumptionGrams} g/mes`
                   : '-'}
               </span>
+            </div>
+            <div className="customer-info-item">
+              <span className="customer-info-label">Email:</span>
+              <span className="customer-info-value">{customer.email || '-'}</span>
+            </div>
+            <div className="customer-info-item">
+              <span className="customer-info-label">Fecha de nacimiento:</span>
+              <span className="customer-info-value">{customer.fechaDeNacimiento || '-'}</span>
             </div>
             {customer.phone && (
               <div className="customer-info-item">
@@ -910,10 +910,6 @@ const handleBalanceTransferred = () => {
       <CajaClosedModal
         isOpen={showClosedModal}
         onClose={() => setShowClosedModal(false)}
-        onReopenSuccess={() => {
-          refreshCajaStatus();
-          setShowClosedModal(false);
-        }}
       />
     </>
   );

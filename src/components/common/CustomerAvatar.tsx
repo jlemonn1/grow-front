@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { buildCustomerImageUrl } from '@/utils/apiUrl';
 import './CustomerAvatar.css';
 
 interface CustomerAvatarProps {
@@ -8,17 +9,6 @@ interface CustomerAvatarProps {
   className?: string;
   tooltip?: string;
 }
-
-const resolveImageUrl = (url?: string) => {
-  if (!url) return null;
-
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  const apiBase = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-  return `${apiBase}${url}`;
-};
 
 const initialsFromName = (name: string) => {
   const parts = name
@@ -39,7 +29,7 @@ const initialsFromName = (name: string) => {
 
 export function CustomerAvatar({ name, imageUrl, size = 40, className, tooltip }: CustomerAvatarProps) {
   const [hasError, setHasError] = useState(false);
-  const resolvedUrl = useMemo(() => resolveImageUrl(imageUrl), [imageUrl]);
+  const resolvedUrl = useMemo(() => buildCustomerImageUrl(imageUrl), [imageUrl]);
   const initials = useMemo(() => initialsFromName(name), [name]);
   const showImage = Boolean(resolvedUrl && !hasError);
   const classes = ['customer-avatar', className].filter(Boolean).join(' ');

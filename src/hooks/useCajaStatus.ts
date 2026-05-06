@@ -1,26 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTodayStatus } from '@/services/cajafuerte.service';
-import type { TodayStatus } from '@/types/models';
+import { cajaService } from '@/services/caja/caja.service';
 
 interface UseCajaStatusReturn {
   isTodayClosed: boolean;
-  todayStatus: TodayStatus | null;
+  hasCajaAbierta: boolean;
   loading: boolean;
   refreshStatus: () => Promise<void>;
 }
 
 export function useCajaStatus(): UseCajaStatusReturn {
-  const [todayStatus, setTodayStatus] = useState<TodayStatus | null>(null);
+  const [hasCajaAbierta, setHasCajaAbierta] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const status = await getTodayStatus();
-      setTodayStatus(status);
+      const caja = await cajaService.getCajaActual();
+      setHasCajaAbierta(caja !== null && caja.estado === 'ABIERTA');
     } catch (error) {
       console.error('Error al obtener estado de la caja:', error);
-      setTodayStatus(null);
+      setHasCajaAbierta(false);
     } finally {
       setLoading(false);
     }
@@ -30,11 +29,13 @@ export function useCajaStatus(): UseCajaStatusReturn {
     refreshStatus();
   }, [refreshStatus]);
 
-  const isTodayClosed = todayStatus?.isClosed ?? false;
+  // Para compatibilidad con código existente:
+  // isTodayClosed = true significa que NO hay caja abierta (bloquear ventas)
+  const isTodayClosed = !hasCajaAbierta;
 
   return {
     isTodayClosed,
-    todayStatus,
+    hasCajaAbierta,
     loading,
     refreshStatus,
   };

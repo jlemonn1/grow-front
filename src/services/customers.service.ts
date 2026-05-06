@@ -79,6 +79,8 @@ export const customersService = {
       };
 
       formData.append('displayName', data.displayName);
+      appendIfPresent('email', data.email);
+      appendIfPresent('fechaDeNacimiento', data.fechaDeNacimiento);
       appendIfPresent('phone', data.phone);
       appendIfPresent('notes', data.notes);
       formData.append('pin', data.pin);
@@ -175,6 +177,8 @@ export const customersService = {
       };
 
       appendIfPresent('displayName', data.displayName);
+      appendIfPresent('email', data.email);
+      appendIfPresent('fechaDeNacimiento', data.fechaDeNacimiento);
       appendIfPresent('phone', data.phone);
       appendIfPresent('notes', data.notes);
       appendIfPresent('pin', data.pin);

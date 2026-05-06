@@ -55,6 +55,8 @@ export interface Product {
 export interface Customer {
   id: string;
   displayName: string;
+  email?: string;
+  fechaDeNacimiento?: string;
   phone?: string;
   notes?: string;
   pin: string;
@@ -177,15 +179,22 @@ export interface TicketItem {
   grams: number;
   actualWeighedGrams?: number; // Cantidad real pesada (para stock)
   pricePerGram: number; // Snapshot del precio
-  subtotal: number; // grams × pricePerGram
+  subtotal: number; // grams × pricePerGram (o eurosInput si el usuario introdujo euros directamente)
   validationState: 'valid' | 'invalid' | 'checking';
   errorMessage?: string;
+  eurosInput?: number; // Euros exactos introducidos por el usuario (para preservar el monto exacto)
 }
 
 export interface CreateSaleItemRequest {
   productId: string;
   grams: number;
   actualWeighedGrams?: number;
+  /**
+   * Subtotal exacto a enviar al backend.
+   * Si se proporciona, el backend usará este valor en lugar de recalcular desde gramos.
+   * Esto permite que el usuario vea exactamente el monto que introdujo.
+   */
+  lineTotal?: number;
 }
 
 // Mapa de denominaciones (ej: { "50": 1, "20": 2, "0.5": 3 })
@@ -406,6 +415,8 @@ export interface DashboardTickerResponse {
 // Tipos para gestión de clientes
 export interface UpdateCustomerRequest {
   displayName?: string;
+  email?: string;
+  fechaDeNacimiento?: string;
   phone?: string;
   notes?: string;
   // Note: PIN is not editable (only verifiable), kept for compatibility
@@ -425,6 +436,8 @@ export interface UpdateCustomerRequest {
 
 export interface CreateCustomerRequest {
   displayName: string;
+  email?: string;
+  fechaDeNacimiento?: string;
   phone?: string;
   notes?: string;
   pin: string;
@@ -528,7 +541,9 @@ export type CajaFuerteTransactionType =
   | 'ADD'
   | 'WITHDRAW'
   | 'SALE_INPUT'
-  | 'SALE_OUTPUT';
+  | 'SALE_OUTPUT'
+  | 'SUBSCRIPTION_NEW'
+  | 'SUBSCRIPTION_RENEWAL';
 
 export interface CajaFuerte {
   totalAmount: number;
@@ -571,6 +586,8 @@ export interface DailySummary {
   totalWithdrawals: number;
   totalSaleInputs: number;
   totalSaleOutputs: number;
+  totalSubscriptionNew: number;
+  totalSubscriptionRenewal: number;
   isAutoClosed: boolean;
   closedByUsername?: string;
   closedAt?: string;
@@ -640,6 +657,7 @@ export interface InventoryItem {
   productId: string;
   action: InventoryAction;
   grams?: number;
+  note?: string;
 }
 
 export interface CompleteInventoryRequest {

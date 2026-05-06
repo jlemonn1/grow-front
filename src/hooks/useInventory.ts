@@ -8,6 +8,7 @@ interface ProductInventoryState {
     checked: boolean;
     action?: InventoryAction;
     grams?: number;
+    note?: string;
   };
 }
 
@@ -52,17 +53,17 @@ export function useInventory() {
     }));
   }, []);
 
-  const rechargeProduct = useCallback((productId: string, grams: number) => {
+  const rechargeProduct = useCallback((productId: string, grams: number, note?: string) => {
     setProductStates(prev => ({
       ...prev,
-      [productId]: { checked: true, action: 'RECHARGE', grams }
+      [productId]: { checked: true, action: 'RECHARGE', grams, note }
     }));
   }, []);
 
-  const setProductStock = useCallback((productId: string, grams: number) => {
+  const setProductStock = useCallback((productId: string, grams: number, note?: string) => {
     setProductStates(prev => ({
       ...prev,
-      [productId]: { checked: true, action: 'SET', grams }
+      [productId]: { checked: true, action: 'SET', grams, note }
     }));
   }, []);
 
@@ -80,7 +81,8 @@ export function useInventory() {
         items.push({
           productId,
           action: state.action,
-          grams: state.grams
+          grams: state.grams,
+          note: state.note
         });
       }
     });

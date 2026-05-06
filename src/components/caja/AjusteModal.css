@@ -1,0 +1,221 @@
+/* AjusteModal.css */
+/* Modal para ajustes de entrada/salida - Compacto y responsive */
+
+.ajuste-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .ajuste-modal {
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Descripción */
+.ajuste-descripcion {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .ajuste-descripcion {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Alerta de info */
+.alerta-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .alerta-info {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}
+
+.alerta-info svg {
+  color: var(--color-info);
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 640px) {
+  .alerta-info svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Contenedor del keypad - Compacto */
+.ajuste-keypad-container {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Keypad optimizado */
+.ajuste-keypad-container .numeric-keypad {
+  max-width: 280px;
+  width: 100%;
+  padding: var(--spacing-md);
+  margin: 0;
+}
+
+/* Tablet: Keypad más grande y centrado */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .ajuste-modal {
+    max-height: 85vh;
+    justify-content: center;
+  }
+  
+  .ajuste-keypad-container .numeric-keypad {
+    max-width: 400px;
+    padding: var(--spacing-lg);
+  }
+  
+  .ajuste-keypad-container .keypad-button {
+    height: 64px;
+    font-size: 1.5rem;
+  }
+  
+  .ajuste-keypad-container .keypad-display {
+    min-height: 80px;
+  }
+  
+  .ajuste-keypad-container .keypad-display-value {
+    font-size: 2rem;
+    min-width: 180px;
+  }
+  
+  .form-group textarea {
+    height: 80px;
+    font-size: var(--font-size-base);
+  }
+}
+
+/* En móvil: keypad usa todo el ancho y botones más grandes */
+@media (max-width: 640px) {
+  .ajuste-keypad-container .numeric-keypad {
+    max-width: 100%;
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+  
+  .ajuste-keypad-container .keypad-display {
+    min-height: 60px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .ajuste-keypad-container .keypad-display-value {
+    font-size: 1.5rem;
+    min-width: 140px;
+  }
+  
+  .ajuste-keypad-container .keypad-button {
+    height: 56px;
+    font-size: 1.4rem;
+  }
+}
+
+/* Campo de notas */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.form-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .form-group label {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.form-group textarea {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  resize: none;
+  height: 60px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+@media (max-width: 640px) {
+  .form-group textarea {
+    height: 50px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--border-led-color);
+  box-shadow: 0 0 0 3px var(--neon-glow-primary);
+}
+
+.form-group textarea:disabled {
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Botones de acción */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+@media (max-width: 640px) {
+  .modal-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+    margin-top: 0;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+    min-height: 48px;
+    font-size: var(--font-size-base);
+  }
+}

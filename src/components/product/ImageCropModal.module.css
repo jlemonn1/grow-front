@@ -1,0 +1,337 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.modal {
+  background: #000;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 800px;
+  height: 90vh;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 56px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnIcon:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.btnIcon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnConfirm {
+  background: var(--color-primary, #6366f1);
+}
+
+.btnConfirm:hover:not(:disabled) {
+  background: var(--color-primary-hover, #4f46e5);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  text-align: center;
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+
+/* Main Content */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Crop Area */
+.cropArea {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Marco de recorte - estilo WhatsApp */
+.cropArea :global(.reactEasyCrop_CropArea) {
+  border: 2px solid white !important;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.75),
+    0 0 20px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 0 !important;
+}
+
+/* Esquinas del marco (L-shapes) */
+.cropArea :global(.reactEasyCrop_CropArea)::before,
+.cropArea :global(.reactEasyCrop_CropArea)::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: white;
+  border-style: solid;
+  pointer-events: none;
+}
+
+/* Esquina superior izquierda */
+.cropArea :global(.reactEasyCrop_CropArea)::before {
+  top: -2px;
+  left: -2px;
+  border-width: 3px 0 0 3px;
+}
+
+/* Esquina inferior derecha */
+.cropArea :global(.reactEasyCrop_CropArea)::after {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 3px 3px 0;
+}
+
+/* Ocultar grid por defecto */
+.cropArea :global(.reactEasyCrop_CropAreaGrid) {
+  display: none !important;
+}
+
+/* Zoom Sidebar */
+.zoomSidebar {
+  width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 10px;
+}
+
+.zoomBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoomBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.zoomBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sliderContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 300px;
+  min-height: 100px;
+}
+
+.zoomSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 200px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  outline: none;
+  transform: rotate(-90deg);
+  cursor: pointer;
+}
+
+.zoomSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.zoomSlider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.zoomValue {
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 70px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 10px 12px;
+    height: 52px;
+  }
+
+  .btnIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .zoomSidebar {
+    width: 60px;
+    padding: 15px 8px;
+  }
+
+  .zoomBtn {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .sliderContainer {
+    max-height: 200px;
+  }
+
+  .zoomSlider {
+    width: 150px;
+  }
+
+  .footer {
+    height: 64px;
+    padding: 12px;
+  }
+
+  .cropArea :global(.reactEasyCrop_CropArea)::before,
+  .cropArea :global(.reactEasyCrop_CropArea)::after {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+/* Orientación landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .header {
+    height: 44px;
+    padding: 8px 12px;
+  }
+
+  .footer {
+    height: 50px;
+    padding: 8px;
+  }
+
+  .btnIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+/* Preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  .btnIcon {
+    transition: none;
+  }
+}
+
+/* Estados de focus para accesibilidad */
+.btnIcon:focus-visible,
+.zoomBtn:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}

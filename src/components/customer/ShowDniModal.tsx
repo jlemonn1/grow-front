@@ -1,4 +1,5 @@
 import { Modal } from '@/components/common/Modal';
+import { buildCustomerImageUrl } from '@/utils/apiUrl';
 import type { Customer } from '@/types/models';
 import './ShowDniModal.css';
 
@@ -10,13 +11,6 @@ interface ShowDniModalProps {
 
 export function ShowDniModal({ isOpen, onClose, customer }: ShowDniModalProps) {
   if (!customer) return null;
-
-  const getImageUrl = (url?: string) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    return `${apiBaseUrl}${url}`;
-  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Documento Nacional de Identidad">
@@ -30,7 +24,7 @@ export function ShowDniModal({ isOpen, onClose, customer }: ShowDniModalProps) {
         {customer.dniPictureUrl && (
           <div className="show-dni-image-container">
             <img 
-              src={getImageUrl(customer.dniPictureUrl) || ''} 
+              src={buildCustomerImageUrl(customer.dniPictureUrl) || ''} 
               alt="DNI"
               className="show-dni-image"
               onError={(e) => {

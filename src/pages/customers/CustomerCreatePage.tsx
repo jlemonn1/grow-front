@@ -21,6 +21,8 @@ import './CustomerCreatePage.css';
 
 interface FormData {
   displayName: string;
+  email: string;
+  fechaDeNacimiento: string;
   phone: string;
   notes: string;
   pin: string;
@@ -33,6 +35,8 @@ interface FormData {
 
 interface FormErrors {
   displayName?: string;
+  email?: string;
+  fechaDeNacimiento?: string;
   phone?: string;
   notes?: string;
   pin?: string;
@@ -57,6 +61,8 @@ export function CustomerCreatePage() {
   
   const initialFormData: FormData = {
     displayName: '',
+    email: '',
+    fechaDeNacimiento: '',
     phone: '',
     notes: '',
     pin: '',
@@ -331,6 +337,8 @@ export function CustomerCreatePage() {
     Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
       if (
         field === 'displayName' ||
+        field === 'email' ||
+        field === 'fechaDeNacimiento' ||
         field === 'phone' ||
         field === 'notes' ||
         field === 'pin' ||
@@ -370,6 +378,8 @@ export function CustomerCreatePage() {
       const sanitizedConsumption = Number(currentForm.estimatedMonthlyConsumptionGrams);
       const customer = await customersService.create({
         displayName: currentForm.displayName.trim(),
+        email: currentForm.email.trim() || undefined,
+        fechaDeNacimiento: currentForm.fechaDeNacimiento || undefined,
         phone: currentForm.phone.trim() || undefined,
         notes: currentForm.notes.trim() || undefined,
         pin: currentForm.pin.trim().toUpperCase(),
@@ -432,6 +442,8 @@ export function CustomerCreatePage() {
   const hasUnsavedChanges = useMemo(() => {
     return (
       formData.displayName !== initialFormData.displayName ||
+      formData.email !== initialFormData.email ||
+      formData.fechaDeNacimiento !== initialFormData.fechaDeNacimiento ||
       formData.phone !== initialFormData.phone ||
       formData.notes !== initialFormData.notes ||
       formData.pin !== initialFormData.pin ||
@@ -567,6 +579,37 @@ export function CustomerCreatePage() {
                       disabled={isSubmitting}
                       placeholder="Ej: 612 345 678"
                       data-tour="customer-phone-input"
+                    />
+                  </div>
+
+                  <div className="form-field-with-icon">
+                    <HiOutlineDocumentText className="form-field-icon" />
+                    <Input
+                      id="email"
+                      label="Email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      onBlur={() => handleBlur('email')}
+                      error={errors.email}
+                      disabled={isSubmitting}
+                      placeholder="Ej: juan@email.com"
+                      data-tour="customer-email-input"
+                    />
+                  </div>
+
+                  <div className="form-field-with-icon">
+                    <HiOutlineDocumentText className="form-field-icon" />
+                    <Input
+                      id="fechaDeNacimiento"
+                      label="Fecha de nacimiento"
+                      type="date"
+                      value={formData.fechaDeNacimiento}
+                      onChange={(e) => handleChange('fechaDeNacimiento', e.target.value)}
+                      onBlur={() => handleBlur('fechaDeNacimiento')}
+                      error={errors.fechaDeNacimiento}
+                      disabled={isSubmitting}
+                      data-tour="customer-birthdate-input"
                     />
                   </div>
 

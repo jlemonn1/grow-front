@@ -16,10 +16,13 @@ import type { ValidationError } from '@/types/api';
 import { CustomerPicker } from '@/components/sale/CustomerPicker';
 import type { Customer, UpdateCustomerRequest } from '@/types/models';
 import { formatDateTime } from '@/utils/dates';
+import { buildCustomerImageUrl } from '@/utils/apiUrl';
 import './CustomerCreatePage.css';
 
 interface FormData {
   displayName: string;
+  email: string;
+  fechaDeNacimiento: string;
   phone: string;
   notes: string;
   address: string;
@@ -29,6 +32,8 @@ interface FormData {
 
 interface FormErrors {
   displayName?: string;
+  email?: string;
+  fechaDeNacimiento?: string;
   phone?: string;
   notes?: string;
   address?: string;
@@ -48,10 +53,11 @@ export function CustomerEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useUI();
-  const baseApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
   const initialFormData: FormData = {
     displayName: '',
+    email: '',
+    fechaDeNacimiento: '',
     phone: '',
     notes: '',
     address: '',
@@ -105,6 +111,8 @@ export function CustomerEditPage() {
 
       const customerFormData: FormData = {
         displayName: customerData.displayName || '',
+        email: customerData.email || '',
+        fechaDeNacimiento: customerData.fechaDeNacimiento || '',
         phone: customerData.phone || '',
         notes: customerData.notes || '',
         address: customerData.address || '',
@@ -116,25 +124,12 @@ export function CustomerEditPage() {
       setOriginalFormData(customerFormData);
       setDniNumber(customerData.dniNumber || '');
 
-      const profilePictureUrl = customerData.profilePictureUrl
-        ? (customerData.profilePictureUrl.startsWith('http')
-          ? customerData.profilePictureUrl
-          : `${baseApiUrl}${customerData.profilePictureUrl}`)
-        : null;
-      const dniPictureUrl = customerData.dniPictureUrl
-        ? (customerData.dniPictureUrl.startsWith('http')
-          ? customerData.dniPictureUrl
-          : `${baseApiUrl}${customerData.dniPictureUrl}`)
-        : null;
+      const profilePictureUrl = buildCustomerImageUrl(customerData.profilePictureUrl);
+      const dniPictureUrl = buildCustomerImageUrl(customerData.dniPictureUrl);
+      const contractSignatureUrl = buildCustomerImageUrl(customerData.contractSignatureUrl);
 
       setProfilePicturePreview(profilePictureUrl);
       setDniPicturePreview(dniPictureUrl);
-
-      const contractSignatureUrl = customerData.contractSignatureUrl
-        ? (customerData.contractSignatureUrl.startsWith('http')
-          ? customerData.contractSignatureUrl
-          : `${baseApiUrl}${customerData.contractSignatureUrl}`)
-        : null;
       setContractSignatureDataUrl(contractSignatureUrl);
 
       if (customerData.guarantorId) {
@@ -172,7 +167,7 @@ export function CustomerEditPage() {
       setLoading(false);
       setDataLoaded(true);
     }
-  }, [id, navigate, showToast, baseApiUrl]);
+  }, [id, navigate, showToast]);
 
   useEffect(() => {
     loadCustomer();
@@ -310,6 +305,8 @@ export function CustomerEditPage() {
 
     return (
       formData.displayName !== originalFormData.displayName ||
+      formData.email !== originalFormData.email ||
+      formData.fechaDeNacimiento !== originalFormData.fechaDeNacimiento ||
       formData.phone !== originalFormData.phone ||
       formData.notes !== originalFormData.notes ||
       formData.address !== originalFormData.address ||
@@ -346,6 +343,8 @@ export function CustomerEditPage() {
     try {
       const updateData: UpdateCustomerRequest = {
         displayName: formData.displayName.trim(),
+        email: formData.email.trim() || undefined,
+        fechaDeNacimiento: formData.fechaDeNacimiento || undefined,
         phone: formData.phone.trim() || undefined,
         notes: formData.notes.trim() || undefined,
         address: formData.address.trim() || undefined,
@@ -368,6 +367,8 @@ export function CustomerEditPage() {
           Object.entries(apiError.fieldErrors).forEach(([field, messages]) => {
             if (
               field === 'displayName' ||
+              field === 'email' ||
+              field === 'fechaDeNacimiento' ||
               field === 'phone' ||
               field === 'notes' ||
               field === 'address' ||
@@ -590,6 +591,35 @@ export function CustomerEditPage() {
                   </div>
 
                   <div className="form-field-with-icon">
+                    <HiOutlineDocumentText className="form-field-icon" />
+                    <Input
+                      id="email"
+                      label="Email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      onBlur={() => handleBlur('email')}
+                      error={errors.email}
+                      disabled={isSubmitting}
+                      placeholder="Ej: juan@email.com"
+                    />
+                  </div>
+
+                  <div className="form-field-with-icon">
+                    <HiOutlineDocumentText className="form-field-icon" />
+                    <Input
+                      id="fechaDeNacimiento"
+                      label="Fecha de nacimiento"
+                      type="date"
+                      value={formData.fechaDeNacimiento}
+                      onChange={(e) => handleChange('fechaDeNacimiento', e.target.value)}
+                      onBlur={() => handleBlur('fechaDeNacimiento')}
+                      error={errors.fechaDeNacimiento}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="form-field-with-icon">
                     <HiLocationMarker className="form-field-icon" />
                     <Input
                       id="address"
@@ -742,7 +772,7 @@ export function CustomerEditPage() {
                   <div className="current-signature">
                     <label className="form-label">Firma actual:</label>
                     <img
-                      src={customer.contractSignatureUrl.startsWith('http') ? customer.contractSignatureUrl : `${baseApiUrl}${customer.contractSignatureUrl}`}
+                      src={buildCustomerImageUrl(customer.contractSignatureUrl) || ''}
                       alt="Firma actual"
                       className="current-contract-signature"
                     />

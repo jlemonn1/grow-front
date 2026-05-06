@@ -157,16 +157,33 @@
 }
 
 /* Responsive */
-@media (max-width: 400px) {
+@media (max-width: 640px) {
   .numeric-keypad {
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+  
+  .keypad-display {
+    min-height: 60px;
+    padding: var(--spacing-sm);
   }
   
   .keypad-display-value {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    min-width: 140px;
   }
   
   .keypad-button {
-    font-size: 1.25rem;
+    aspect-ratio: auto;
+    height: 56px;
+    font-size: 1.4rem;
+  }
+  
+  .keypad-grid {
+    gap: var(--spacing-xs);
+  }
+  
+  .keypad-row {
+    gap: var(--spacing-xs);
   }
 }

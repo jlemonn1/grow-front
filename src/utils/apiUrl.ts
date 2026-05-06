@@ -73,12 +73,34 @@ export function buildApiUrl(endpoint: string): string {
  * @throws Error si VITE_API_URL no está definida
  */
 export function buildResourceUrl(resourcePath: string): string {
-  // Si ya es una URL completa, devolverla tal cual
-  if (resourcePath.startsWith('http://') || resourcePath.startsWith('https://')) {
+  // Si ya es una URL completa o data URL, devolverla tal cual
+  if (resourcePath.startsWith('http://') || resourcePath.startsWith('https://') || resourcePath.startsWith('data:')) {
     return resourcePath;
   }
   
   const serverBaseUrl = getServerBaseUrl();
   const cleanPath = resourcePath.startsWith('/') ? resourcePath : `/${resourcePath}`;
   return `${serverBaseUrl}${cleanPath}`;
+}
+
+/**
+ * Construye una URL completa para imágenes de cliente
+ * (foto de perfil, DNI, firma de contrato)
+ * 
+ * Unifica el manejo de URLs de imágenes de cliente para que
+ * todas usen la misma lógica que las imágenes de producto.
+ * 
+ * @param url - URL de la imagen (puede ser relativa o absoluta)
+ * @returns URL completa o null si no hay URL
+ */
+export function buildCustomerImageUrl(url?: string | null): string | null {
+  if (!url) return null;
+  
+  // Si ya es una URL completa o data URL, devolverla tal cual
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  
+  // Usar la misma función que productos para consistencia
+  return buildResourceUrl(url);
 }

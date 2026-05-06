@@ -1,0 +1,107 @@
+/* CajaPage.css */
+/* Página principal de gestión de cajas */
+
+.caja-page {
+  padding: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Loading state */
+.caja-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: var(--spacing-md);
+  color: var(--text-muted);
+}
+
+.caja-loading p {
+  font-size: var(--font-size-base);
+}
+
+/* Error state */
+.alerta-error {
+  padding: var(--spacing-lg);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius);
+  color: var(--color-error);
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+}
+
+/* Sección de caja actual */
+.caja-actual-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Sección de historial */
+.caja-historial-section {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.caja-historial-section h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .caja-page {
+    padding: var(--spacing-sm);
+  }
+
+  .caja-historial-section {
+    padding: var(--spacing-md);
+  }
+
+  .caja-historial-section h2 {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .caja-page {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Modo oscuro - ajustes específicos */
+[data-theme="dark"] .caja-historial-section {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .caja-loading {
+  color: var(--text-secondary);
+}
+
+/* Animaciones de entrada */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.caja-actual-section {
+  animation: fadeIn var(--transition-base);
+}
+
+.caja-historial-section {
+  animation: fadeIn var(--transition-base);
+  animation-delay: 100ms;
+  animation-fill-mode: both;
+}

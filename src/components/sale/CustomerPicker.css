@@ -235,7 +235,6 @@
   z-index: 100;
   animation: slideDownGlow var(--transition-base) forwards;
   position: relative;
-  overflow: hidden;
 }
 
 .customer-picker-results::before {
@@ -259,7 +258,7 @@
 .quick-sale-modal-content .customer-picker-results {
   z-index: 101;
   max-height: 280px;
-  position: absolute;
+  overflow-y: auto;
 }
 
 @keyframes slideDownGlow {

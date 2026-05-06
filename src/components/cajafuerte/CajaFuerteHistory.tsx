@@ -18,6 +18,8 @@ const TRANSACTION_TYPE_OPTIONS = [
   { value: 'WITHDRAW', label: 'Retirar' },
   { value: 'SALE_INPUT', label: 'Entrada por dispensación' },
   { value: 'SALE_OUTPUT', label: 'Salida por cambio' },
+  { value: 'SUBSCRIPTION_NEW', label: 'Nueva suscripción' },
+  { value: 'SUBSCRIPTION_RENEWAL', label: 'Renovación de suscripción' },
 ];
 
 type ViewMode = 'daily' | 'list';

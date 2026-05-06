@@ -28,7 +28,7 @@ function DayCard({ summary, onCloseDay }: DayCardProps) {
   const isToday = new Date().toISOString().split('T')[0] === summary.date;
   const isClosed = summary.closedAt !== undefined;
 
-  const netChange = summary.totalAdditions + summary.totalSaleInputs 
+  const netChange = summary.totalAdditions + summary.totalSaleInputs + summary.totalSubscriptionNew + summary.totalSubscriptionRenewal
     - summary.totalWithdrawals - summary.totalSaleOutputs;
 
   return (
@@ -104,9 +104,21 @@ function DayCard({ summary, onCloseDay }: DayCardProps) {
                 <span>Ventas:</span>
                 <span className="positive">+{formatMoney(summary.totalSaleInputs)}</span>
               </div>
+              {(summary.totalSubscriptionNew > 0 || summary.totalSubscriptionRenewal > 0) && (
+                <>
+                  <div className="day-card-summary-row">
+                    <span>👤 Nuevos socios:</span>
+                    <span className="positive">+{formatMoney(summary.totalSubscriptionNew)}</span>
+                  </div>
+                  <div className="day-card-summary-row">
+                    <span>🔄 Renovaciones:</span>
+                    <span className="positive">+{formatMoney(summary.totalSubscriptionRenewal)}</span>
+                  </div>
+                </>
+              )}
               <div className="day-card-summary-total">
                 <span>Total entradas:</span>
-                <span className="positive">+{formatMoney(summary.totalAdditions + summary.totalSaleInputs)}</span>
+                <span className="positive">+{formatMoney(summary.totalAdditions + summary.totalSaleInputs + summary.totalSubscriptionNew + summary.totalSubscriptionRenewal)}</span>
               </div>
             </div>
 
@@ -137,9 +149,9 @@ function DayCard({ summary, onCloseDay }: DayCardProps) {
                       {getTransactionTypeLabel(transaction.type)}
                     </span>
                     <span className={`day-card-transaction-amount ${
-                      transaction.type === 'ADD' || transaction.type === 'SALE_INPUT' ? 'positive' : 'negative'
+                      transaction.type === 'ADD' || transaction.type === 'SALE_INPUT' || transaction.type === 'SUBSCRIPTION_NEW' || transaction.type === 'SUBSCRIPTION_RENEWAL' ? 'positive' : 'negative'
                     }`}>
-                      {transaction.type === 'ADD' || transaction.type === 'SALE_INPUT' ? '+' : '-'}
+                      {transaction.type === 'ADD' || transaction.type === 'SALE_INPUT' || transaction.type === 'SUBSCRIPTION_NEW' || transaction.type === 'SUBSCRIPTION_RENEWAL' ? '+' : '-'}
                       {formatMoney(transaction.amount)}
                     </span>
                     {transaction.notes && (
@@ -166,7 +178,9 @@ function getTransactionTypeLabel(type: string): string {
     'ADD': 'Añadido',
     'WITHDRAW': 'Retirado',
     'SALE_INPUT': 'Dispensación',
-    'SALE_OUTPUT': 'Cambio'
+    'SALE_OUTPUT': 'Cambio',
+    'SUBSCRIPTION_NEW': 'Nueva suscripción',
+    'SUBSCRIPTION_RENEWAL': 'Renovación'
   };
   return labels[type] || type;
 }

@@ -1,57 +1,28 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
-import { reopenDay } from '@/services/cajafuerte.service';
-import { useUI } from '@/context/ui.context';
-import { HiLockClosed, HiLockOpen } from 'react-icons/hi2';
+import { HiLockClosed, HiOutlineArrowRight } from 'react-icons/hi';
 import './CajaClosedModal.css';
 
 interface CajaClosedModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onReopenSuccess: () => void;
 }
 
-export function CajaClosedModal({ isOpen, onClose, onReopenSuccess }: CajaClosedModalProps) {
-  const { showToast, setGlobalLoading } = useUI();
-  const [isReopening, setIsReopening] = useState(false);
+export function CajaClosedModal({ isOpen, onClose }: CajaClosedModalProps) {
+  const navigate = useNavigate();
 
-  const handleReopen = async () => {
-    setIsReopening(true);
-    setGlobalLoading(true);
-
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      await reopenDay({ date: today });
-      
-      showToast('Caja reabierta exitosamente', 'success');
-      onReopenSuccess();
-      onClose();
-    } catch (error: any) {
-      showToast(
-        error?.response?.data?.message || 'Error al reabrir la caja',
-        'error'
-      );
-    } finally {
-      setIsReopening(false);
-      setGlobalLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (!isReopening) {
-      onClose();
-    }
+  const handleGoToCaja = () => {
+    onClose();
+    navigate('/cajasfuertes');
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCancel}
-      title="Caja Cerrada"
-      showCloseButton={false}
-      closeOnOverlayClick={false}
-      closeOnEscape={false}
+      onClose={onClose}
+      title="No hay Caja Abierta"
+      showCloseButton={true}
     >
       <div className="caja-closed-modal">
         <div className="caja-closed-icon">
@@ -59,9 +30,10 @@ export function CajaClosedModal({ isOpen, onClose, onReopenSuccess }: CajaClosed
         </div>
         
         <div className="caja-closed-message">
-          <p className="caja-closed-title">La caja está cerrada</p>
+          <p className="caja-closed-title">No hay una caja abierta</p>
           <p className="caja-closed-description">
-            No se pueden realizar operaciones de entrada o salida de dinero mientras la caja esté cerrada.
+            No se pueden realizar ventas ni operaciones de dinero sin una caja abierta.
+            Ve a la página de Cajas para inicializar o abrir una caja.
           </p>
         </div>
 
@@ -69,9 +41,7 @@ export function CajaClosedModal({ isOpen, onClose, onReopenSuccess }: CajaClosed
           <Button
             type="button"
             variant="secondary"
-            onClick={handleCancel}
-            disabled={isReopening}
-            className="caja-closed-cancel-btn"
+            onClick={onClose}
           >
             Cancelar
           </Button>
@@ -79,13 +49,10 @@ export function CajaClosedModal({ isOpen, onClose, onReopenSuccess }: CajaClosed
           <Button
             type="button"
             variant="primary"
-            onClick={handleReopen}
-            loading={isReopening}
-            disabled={isReopening}
-            icon={<HiLockOpen />}
-            className="caja-closed-reopen-btn"
+            onClick={handleGoToCaja}
+            icon={<HiOutlineArrowRight />}
           >
-            Abrir Caja
+            Ir a Cajas
           </Button>
         </div>
       </div>

@@ -330,7 +330,13 @@
 
 .inventory-modal-input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.inventory-modal-note {
+  margin-top: var(--spacing-sm);
+  font-size: 0.9rem;
 }
 
 .inventory-modal-actions {

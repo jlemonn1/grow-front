@@ -19,7 +19,7 @@ import { CustomerDetailPage } from './pages/customers/CustomerDetailPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { ConfigPage } from './pages/config/ConfigPage';
 import { AdminsPage } from './pages/admins/AdminsPage';
-import { CajaFuertePage } from './pages/cajafuerte/CajaFuertePage';
+import { CajaPage } from './pages/caja/CajaPage';
 import { CouponsPage } from './pages/coupons/CouponsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
@@ -76,7 +76,7 @@ export function AppRoutes() {
         <Route path="customers/:id" element={<CustomerDetailPage />} />
         <Route path="customers/:id/edit" element={<CustomerEditPage />} />
         <Route path="reports" element={<ReportsPage />} />
-        <Route path="cajafuerte" element={<CajaFuertePage />} />
+        <Route path="cajafuerte" element={<CajaPage />} />
         <Route path="config" element={<ConfigPage />} />
         <Route path="admins" element={<AdminsPage />} />
         <Route path="coupons" element={<CouponsPage />} />

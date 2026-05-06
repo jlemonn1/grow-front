@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { ImageCropModal } from './index';
 import { uploadImage } from '@/services/images.service';
 import { buildResourceUrl } from '@/utils/apiUrl';
 import { useUI } from '@/context/ui.context';
@@ -19,18 +20,25 @@ export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }:
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
   const [dragOver, setDragOver] = useState(false);
+  
+  // Estados para el modal de recorte
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (file: File | null) => {
-    if (!file) return;
+  // Validar archivo antes de abrir el modal de recorte
+  const validateAndPrepareFile = useCallback((file: File | null): boolean => {
+    if (!file) return false;
 
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       const errorMsg = 'Por favor selecciona un archivo de imagen válido';
       showToast(errorMsg, 'error');
       onError?.(errorMsg);
-      return;
+      return false;
     }
 
     // Validar tamaño (20MB)
@@ -39,31 +47,96 @@ export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }:
       const errorMsg = 'La imagen es demasiado grande. El tamaño máximo es 20MB';
       showToast(errorMsg, 'error');
       onError?.(errorMsg);
-      return;
+      return false;
     }
 
-    // Mostrar preview local
+    return true;
+  }, [showToast, onError]);
+
+  // Abrir modal de recorte con la imagen seleccionada
+  const openCropModal = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      setPreview(e.target?.result as string);
+      const imageDataUrl = e.target?.result as string;
+      setSelectedImage(imageDataUrl);
+      setSelectedFileName(file.name);
+      setShowCropModal(true);
     };
     reader.readAsDataURL(file);
+  }, []);
 
-    // Subir imagen
+  // Manejar selección de archivo (ahora abre el modal de recorte)
+  const handleFileSelect = useCallback((file: File | null) => {
+    if (!file) return;
+    
+    if (validateAndPrepareFile(file)) {
+      openCropModal(file);
+    }
+  }, [validateAndPrepareFile, openCropModal]);
+
+  // Manejar recorte completado - subir imagen recortada
+  const handleCropComplete = useCallback(async (croppedFile: File) => {
+    console.log('=== UPLOAD DEBUG ===');
+    console.log('Received croppedFile:', croppedFile);
+    console.log('File size:', croppedFile.size, 'bytes');
+    console.log('File type:', croppedFile.type);
+    console.log('File name:', croppedFile.name);
+    
+    setShowCropModal(false);
     setUploading(true);
+    
+    // Crear preview local inmediatamente
+    const objectUrl = URL.createObjectURL(croppedFile);
+    console.log('Created object URL:', objectUrl);
+    setPreview(objectUrl);
+    
+    // Verificar que el object URL funciona
+    const testImg = new Image();
+    testImg.onload = () => {
+      console.log('Object URL image loaded successfully:', testImg.width, 'x', testImg.height);
+    };
+    testImg.onerror = (e) => {
+      console.error('Object URL image failed to load:', e);
+    };
+    testImg.src = objectUrl;
+    
     try {
-      const response = await uploadImage(file);
+      const response = await uploadImage(croppedFile);
+      console.log('Upload response:', response);
+      // Liberar el objectUrl y usar la URL del servidor
+      URL.revokeObjectURL(objectUrl);
       onChange(response.url);
+      setPreview(response.url);
       showToast('Imagen subida exitosamente', 'success');
     } catch (error) {
+      console.error('Upload error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Error al subir la imagen';
       showToast(errorMsg, 'error');
       onError?.(errorMsg);
+      URL.revokeObjectURL(objectUrl);
       setPreview(null);
     } finally {
       setUploading(false);
+      // Limpiar estados del modal
+      setSelectedImage('');
+      setSelectedFileName('');
+      console.log('==================');
     }
-  };
+  }, [onChange, onError, showToast]);
+
+  // Cerrar modal de recorte
+  const handleCloseCropModal = useCallback(() => {
+    setShowCropModal(false);
+    setSelectedImage('');
+    setSelectedFileName('');
+    // Limpiar inputs para permitir seleccionar la misma imagen de nuevo
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+  }, []);
 
   const handleGalleryClick = () => {
     fileInputRef.current?.click();
@@ -76,11 +149,15 @@ export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     handleFileSelect(file);
-    // Reset input para permitir seleccionar el mismo archivo de nuevo
-    e.target.value = '';
+    // No reseteamos aquí porque el modal necesita el input
+    // Se resetea al cerrar el modal o completar el recorte
   };
 
   const handleRemove = () => {
+    // Liberar objectUrl si existe
+    if (preview && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview);
+    }
     setPreview(null);
     onChange('');
     if (fileInputRef.current) {
@@ -118,14 +195,25 @@ export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }:
     handleFileSelect(file);
   };
 
-  // Sincronizar preview con value externo
+  // Sincronizar preview con value externo (solo cuando no estamos subiendo)
   useEffect(() => {
-    if (value && value !== preview) {
-      setPreview(value);
-    } else if (!value && preview) {
-      setPreview(null);
+    if (!uploading) {
+      if (value) {
+        setPreview(value);
+      } else if (!value && preview) {
+        setPreview(null);
+      }
     }
-  }, [value, preview]);
+  }, [value, uploading]);
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, []);
 
   return (
     <div className="image-upload" data-tour={dataTour}>
@@ -203,6 +291,15 @@ export function ImageUpload({ value, onChange, onError, 'data-tour': dataTour }:
         onChange={handleFileChange}
         style={{ display: 'none' }}
         aria-label="Capturar imagen con cámara"
+      />
+
+      {/* Modal de Recorte */}
+      <ImageCropModal
+        isOpen={showCropModal}
+        imageSrc={selectedImage}
+        onClose={handleCloseCropModal}
+        onCropComplete={handleCropComplete}
+        originalFileName={selectedFileName}
       />
     </div>
   );

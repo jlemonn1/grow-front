@@ -1,0 +1,255 @@
+/* CajaActualCard.css */
+/* Tarjeta principal de la caja actual */
+
+.caja-actual-card {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  transition: all var(--transition-base), box-shadow var(--transition-glow);
+}
+
+.caja-actual-card:hover {
+  border-color: var(--border-led-color);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+/* Header */
+.caja-actual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.caja-actual-title-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.caja-actual-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.caja-actual-numero {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.caja-actual-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.caja-estado-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.caja-estado-abierta {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.caja-estado-cerrada {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--color-secondary);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.caja-expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-fast);
+}
+
+.caja-expand-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Monto Teórico */
+.caja-teorico-box {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-neon-sm);
+}
+
+.caja-teorico-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+  margin-bottom: var(--spacing-xs);
+}
+
+.caja-teorico-monto {
+  display: block;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+}
+
+/* Acciones */
+.caja-acciones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+/* Detalle expandible */
+.caja-detalle {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  animation: slideDown var(--transition-base);
+}
+
+.caja-detalle h3 {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.caja-movimientos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.caja-movimiento-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.caja-movimiento-inicial {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.caja-movimiento-positivo {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.caja-movimiento-positivo .caja-movimiento-valor {
+  color: var(--color-success);
+}
+
+.caja-movimiento-negativo {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.caja-movimiento-negativo .caja-movimiento-valor {
+  color: var(--color-error);
+}
+
+.caja-movimiento-info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.caja-movimiento-info .caja-movimiento-valor {
+  color: var(--color-info);
+}
+
+.caja-movimiento-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.caja-movimiento-valor {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.caja-footer {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Animaciones */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .caja-actual-card {
+    padding: var(--spacing-md);
+  }
+
+  .caja-actual-numero {
+    font-size: var(--font-size-xl);
+  }
+
+  .caja-teorico-monto {
+    font-size: var(--font-size-2xl);
+  }
+
+  .caja-acciones {
+    grid-template-columns: 1fr;
+  }
+
+  .caja-movimientos-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .caja-movimiento-item {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .caja-acciones {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .caja-movimientos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Utilidades de texto */
+.text-success {
+  color: var(--color-success);
+}
+
+.text-danger {
+  color: var(--color-error);
+}
