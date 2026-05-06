@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useUI } from '@/context/ui.context';
@@ -16,7 +15,7 @@ import { AjusteModal } from '@/components/caja/AjusteModal';
 import { CajaList } from '@/components/caja/CajaList';
 import { ExportarModal } from '@/components/caja/ExportarModal';
 import { getFirstDayOfMonthISO, getTodayISO } from '@/utils/dateUtils';
-import type { Caja, CerrarCajaResponse } from '@/types/caja';
+import type { CerrarCajaResponse } from '@/types/caja';
 import { HiOutlineDownload } from 'react-icons/hi';
 import './CajaPage.css';
 
@@ -148,15 +147,12 @@ export function CajaPage() {
     <div className="caja-page">
       <PageHeader 
         title="Gestión de Cajas"
-        actions={
-          <Button
-            variant="secondary"
-            onClick={() => setModalExportarOpen(true)}
-            icon={<HiOutlineDownload />}
-          >
-            Exportar
-          </Button>
-        }
+        action={{
+          label: 'Exportar',
+          onClick: () => setModalExportarOpen(true),
+          icon: HiOutlineDownload,
+          variant: 'secondary'
+        }}
       />
 
       {/* Caja Actual */}

@@ -68,7 +68,7 @@ const [showContractModal, setShowContractModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
   
   // Hook para verificar estado de caja
-  const { isTodayClosed, refreshStatus: refreshCajaStatus } = useCajaStatus();
+  const { isTodayClosed } = useCajaStatus();
   
   const [salesPagination, setSalesPagination] = useState({
     page: 0,

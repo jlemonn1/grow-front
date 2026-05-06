@@ -119,7 +119,7 @@ export function SaleCreatePage() {
   }, [cashGiven]);
    
   // Hook para verificar estado de caja
-  const { isTodayClosed, refreshStatus: refreshCajaStatus } = useCajaStatus();
+  const { isTodayClosed } = useCajaStatus();
   
   // Refs para atajos de teclado
   const gramsInputRef = useRef<HTMLInputElement>(null);

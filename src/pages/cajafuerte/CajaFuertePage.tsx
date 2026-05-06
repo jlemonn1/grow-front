@@ -115,11 +115,6 @@ export function CajaFuertePage() {
     }
   };
 
-  const handleReopenSuccess = () => {
-    loadData();
-    setHistoryRefreshTrigger(prev => prev + 1);
-  };
-
   return (
     <div className="cajafuerte-page">
       <PageHeader 
@@ -205,7 +200,6 @@ export function CajaFuertePage() {
       <CajaClosedModal
         isOpen={showClosedModal}
         onClose={() => setShowClosedModal(false)}
-        onReopenSuccess={handleReopenSuccess}
       />
     </div>
   );

@@ -101,7 +101,7 @@ function TicketItemRowComponent({
       const calculatedGrams = Math.round((euros / effectivePricePerGram) * 100) / 100;
       setDispenseGrams(calculatedGrams);
       // Pasar los euros exactos introducidos por el usuario para preservar el subtotal exacto
-      onUpdate(index, calculatedGrams, euros);
+      onUpdate(index, calculatedGrams);
       onValidate(index);
     }
     requestAnimationFrame(() => {
