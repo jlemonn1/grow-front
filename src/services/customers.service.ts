@@ -19,6 +19,8 @@ export interface ListCustomersParams {
   type?: 'any' | 'pin' | 'name' | 'phone' | 'dni';
   page?: number;
   size?: number;
+  createdAtFrom?: string; // YYYY-MM-DD
+  createdAtTo?: string;   // YYYY-MM-DD
 }
 
 export interface CustomerSalesParams {
@@ -141,6 +143,12 @@ export const customersService = {
     }
     if (params?.size !== undefined) {
       queryParams.append('size', params.size.toString());
+    }
+    if (params?.createdAtFrom) {
+      queryParams.append('createdAtFrom', params.createdAtFrom);
+    }
+    if (params?.createdAtTo) {
+      queryParams.append('createdAtTo', params.createdAtTo);
     }
 
     const queryString = queryParams.toString();

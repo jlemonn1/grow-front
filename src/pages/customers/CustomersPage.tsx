@@ -50,6 +50,10 @@ export function CustomersPage() {
     customer: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [appliedDateFrom, setAppliedDateFrom] = useState('');
+  const [appliedDateTo, setAppliedDateTo] = useState('');
   
   // Estado para modo visitante
   const [visitorCustomers, setVisitorCustomers] = useState<Customer[]>([]);
@@ -69,7 +73,7 @@ export function CustomersPage() {
   const pagination = isVisitorMode ? visitorPagination : contextPagination;
 
   // Cargar clientes (públicos o normales según el modo)
-  const loadCustomersData = useCallback(async (params?: { q?: string; type?: SearchType; page?: number; size?: number }) => {
+  const loadCustomersData = useCallback(async (params?: { q?: string; type?: SearchType; page?: number; size?: number; createdAtFrom?: string; createdAtTo?: string }) => {
     if (isVisitorMode) {
       setVisitorLoading(true);
       setVisitorError(null);
@@ -130,6 +134,46 @@ export function CustomersPage() {
     setManualSearchType(null);
   }, []);
 
+  const handleApplyDateFilter = useCallback(() => {
+    if (!dateFrom || !dateTo) return;
+    setAppliedDateFrom(dateFrom);
+    setAppliedDateTo(dateTo);
+    let finalSearchType: SearchType;
+    if (searchMode === 'manual' && manualSearchType) {
+      finalSearchType = manualSearchType;
+    } else {
+      finalSearchType = getAutoSearchType(searchQuery);
+    }
+    loadCustomersData({
+      q: searchQuery || undefined,
+      type: finalSearchType === 'any' ? undefined : finalSearchType,
+      page: 0,
+      size: 25,
+      createdAtFrom: dateFrom,
+      createdAtTo: dateTo,
+    });
+  }, [dateFrom, dateTo, searchQuery, searchMode, manualSearchType, loadCustomersData]);
+
+  const handleClearDates = useCallback(() => {
+    setDateFrom('');
+    setDateTo('');
+    setAppliedDateFrom('');
+    setAppliedDateTo('');
+    // Recargar sin filtros de fecha
+    let finalSearchType: SearchType;
+    if (searchMode === 'manual' && manualSearchType) {
+      finalSearchType = manualSearchType;
+    } else {
+      finalSearchType = getAutoSearchType(searchQuery);
+    }
+    loadCustomersData({ 
+      q: searchQuery || undefined, 
+      type: finalSearchType === 'any' ? undefined : finalSearchType,
+      page: 0, 
+      size: 25,
+    });
+  }, [searchQuery, searchMode, manualSearchType, loadCustomersData]);
+
   // Cargar clientes al montar
   useEffect(() => {
     // Si estamos en modo demo o modo normal, cargar datos
@@ -156,21 +200,31 @@ export function CustomersPage() {
     setSearchType(finalSearchType);
 
     const timer = setTimeout(() => {
+      const hasBothDates = appliedDateFrom && appliedDateTo;
       loadCustomersData({ 
         q: searchQuery || undefined, 
         type: finalSearchType === 'any' ? undefined : finalSearchType,
         page: 0, 
-        size: 25 
+        size: 25,
+        createdAtFrom: hasBothDates ? appliedDateFrom : undefined,
+        createdAtTo: hasBothDates ? appliedDateTo : undefined,
       });
     }, 300);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, searchMode, manualSearchType]);
+  }, [searchQuery, searchMode, manualSearchType, appliedDateFrom, appliedDateTo]);
 
   const handlePageChange = useCallback((page: number) => {
-    loadCustomersData({ q: searchQuery || undefined, page, size: 25 });
-  }, [searchQuery, loadCustomersData]);
+    const hasBothDates = appliedDateFrom && appliedDateTo;
+    loadCustomersData({ 
+      q: searchQuery || undefined, 
+      page, 
+      size: 25,
+      createdAtFrom: hasBothDates ? appliedDateFrom : undefined,
+      createdAtTo: hasBothDates ? appliedDateTo : undefined,
+    });
+  }, [searchQuery, appliedDateFrom, appliedDateTo, loadCustomersData]);
 
   const handleRowClick = useCallback((customer: Customer) => {
     // En modo visitante, no permitir navegar a detalles
@@ -194,13 +248,20 @@ export function CustomersPage() {
       showToast('Socio eliminado exitosamente', 'success');
       setDeleteModal({ isOpen: false, customer: null });
       // Recargar clientes
-      loadCustomersData({ q: searchQuery || undefined, page: 0, size: 25 });
+      const hasBothDates = appliedDateFrom && appliedDateTo;
+      loadCustomersData({ 
+        q: searchQuery || undefined, 
+        page: 0, 
+        size: 25,
+        createdAtFrom: hasBothDates ? appliedDateFrom : undefined,
+        createdAtTo: hasBothDates ? appliedDateTo : undefined,
+      });
     } catch (err) {
       showToast('Error al eliminar socio', 'error');
     } finally {
       setIsDeleting(false);
     }
-  }, [deleteModal.customer, showToast, loadCustomers, searchQuery]);
+  }, [deleteModal.customer, showToast, loadCustomersData, searchQuery, appliedDateFrom, appliedDateTo]);
 
   const handleCloseDeleteModal = useCallback(() => {
     if (!isDeleting) {
@@ -347,6 +408,71 @@ export function CustomersPage() {
             </div>
           )}
         </div>
+
+        {!isVisitorMode && (
+          <div className="customers-page-date-filter">
+            <div className="customers-page-date-inputs">
+              <label className="customers-page-date-label">
+                <span>Desde</span>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </label>
+              <label className="customers-page-date-label">
+                <span>Hasta</span>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </label>
+              {dateFrom && dateTo && (
+                <button
+                  type="button"
+                  className="customers-page-date-apply"
+                  onClick={handleApplyDateFilter}
+                  aria-label="Filtrar por fechas"
+                  title="Filtrar por fechas"
+                >
+                  Filtrar
+                </button>
+              )}
+              {(appliedDateFrom || appliedDateTo) && (
+                <button
+                  type="button"
+                  className="customers-page-date-clear"
+                  onClick={handleClearDates}
+                  aria-label="Limpiar fechas"
+                  title="Limpiar fechas"
+                >
+                  Limpiar fechas
+                </button>
+              )}
+            </div>
+            {dateFrom && !dateTo && (
+              <div className="customers-page-search-hint">
+                Selecciona también la fecha "Hasta" para habilitar el filtro
+              </div>
+            )}
+            {!dateFrom && dateTo && (
+              <div className="customers-page-search-hint">
+                Selecciona también la fecha "Desde" para habilitar el filtro
+              </div>
+            )}
+            {dateFrom && dateTo && !appliedDateFrom && (
+              <div className="customers-page-search-hint">
+                Pulsa "Filtrar" para aplicar el rango de fechas
+              </div>
+            )}
+            {appliedDateFrom && appliedDateTo && (
+              <div className="customers-page-search-hint">
+                Filtrando por fechas de creación: {appliedDateFrom} a {appliedDateTo}
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="customers-page-error">
