@@ -276,30 +276,6 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
         )}
       </div>
 
-      {customerId && quickOptions.length > 0 && !searchQuery.trim() && !selectedProduct && (
-        <div className="product-picker-quick-options">
-          <div className="product-picker-quick-options-scroll">
-            {quickOptions.map((product) => (
-              <button
-                key={product.id}
-                type="button"
-                className="product-picker-quick-option-chip"
-                onClick={() => handleSelect(product)}
-                aria-label={`Agregar ${product.name}`}
-              >
-                <ProductImage
-                  imageUrl={product.imageUrl}
-                  alt={product.name}
-                  size="small"
-                  className="product-picker-quick-option-image"
-                />
-                <span className="product-picker-quick-option-name">{product.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {showCategories && (
         <div className="product-picker-results" role="listbox" id="product-picker-categories">
           {loadingCategories ? (

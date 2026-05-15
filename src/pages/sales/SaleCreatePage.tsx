@@ -10,6 +10,7 @@ import { TicketSummary } from '@/components/sale/TicketSummary';
 import { WizardSummary } from '@/components/sale/WizardSummary';
 import { NumericKeypad } from '@/components/common/NumericKeypad';
 import { SaleCreateMain } from '@/components/sale/SaleCreateMain';
+import { SelectedCustomerChip } from '@/components/sale/SelectedCustomerChip';
 
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
 import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
@@ -28,7 +29,7 @@ import { PendingSalesModal } from '@/components/sale/PendingSalesModal';
 import { CajaClosedModal } from '@/components/cajafuerte/CajaClosedModal';
 import { useCajaStatus } from '@/hooks/useCajaStatus';
 import type { ValidationError, ApiError } from '@/types/api';
-import type { CreateSaleRequest, Product, Sale, SaleDraft, PendingSale } from '@/types/models';
+import type { CreateSaleRequest, Product, Sale, SaleDraft, PendingSale, Customer } from '@/types/models';
 import './SaleCreatePage.css';
 import '@/components/sale/SaleCreateMain.css';
 
@@ -175,6 +176,14 @@ export function SaleCreatePage() {
       })));
     }, 1000);
   }, []);
+
+  // Auto-avanzar al paso 1 si ya hay un socio cargado (borrador/pendiente)
+  useEffect(() => {
+    if (customer && currentStep === 0) {
+      setCompletedSteps(prev => new Set([...prev, 0]));
+      setCurrentStep(1);
+    }
+  }, [customer, currentStep]);
 
   // Cargar borrador al montar
   useEffect(() => {
@@ -374,6 +383,15 @@ export function SaleCreatePage() {
       setGramsToAdd(0);
     }
   }, [ensureProductInContext, getProductStock, showToast, addProductToTicket, currentStep, setCompletedSteps, setCurrentStep]);
+
+  // Manejar selección de socio con navegación automática al paso 1
+  const handleCustomerSelect = useCallback((selectedCustomer: Customer | null) => {
+    setCustomer(selectedCustomer);
+    if (selectedCustomer) {
+      setCompletedSteps(prev => new Set([...prev, 0]));
+      setCurrentStep(1);
+    }
+  }, [setCustomer, setCompletedSteps, setCurrentStep]);
 
   // Agregar producto al ticket
   const handleAddProduct = useCallback(async () => {
@@ -809,7 +827,7 @@ export function SaleCreatePage() {
         <CustomerPicker
           ref={customerSearchRef}
           selectedCustomer={customer}
-          onSelect={setCustomer}
+          onSelect={handleCustomerSelect}
         />
       </div>
 
@@ -831,50 +849,58 @@ export function SaleCreatePage() {
   const renderStep1 = () => (
     <div className="wizard-step-content wizard-step-1">
       <SaleCreateMain>
-        <div className="sale-create-section">
-          <div className="sale-create-section-header">
-            <HiOutlineCube className="sale-create-section-icon" />
-            <h2 className="sale-create-section-title">Buscar Productos</h2>
-          </div>
-          <ProductPicker
-            ref={productSearchRef}
-            selectedProduct={selectedProduct}
-            onSelect={handleProductSelect}
-            customerId={customer?.id}
-          />
-          {selectedProduct && (
-            <div className="sale-create-product-form">
-              <div className="sale-create-dispense-input">
-                <div onKeyDown={(e) => {
-                  if (e.key === 'Enter' && gramsToAdd > 0) {
-                    e.preventDefault();
-                    handleAddProduct();
-                  }
-                }}>
-                  <ProductDispenseInput
-                    product={selectedProduct}
-                    availableStock={getProductStock(selectedProduct.id)}
-                    onGramsChange={setGramsToAdd}
-                    onEurosChange={setEurosToAdd}
-                    onActualWeighedGramsChange={setActualWeighedGrams}
-                    gramsInputRef={gramsInputRef}
-                    eurosInputRef={eurosInputRef}
-                  />
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleAddProduct}
-                disabled={gramsToAdd <= 0}
-                style={{ minWidth: '120px' }}
-                data-tour="add-product"
-              >
-                <HiOutlinePlus style={{ marginRight: '8px' }} />
-                Agregar
-              </Button>
-            </div>
+        <div className="sale-create-left-col">
+          {customer && (
+            <SelectedCustomerChip
+              customer={customer}
+              onClear={handleReset}
+            />
           )}
+          <div className="sale-create-section">
+            <div className="sale-create-section-header">
+              <HiOutlineCube className="sale-create-section-icon" />
+              <h2 className="sale-create-section-title">Buscar Productos</h2>
+            </div>
+            <ProductPicker
+              ref={productSearchRef}
+              selectedProduct={selectedProduct}
+              onSelect={handleProductSelect}
+              customerId={customer?.id}
+            />
+            {selectedProduct && (
+              <div className="sale-create-product-form">
+                <div className="sale-create-dispense-input">
+                  <div onKeyDown={(e) => {
+                    if (e.key === 'Enter' && gramsToAdd > 0) {
+                      e.preventDefault();
+                      handleAddProduct();
+                    }
+                  }}>
+                    <ProductDispenseInput
+                      product={selectedProduct}
+                      availableStock={getProductStock(selectedProduct.id)}
+                      onGramsChange={setGramsToAdd}
+                      onEurosChange={setEurosToAdd}
+                      onActualWeighedGramsChange={setActualWeighedGrams}
+                      gramsInputRef={gramsInputRef}
+                      eurosInputRef={eurosInputRef}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleAddProduct}
+                  disabled={gramsToAdd <= 0}
+                  style={{ minWidth: '120px' }}
+                  data-tour="add-product"
+                >
+                  <HiOutlinePlus style={{ marginRight: '8px' }} />
+                  Agregar
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="sale-create-section">
