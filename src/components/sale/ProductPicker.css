@@ -497,6 +497,60 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* View Mode Toggle */
+.product-picker-view-toggle {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  padding: 2px;
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  align-self: flex-start;
+}
+
+.product-picker-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-base);
+  line-height: 1;
+}
+
+.product-picker-view-btn:hover {
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.08);
+  color: var(--text-primary);
+}
+
+.product-picker-view-btn.active {
+  background: rgba(var(--color-primary-rgb, 37, 99, 235), 0.12);
+  border-color: var(--neon-primary);
+  color: var(--neon-primary);
+  box-shadow: 0 0 6px var(--neon-glow-primary);
+}
+
+.product-picker-view-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.product-picker-view-label {
+  font-weight: 500;
+}
+
+/* Product Picker List item price */
+.product-picker-item-price {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 /* Quick Options Roll Gallery */
 .product-picker-quick-options {
   margin-top: var(--spacing-xs);

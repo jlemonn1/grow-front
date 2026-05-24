@@ -2,9 +2,10 @@ import { memo, useState, useEffect, useCallback, useRef, useImperativeHandle, fo
 import { Input } from '@/components/forms/Input';
 import { ProductImage } from '@/components/common/ProductImage';
 import { ProductPickerGrid } from './ProductPickerGrid';
+import { ProductPickerList } from './ProductPickerList';
 import { listProducts } from '@/services/products.service';
 import { listCategories } from '@/services/categories.service';
-import { customersService } from '@/services/customers.service';
+import { useProductPickerView } from '@/hooks/useProductPickerView';
 import type { Product, Category } from '@/types/models';
 import { getMeasurementShortLabel } from '@/utils/measurement';
 import './ProductPicker.css';
@@ -12,7 +13,6 @@ import './ProductPicker.css';
 interface ProductPickerProps {
   selectedProduct: Product | null;
   onSelect: (product: Product | null) => void;
-  customerId?: string | null;
 }
 
 export interface ProductPickerRef {
@@ -20,7 +20,7 @@ export interface ProductPickerRef {
 }
 
 const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
-  ({ selectedProduct, onSelect, customerId }, ref) => {
+  ({ selectedProduct, onSelect }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -36,7 +36,8 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [showCategories, setShowCategories] = useState(false);
-    const [quickOptions, setQuickOptions] = useState<Product[]>([]);
+    const { viewMode, toggleViewMode, isListMode } = useProductPickerView();
+    const initialListLoadRef = useRef(false);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -54,26 +55,6 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     loadCategories();
   }, []);
 
-  // Cargar quick options del socio cuando hay customerId
-  useEffect(() => {
-    if (!customerId) {
-      setQuickOptions([]);
-      return;
-    }
-
-    const loadQuickOptions = async () => {
-      try {
-        const recommended = await customersService.getRecommendedProducts(customerId);
-        setQuickOptions(recommended.slice(0, 6));
-      } catch (error) {
-        console.error('Error al cargar quick options:', error);
-        setQuickOptions([]);
-      }
-    };
-
-    loadQuickOptions();
-  }, [customerId]);
-
   // Limpiar estados internos cuando selectedProduct cambia a null
   useEffect(() => {
     if (!selectedProduct) {
@@ -88,10 +69,52 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     }
   }, [selectedProduct]);
 
+  // Precargar productos iniciales cuando estamos en modo lista
+  useEffect(() => {
+    if (isListMode && !selectedProduct && !searchQuery.trim() && !selectedCategoryId) {
+      if (initialListLoadRef.current) return;
+      initialListLoadRef.current = true;
+      const loadInitialProducts = async () => {
+        setLoading(true);
+        try {
+          const response = await listProducts({ page: 0, size: 10 });
+          const sortedResults = [...response.content].sort((a, b) => {
+            if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
+            if (a.stockGrams > 0 && b.stockGrams <= 0) return -1;
+            return 0;
+          });
+          setResults(sortedResults);
+          setShowResults(true);
+          setShowCategories(false);
+        } catch (error) {
+          console.error('Error al cargar productos iniciales:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadInitialProducts();
+    } else {
+      initialListLoadRef.current = false;
+    }
+  }, [isListMode, selectedProduct, searchQuery, selectedCategoryId]);
+
+  // Reaccionar a cambios de viewMode
+  useEffect(() => {
+    // Si cambiamos a modo carpetas y no hay búsqueda ni categoría, mostrar categorías
+    if (!isListMode && !selectedProduct && !searchQuery.trim() && !selectedCategoryId && categories.length > 0) {
+      setShowCategories(true);
+      setShowResults(false);
+    }
+    // Si cambiamos a modo lista y no hay búsqueda ni categoría, ocultar categorías
+    if (isListMode && showCategories && !searchQuery.trim() && !selectedCategoryId) {
+      setShowCategories(false);
+    }
+  }, [isListMode, selectedProduct, searchQuery, selectedCategoryId, categories.length, showCategories]);
+
   // Búsqueda con debounce - solo buscar si no hay producto seleccionado
   useEffect(() => {
     const trimmed = searchQuery.trim();
-    
+
     // Si hay un producto seleccionado y el query coincide con su nombre, no buscar
     if (selectedProduct && trimmed === selectedProduct.name) {
       setResults([]);
@@ -99,16 +122,16 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
       setShowCategories(false);
       return;
     }
-    
+
     // Si hay una categoría seleccionada, buscar productos de esa categoría
     if (selectedCategoryId && !trimmed) {
       const timer = setTimeout(async () => {
         setLoading(true);
         try {
-          const response = await listProducts({ 
-            categoryId: selectedCategoryId, 
-            page: 0, 
-            size: 100 
+          const response = await listProducts({
+            categoryId: selectedCategoryId,
+            page: 0,
+            size: 100
           });
           const sortedResults = [...response.content].sort((a, b) => {
             if (a.stockGrams <= 0 && b.stockGrams > 0) return 1;
@@ -127,8 +150,13 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
       }, 100);
       return () => clearTimeout(timer);
     }
-    
+
     if (!trimmed) {
+      // En modo lista sin categoría, no limpiar resultados ni forzar categorías
+      if (isListMode && !selectedCategoryId) {
+        setShowCategories(false);
+        return;
+      }
       setResults([]);
       setShowResults(false);
       // Si no hay texto y hay categorías, mostrar categorías
@@ -171,7 +199,7 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedProduct, selectedCategoryId, categories.length]);
+  }, [searchQuery, selectedProduct, selectedCategoryId, categories.length, isListMode]);
 
   const handleSelect = useCallback((product: Product) => {
     onSelect(product);
@@ -229,16 +257,25 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
             }
           }}
           onFocus={() => {
-            // Si no hay texto y no hay producto seleccionado, mostrar categorías
-            if (!selectedProduct && !searchQuery.trim() && categories.length > 0 && !selectedCategoryId) {
-              setShowCategories(true);
+            if (selectedProduct) return;
+            // Si no hay texto y no hay producto seleccionado
+            if (!searchQuery.trim() && !selectedCategoryId) {
+              if (isListMode) {
+                // En modo lista, mostrar resultados ya cargados
+                if (results.length > 0) {
+                  setShowResults(true);
+                  setShowCategories(false);
+                }
+              } else if (categories.length > 0) {
+                setShowCategories(true);
+              }
             }
-            // Solo mostrar resultados si hay búsqueda activa y no hay producto seleccionado
-            else if (!selectedProduct && results.length > 0 && searchQuery.trim().length > 0) {
+            // Solo mostrar resultados si hay búsqueda activa
+            else if (results.length > 0 && searchQuery.trim().length > 0) {
               setShowResults(true);
             }
             // Si hay categoría seleccionada pero no hay texto, mostrar productos de esa categoría
-            else if (!selectedProduct && selectedCategoryId && !searchQuery.trim()) {
+            else if (selectedCategoryId && !searchQuery.trim()) {
               setShowResults(true);
             }
           }}
@@ -274,6 +311,29 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
             ×
           </button>
         )}
+      </div>
+
+      <div className="product-picker-view-toggle">
+        <button
+          type="button"
+          className={`product-picker-view-btn ${viewMode === 'folders' ? 'active' : ''}`}
+          onClick={() => viewMode !== 'folders' && toggleViewMode()}
+          aria-label="Vista carpetas"
+          title="Vista carpetas"
+        >
+          <span className="product-picker-view-icon">📁</span>
+          <span className="product-picker-view-label">Carpetas</span>
+        </button>
+        <button
+          type="button"
+          className={`product-picker-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+          onClick={() => viewMode !== 'list' && toggleViewMode()}
+          aria-label="Vista lista"
+          title="Vista lista"
+        >
+          <span className="product-picker-view-icon">☰</span>
+          <span className="product-picker-view-label">Lista</span>
+        </button>
       </div>
 
       {showCategories && (
@@ -345,6 +405,12 @@ const ProductPickerComponent = forwardRef<ProductPickerRef, ProductPickerProps>(
             <div className="product-picker-empty" role="status" aria-live="polite">
               No se encontraron productos
             </div>
+          ) : isListMode ? (
+            <ProductPickerList
+              products={results}
+              selectedProduct={selectedProduct}
+              onSelect={handleSelect}
+            />
           ) : (
             <ProductPickerGrid
               products={results}

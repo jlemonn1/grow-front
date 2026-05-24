@@ -1,0 +1,93 @@
+.draft-recovery-banner {
+  background: var(--bg-secondary, #1a1a2e);
+  border: var(--border-led-width, 1px) solid var(--color-warning, #ff9800);
+  border-radius: var(--border-radius, 6px);
+  overflow: hidden;
+  margin-bottom: var(--spacing-md, 12px);
+  position: relative;
+}
+
+.draft-recovery-banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  min-height: 36px;
+}
+
+.draft-recovery-banner-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--color-warning, #ff9800);
+}
+
+.draft-recovery-banner-text {
+  flex: 1;
+  font-size: var(--font-size-sm, 13px);
+  color: var(--text-primary, #e2e8f0);
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-recovery-banner-recover {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--color-warning, #ff9800);
+  color: var(--color-warning, #ff9800);
+  border-radius: var(--border-radius-sm, 4px);
+  padding: 4px 10px;
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.15s);
+  white-space: nowrap;
+}
+
+.draft-recovery-banner-recover:hover {
+  background: var(--color-warning, #ff9800);
+  color: var(--bg-primary, #0f0f1a);
+}
+
+.draft-recovery-banner-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm, 4px);
+  transition: all var(--transition-fast, 0.15s);
+  padding: 0;
+}
+
+.draft-recovery-banner-close:hover {
+  background: var(--bg-tertiary, #2d2d44);
+  color: var(--text-primary, #e2e8f0);
+}
+
+.draft-recovery-banner-progress {
+  height: 2px;
+  background: var(--color-warning, #ff9800);
+  opacity: 0.6;
+  transition: width 0.1s linear;
+}
+
+@media (max-width: 640px) {
+  .draft-recovery-banner-text {
+    white-space: normal;
+    font-size: var(--font-size-xs, 12px);
+  }
+
+  .draft-recovery-banner-recover {
+    padding: 3px 8px;
+    font-size: var(--font-size-xs, 12px);
+  }
+}

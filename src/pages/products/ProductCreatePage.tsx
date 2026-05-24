@@ -15,6 +15,7 @@ import { ImageUpload } from '@/components/product/ImageUpload';
 import { useUI } from '@/context/ui.context';
 import { useProducts } from '@/context/products.context';
 import { listCategories, createCategory } from '@/services/categories.service';
+import { uploadImage } from '@/services/images.service';
 import type { Category, ProductMeasurementType } from '@/types/models';
 import type { ValidationError, ApiError } from '@/types/api';
 import { getMeasurementLongLabel } from '@/utils/measurement';
@@ -47,6 +48,76 @@ const STEPS = [
   { id: 2 as Step, title: 'Imagen', fields: ['imageUrl'] as (keyof FormData)[] },
   { id: 3 as Step, title: 'Descripción', fields: ['description'] as (keyof FormData)[] },
 ];
+
+function escapeSvgText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function generateProductPlaceholderFile(name: string): Promise<File> {
+  const size = 400;
+  const words = name.trim().split(/\s+/);
+  const maxLen = Math.max(...words.map((w) => w.length));
+  const lineCount = words.length;
+
+  // Mucho más grande: limitado por ancho de la palabra más larga y altura total
+  const fontSize = Math.max(24, Math.min(120, Math.floor(360 / maxLen), Math.floor(340 / (lineCount * 1.2))));
+  const lineHeight = fontSize * 1.2;
+  const totalBlockHeight = lineCount * lineHeight;
+  const startY = (size - totalBlockHeight) / 2 + fontSize * 0.35;
+
+  const tspanElements = words
+    .map((word, i) => {
+      const dy = i === 0 ? 0 : lineHeight;
+      return `<tspan x="50%" dy="${dy}">${escapeSvgText(word)}</tspan>`;
+    })
+    .join('');
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <rect width="100%" height="100%" fill="#0f172a"/>
+    <text x="50%" y="${startY}" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="${fontSize}" font-weight="700" fill="#10b981">${tspanElements}</text>
+  </svg>`;
+
+  return new Promise((resolve, reject) => {
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        reject(new Error('No se pudo obtener el contexto del canvas'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('No se pudo generar el blob PNG'));
+          return;
+        }
+        const safeName = name.trim().replace(/\s+/g, '_').toLowerCase();
+        const file = new File([blob], `${safeName}_placeholder.png`, { type: 'image/png' });
+        resolve(file);
+      }, 'image/png');
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Error al cargar el SVG en el canvas'));
+    };
+
+    img.src = url;
+  });
+}
 
 export function ProductCreatePage() {
   const navigate = useNavigate();
@@ -82,6 +153,7 @@ export function ProductCreatePage() {
   const measurementLongName = getMeasurementLongLabel(formData.measurementType);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
 
   useEffect(() => {
@@ -544,7 +616,7 @@ export function ProductCreatePage() {
           <div className="step-content">
             <h2 className="step-title">Imagen del producto</h2>
             <p className="step-description">Sube una imagen para identificar el producto (opcional)</p>
-            
+
             <div className="step-form">
               <ImageUpload
                 value={formData.imageUrl}
@@ -552,6 +624,34 @@ export function ProductCreatePage() {
                 data-tour="product-image-upload"
               />
               <p className="step-hint">Puedes continuar sin imagen y añadirla más tarde</p>
+              <div className="generate-image-wrapper">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={async () => {
+                    if (!formData.name.trim()) return;
+                    setIsGeneratingImage(true);
+                    try {
+                      const file = await generateProductPlaceholderFile(formData.name.trim());
+                      const response = await uploadImage(file);
+                      handleChange('imageUrl', response.url);
+                      showToast('Imagen generada y subida correctamente', 'success');
+                    } catch (err) {
+                      const errorMsg = err instanceof Error ? err.message : 'Error al subir imagen generada';
+                      showToast(errorMsg, 'error');
+                    } finally {
+                      setIsGeneratingImage(false);
+                    }
+                  }}
+                  disabled={!formData.name.trim() || isSubmitting || isGeneratingImage}
+                  loading={isGeneratingImage}
+                >
+                  Generar imagen automática
+                </Button>
+                <span className="generate-image-hint">
+                  Crea una imagen cuadrada PNG con el nombre del producto
+                </span>
+              </div>
             </div>
           </div>
         );

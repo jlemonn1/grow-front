@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useProductDispense } from '@/hooks/useProductDispense';
-import { formatMoney } from '@/utils/money';
 import { getMeasurementLongLabel, getMeasurementShortLabel } from '@/utils/measurement';
 import { DispenseInputField } from './DispenseInputField';
 import { DispenseInfoCompact } from './DispenseInfoCompact';

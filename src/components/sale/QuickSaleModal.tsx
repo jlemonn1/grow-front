@@ -4,7 +4,7 @@ import { CustomerPicker } from './CustomerPicker';
 import { ProductPicker } from './ProductPicker';
 import { ProductDispenseInput } from './ProductDispenseInput';
 import { CashBillButtons } from './CashBillButtons';
-import { DraftRecoveryModal } from './DraftRecoveryModal';
+import { DraftRecoveryBanner } from './DraftRecoveryBanner';
 import { ProductImage } from '@/components/common/ProductImage';
 import { Button } from '@/components/common/Button';
 import { useTicket } from '@/hooks/useTicket';
@@ -165,6 +165,13 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
       console.error('Error al eliminar borrador:', error);
     }
   }, []);
+
+  // Auto-descartar borrador si el usuario empieza a armar una venta nueva
+  useEffect(() => {
+    if (showDraftModal && (items.length > 0 || customer !== null)) {
+      handleDiscardDraft();
+    }
+  }, [items.length, customer, showDraftModal, handleDiscardDraft]);
 
   // Cargar top productos cuando se abre el modal
   useEffect(() => {
@@ -611,6 +618,13 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
           <HiX />
         </button>
 
+        <DraftRecoveryBanner
+          isVisible={showDraftModal}
+          draft={draft}
+          onRecover={handleRecoverDraft}
+          onDiscard={handleDiscardDraft}
+        />
+
         <div className="quick-sale-modal-body">
           {/* Paso 1: Seleccionar Cliente */}
           {!customer && (
@@ -814,12 +828,6 @@ export function QuickSaleModal({ isOpen, onClose }: QuickSaleModalProps) {
         </div>
       </div>
 
-      <DraftRecoveryModal
-        isOpen={showDraftModal}
-        draft={draft}
-        onRecover={handleRecoverDraft}
-        onDiscard={handleDiscardDraft}
-      />
     </div>
   );
 }

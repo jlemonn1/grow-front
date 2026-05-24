@@ -13,7 +13,7 @@ import { SaleCreateMain } from '@/components/sale/SaleCreateMain';
 import { SelectedCustomerChip } from '@/components/sale/SelectedCustomerChip';
 
 import { SaleSuccessModal } from '@/components/sale/SaleSuccessModal';
-import { DraftRecoveryModal } from '@/components/sale/DraftRecoveryModal';
+import { DraftRecoveryBanner } from '@/components/sale/DraftRecoveryBanner';
 
 import { ProductDispenseInput } from '@/components/sale/ProductDispenseInput';
 import { Button } from '@/components/common/Button';
@@ -291,6 +291,13 @@ export function SaleCreatePage() {
       showToast('Error al eliminar borrador', 'error');
     }
   }, [draft, showToast]);
+
+  // Auto-descartar borrador si el usuario empieza a armar una venta nueva
+  useEffect(() => {
+    if (showDraftModal && (items.length > 0 || customer !== null)) {
+      handleDiscardDraft();
+    }
+  }, [items.length, customer, showDraftModal, handleDiscardDraft]);
 
   // Manejar recuperación de pedido pendiente
   const handleRecoverPendingSale = useCallback(async (pendingSale: PendingSale) => {
@@ -865,7 +872,6 @@ export function SaleCreatePage() {
               ref={productSearchRef}
               selectedProduct={selectedProduct}
               onSelect={handleProductSelect}
-              customerId={customer?.id}
             />
             {selectedProduct && (
               <div className="sale-create-product-form">
@@ -1004,11 +1010,18 @@ export function SaleCreatePage() {
 
   return (
     <>
-      <PageHeader 
-        title="Dispensar" 
+      <PageHeader
+        title="Dispensar"
         onBack={handleBack}
         isSaving={isSavingDraft}
         dataTourBack="back-to-home"
+      />
+
+      <DraftRecoveryBanner
+        isVisible={showDraftModal}
+        draft={draft}
+        onRecover={handleRecoverDraft}
+        onDiscard={handleDiscardDraft}
       />
 
       {renderProgressBar()}
@@ -1029,13 +1042,6 @@ export function SaleCreatePage() {
           setShowSuccessModal(false);
           setSuccessSale(null);
         }}
-      />
-
-      <DraftRecoveryModal
-        isOpen={showDraftModal}
-        draft={draft}
-        onRecover={handleRecoverDraft}
-        onDiscard={handleDiscardDraft}
       />
 
       <PendingSalesModal

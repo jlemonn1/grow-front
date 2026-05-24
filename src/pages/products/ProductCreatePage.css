@@ -348,3 +348,18 @@
     gap: var(--spacing-xs);
   }
 }
+
+/* Generate automatic image button */
+.generate-image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.generate-image-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-style: italic;
+}
