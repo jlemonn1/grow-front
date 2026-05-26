@@ -27,6 +27,7 @@ import { customersService } from '@/services/customers.service';
 import { login } from '@/services/auth.service';
 import { PendingSalesModal } from '@/components/sale/PendingSalesModal';
 import { CajaClosedModal } from '@/components/cajafuerte/CajaClosedModal';
+import { FullScreenCameraModal } from '@/components/customer/FullScreenCameraModal';
 import { useCajaStatus } from '@/hooks/useCajaStatus';
 import type { ValidationError, ApiError } from '@/types/api';
 import type { CreateSaleRequest, Product, Sale, SaleDraft, PendingSale, Customer } from '@/types/models';
@@ -104,7 +105,12 @@ export function SaleCreatePage() {
 
   const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
-  
+
+  // Estados para el modal de foto obligatoria
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [pendingCustomerForPhoto, setPendingCustomerForPhoto] = useState<Customer | null>(null);
+
   // Estado local para el keypad de efectivo (string para preservar decimales mientras se escribe)
   const [cashGivenInput, setCashGivenInput] = useState('');
   const lastSyncedCashGivenRef = useRef(0);
@@ -178,10 +184,16 @@ export function SaleCreatePage() {
   }, []);
 
   // Auto-avanzar al paso 1 si ya hay un socio cargado (borrador/pendiente)
+  // pero solo si tiene foto de perfil
   useEffect(() => {
     if (customer && currentStep === 0) {
-      setCompletedSteps(prev => new Set([...prev, 0]));
-      setCurrentStep(1);
+      if (!customer.profilePictureUrl) {
+        setPendingCustomerForPhoto(customer);
+        setIsPhotoModalOpen(true);
+      } else {
+        setCompletedSteps(prev => new Set([...prev, 0]));
+        setCurrentStep(1);
+      }
     }
   }, [customer, currentStep]);
 
@@ -395,10 +407,45 @@ export function SaleCreatePage() {
   const handleCustomerSelect = useCallback((selectedCustomer: Customer | null) => {
     setCustomer(selectedCustomer);
     if (selectedCustomer) {
-      setCompletedSteps(prev => new Set([...prev, 0]));
-      setCurrentStep(1);
+      if (!selectedCustomer.profilePictureUrl) {
+        setPendingCustomerForPhoto(selectedCustomer);
+        setIsPhotoModalOpen(true);
+      } else {
+        setCompletedSteps(prev => new Set([...prev, 0]));
+        setCurrentStep(1);
+      }
     }
   }, [setCustomer, setCompletedSteps, setCurrentStep]);
+
+  // Manejar captura de foto obligatoria
+  const handlePhotoCaptured = useCallback(async (file: File) => {
+    if (!pendingCustomerForPhoto) return;
+
+    setIsUploadingPhoto(true);
+    setGlobalLoading(true);
+
+    try {
+      await customersService.update(pendingCustomerForPhoto.id, {
+        profilePicture: file,
+      });
+
+      // Refrescar el socio para obtener la nueva URL de foto
+      const updatedCustomer = await customersService.getById(pendingCustomerForPhoto.id);
+
+      setCustomer(updatedCustomer);
+      setPendingCustomerForPhoto(null);
+      setIsPhotoModalOpen(false);
+      setCompletedSteps(prev => new Set([...prev, 0]));
+      setCurrentStep(1);
+      showToast('Foto subida correctamente', 'success');
+    } catch (error) {
+      console.error('Error al subir foto:', error);
+      showToast('Error al subir la foto. Inténtalo de nuevo.', 'error');
+    } finally {
+      setIsUploadingPhoto(false);
+      setGlobalLoading(false);
+    }
+  }, [pendingCustomerForPhoto, setCustomer, setCompletedSteps, setCurrentStep, showToast, setGlobalLoading]);
 
   // Agregar producto al ticket
   const handleAddProduct = useCallback(async () => {
@@ -1053,6 +1100,13 @@ export function SaleCreatePage() {
       <CajaClosedModal
         isOpen={showClosedModal}
         onClose={() => setShowClosedModal(false)}
+      />
+
+      <FullScreenCameraModal
+        isOpen={isPhotoModalOpen}
+        customerName={pendingCustomerForPhoto?.displayName || 'Socio'}
+        onCapture={handlePhotoCaptured}
+        isUploading={isUploadingPhoto}
       />
     </>
   );

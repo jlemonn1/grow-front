@@ -353,7 +353,11 @@ export function CustomerEditPage() {
         guarantorId: selectedGuarantor?.id,
       };
 
-      await customersService.update(id, updateData);
+      await customersService.update(id, {
+        ...updateData,
+        profilePicture: profilePicture || undefined,
+        dniPicture: dniPicture || undefined,
+      });
 
       setOriginalFormData(formData);
       showToast('Socio actualizado exitosamente', 'success');
