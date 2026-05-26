@@ -968,6 +968,12 @@ export function SaleCreatePage() {
             onValidate={validateItemWithStock}
             getProductStock={getProductStock}
           />
+          {items.length > 0 && (
+            <div className="ticket-section-total">
+              <span className="ticket-section-total-label">Total</span>
+              <span className="ticket-section-total-value">{total.toFixed(2)} €</span>
+            </div>
+          )}
         </div>
       </SaleCreateMain>
     </div>
