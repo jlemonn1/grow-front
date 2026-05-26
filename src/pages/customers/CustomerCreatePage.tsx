@@ -254,7 +254,7 @@ export function CustomerCreatePage() {
       }
     };
 
-    const timer = setTimeout(checkPinAvailability, 500);
+    const timer = setTimeout(checkPinAvailability, 1800);
     return () => clearTimeout(timer);
   }, [formData.pin, errors.pin]);
 
