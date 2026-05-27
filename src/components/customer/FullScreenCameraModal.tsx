@@ -7,6 +7,7 @@ interface FullScreenCameraModalProps {
   isOpen: boolean;
   customerName: string;
   onCapture: (file: File) => void;
+  onClose: () => void;
   isUploading?: boolean;
 }
 
@@ -14,6 +15,7 @@ export function FullScreenCameraModal({
   isOpen,
   customerName,
   onCapture,
+  onClose,
   isUploading = false,
 }: FullScreenCameraModalProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -183,6 +185,14 @@ export function FullScreenCameraModal({
               </div>
 
               <div className="fullscreen-camera-controls">
+                <Button
+                  variant="secondary"
+                  onClick={onClose}
+                  disabled={isUploading}
+                  className="fullscreen-camera-close-btn"
+                >
+                  Cerrar
+                </Button>
                 <Button
                   variant="primary"
                   onClick={capturePhoto}

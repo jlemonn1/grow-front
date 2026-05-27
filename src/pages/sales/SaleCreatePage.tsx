@@ -447,6 +447,14 @@ export function SaleCreatePage() {
     }
   }, [pendingCustomerForPhoto, setCustomer, setCompletedSteps, setCurrentStep, showToast, setGlobalLoading]);
 
+  // Manejar cierre del modal de foto sin capturar
+  const handlePhotoModalClose = useCallback(() => {
+    setPendingCustomerForPhoto(null);
+    setIsPhotoModalOpen(false);
+    setCompletedSteps(prev => new Set([...prev, 0]));
+    setCurrentStep(1);
+  }, [setCompletedSteps, setCurrentStep]);
+
   // Agregar producto al ticket
   const handleAddProduct = useCallback(async () => {
     if (!selectedProduct || gramsToAdd <= 0) {
@@ -1112,6 +1120,7 @@ export function SaleCreatePage() {
         isOpen={isPhotoModalOpen}
         customerName={pendingCustomerForPhoto?.displayName || 'Socio'}
         onCapture={handlePhotoCaptured}
+        onClose={handlePhotoModalClose}
         isUploading={isUploadingPhoto}
       />
     </>
