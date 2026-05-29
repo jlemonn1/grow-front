@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiFilter, HiViewGrid, HiCollection } from 'react-icons/hi';
+import { HiFilter, HiViewGrid, HiCollection, HiXCircle } from 'react-icons/hi';
 import { PageHeader } from '@/components/common/PageHeader';
 import { type ColumnDef } from '@/components/common/DataTable';
 import { CardList } from '@/components/common/CardList';
@@ -9,10 +9,13 @@ import { DateRangePicker, type DateRange } from '@/components/common/DateRangePi
 import { Select, type SelectOption } from '@/components/forms/Select';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/forms/Input';
-import { listSales } from '@/services/sales.service';
+import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
+import { listSales, cancelSale } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
 import { useCustomerNames } from '@/hooks/useCustomerNames';
-import type { Sale, Customer } from '@/types/models';
+import { useAuth } from '@/context/auth.context';
+import { useUI } from '@/context/ui.context';
+import { AdminPermission, type Sale, type Customer } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
 import type { PageResponse } from '@/types/api';
@@ -24,7 +27,10 @@ type ViewMode = 'dispensas' | 'productos';
 export function SalesPage() {
   const navigate = useNavigate();
   const { getCustomerName, loadCustomerNames } = useCustomerNames();
-  
+  const { hasPermission } = useAuth();
+  const { showToast } = useUI();
+  const canCancel = hasPermission(AdminPermission.DISPENSAR);
+
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +40,9 @@ export function SalesPage() {
     total: number;
     totalPages: number;
   } | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedSaleForCancel, setSelectedSaleForCancel] = useState<Sale | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   // Filtros
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -129,6 +138,32 @@ export function SalesPage() {
     setDateRange(null);
   };
 
+  const handleOpenCancelModal = (sale: Sale) => {
+    setSelectedSaleForCancel(sale);
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!selectedSaleForCancel) return;
+    setCancelling(true);
+    try {
+      await cancelSale(selectedSaleForCancel.id);
+      showToast('Dispensación cancelada exitosamente', 'success');
+      // Actualizar la lista localmente
+      setSales(prev =>
+        prev.map(s =>
+          s.id === selectedSaleForCancel.id ? { ...s, status: 'CANCELLED' } : s
+        )
+      );
+    } catch (err: any) {
+      showToast(err.message || 'Error al cancelar la dispensación', 'error');
+    } finally {
+      setCancelling(false);
+      setShowCancelModal(false);
+      setSelectedSaleForCancel(null);
+    }
+  };
+
   const customerOptions: SelectOption[] = [
     { value: '', label: 'Todos los socios' },
     ...customers.map((customer) => ({
@@ -193,7 +228,37 @@ export function SalesPage() {
     {
       header: 'Estado',
       accessor: 'status',
-      cell: (value) => value === 'COMPLETED' ? 'Completada' : value,
+      cell: (value) => value === 'COMPLETED' ? 'Completada' : value === 'CANCELLED' ? 'Cancelada' : value,
+    },
+    {
+      header: 'Acciones',
+      accessor: (row: Sale) => {
+        if (row.status === 'CANCELLED' || !canCancel) return null;
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenCancelModal(row);
+            }}
+            style={{
+              color: 'var(--color-error)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              font: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-xs)',
+            }}
+            title="Cancelar dispensación"
+            data-tour={`cancel-sale-row-${row.id}`}
+          >
+            <HiXCircle size={18} />
+            <span>Cancelar</span>
+          </button>
+        );
+      },
     },
   ];
 
@@ -313,6 +378,20 @@ export function SalesPage() {
           <SalesProductsView dateRange={dateRange} searchTerm={searchTerm} />
         )}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={showCancelModal}
+        onClose={() => {
+          setShowCancelModal(false);
+          setSelectedSaleForCancel(null);
+        }}
+        onConfirm={handleConfirmCancel}
+        title="Cancelar dispensación"
+        message="¿Estás seguro de que deseas cancelar esta dispensación? El saldo utilizado será restaurado."
+        confirmLabel="Sí, cancelar"
+        variant="danger"
+        isDeleting={cancelling}
+      />
     </>
   );
 }

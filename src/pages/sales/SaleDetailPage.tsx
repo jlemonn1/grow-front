@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { HiXCircle } from 'react-icons/hi';
 import { useConfig } from '@/context/config.context';
 import { useDemo } from '@/context/demo.context';
 import { useCustomers } from '@/context/customers.context';
+import { useAuth } from '@/context/auth.context';
+import { useUI } from '@/context/ui.context';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
+import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 import { SaleItemsTable } from '@/components/sale/SaleItemsTable';
-import { getSaleById } from '@/services/sales.service';
+import { getSaleById, cancelSale } from '@/services/sales.service';
 import { customersService } from '@/services/customers.service';
-import type { Sale, Customer } from '@/types/models';
+import { AdminPermission, type Sale, type Customer } from '@/types/models';
 import { formatMoney } from '@/utils/money';
 import { formatDateTime } from '@/utils/dates';
 import './SaleDetailPage.css';
@@ -20,12 +24,17 @@ export function SaleDetailPage() {
   const { config } = useConfig();
   const { isDemoMode, demoData } = useDemo();
   const { getCustomerById } = useCustomers();
+  const { hasPermission } = useAuth();
+  const { showToast } = useUI();
   const showCashDetails = config?.showCashDetails ?? true;
-  
+  const canCancel = hasPermission(AdminPermission.DISPENSAR);
+
   const [sale, setSale] = useState<Sale | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const loadSale = async () => {
@@ -88,6 +97,33 @@ export function SaleDetailPage() {
     navigate('/sales');
   };
 
+  const handleOpenCancelModal = () => {
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!sale || !id) return;
+    setCancelling(true);
+    try {
+      if (isDemoMode) {
+        // En modo demo simplemente actualizamos el estado local
+        setSale(prev => prev ? { ...prev, status: 'CANCELLED' } : prev);
+        showToast('Dispensación cancelada exitosamente', 'success');
+      } else {
+        await cancelSale(id);
+        showToast('Dispensación cancelada exitosamente', 'success');
+        // Recargar la venta para reflejar el estado cancelado
+        const updatedSale = await getSaleById(id);
+        setSale(updatedSale);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error al cancelar la dispensación', 'error');
+    } finally {
+      setCancelling(false);
+      setShowCancelModal(false);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -143,6 +179,19 @@ export function SaleDetailPage() {
         title={`Venta #${sale.id.substring(0, 8)}...`}
         onBack={handleBack}
         dataTourBack="back-to-sales"
+        extraActions={
+          sale.status !== 'CANCELLED' && canCancel
+            ? [
+                {
+                  label: 'Cancelar dispensación',
+                  onClick: handleOpenCancelModal,
+                  icon: HiXCircle,
+                  variant: 'danger' as const,
+                  dataTour: 'cancel-sale-btn',
+                },
+              ]
+            : undefined
+        }
       />
 
       <div className="sale-detail-container" data-tour="sale-detail">
@@ -372,6 +421,17 @@ export function SaleDetailPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleConfirmCancel}
+        title="Cancelar dispensación"
+        message="¿Estás seguro de que deseas cancelar esta dispensación? El saldo utilizado será restaurado y el stock no se revertirá automáticamente."
+        confirmLabel="Sí, cancelar"
+        variant="danger"
+        isDeleting={cancelling}
+      />
     </>
   );
 }
