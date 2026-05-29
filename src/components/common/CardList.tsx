@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, useCallback, ReactNode } from 'react';
 import { DataTable, type ColumnDef } from './DataTable';
 import { TableSkeleton } from './TableSkeleton';
 import { EmptyState } from './EmptyState';
@@ -37,6 +37,26 @@ export function CardList<T extends Record<string, any>>({
   getRowDataTour,
 }: CardListProps<T>) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
+  const [goToPage, setGoToPage] = useState('');
+
+  const handleGoToPage = useCallback(() => {
+    const pageNum = parseInt(goToPage, 10);
+    if (
+      !isNaN(pageNum) &&
+      pageNum >= 1 &&
+      pageNum <= (pagination?.totalPages ?? 1) &&
+      onPageChange
+    ) {
+      onPageChange(pageNum - 1);
+      setGoToPage('');
+    }
+  }, [goToPage, pagination?.totalPages, onPageChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleGoToPage();
+    }
+  }, [handleGoToPage]);
 
   const handleToggleExpand = (index: number) => {
     setExpandedIndices((prev) => {
@@ -101,6 +121,27 @@ export function CardList<T extends Record<string, any>>({
             <span className="card-list-pagination-info">
               Página {pagination.page + 1} de {pagination.totalPages} ({pagination.total} total)
             </span>
+            <div className="card-list-pagination-goto">
+              <input
+                type="number"
+                min={1}
+                max={pagination.totalPages}
+                placeholder="Pág."
+                className="card-list-pagination-goto-input"
+                value={goToPage}
+                onChange={(e) => setGoToPage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                aria-label="Ir a página"
+              />
+              <button
+                className="card-list-pagination-button"
+                onClick={handleGoToPage}
+                disabled={!goToPage}
+                aria-label="Ir a página"
+              >
+                Ir
+              </button>
+            </div>
             <button
               className="card-list-pagination-button"
               onClick={() => onPageChange?.(pagination.page + 1)}

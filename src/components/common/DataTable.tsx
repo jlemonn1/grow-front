@@ -1,4 +1,4 @@
-import { memo, ReactNode, useCallback } from 'react';
+import { memo, ReactNode, useCallback, useState } from 'react';
 import { TableSkeleton } from './TableSkeleton';
 import { EmptyState } from './EmptyState';
 import './DataTable.css';
@@ -37,6 +37,8 @@ function DataTableComponent<T extends Record<string, any>>({
   emptyMessage = 'No hay datos disponibles',
   getRowDataTour,
 }: DataTableProps<T>) {
+  const [goToPage, setGoToPage] = useState('');
+
   const renderCell = useCallback((column: ColumnDef<T>, row: T) => {
     if (typeof column.accessor === 'function') {
       return column.accessor(row);
@@ -50,6 +52,25 @@ function DataTableComponent<T extends Record<string, any>>({
 
     return value ?? '-';
   }, []);
+
+  const handleGoToPage = useCallback(() => {
+    const pageNum = parseInt(goToPage, 10);
+    if (
+      !isNaN(pageNum) &&
+      pageNum >= 1 &&
+      pageNum <= (pagination?.totalPages ?? 1) &&
+      onPageChange
+    ) {
+      onPageChange(pageNum - 1);
+      setGoToPage('');
+    }
+  }, [goToPage, pagination?.totalPages, onPageChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleGoToPage();
+    }
+  }, [handleGoToPage]);
 
   if (loading) {
     return <TableSkeleton columns={columns.length} rows={5} />;
@@ -109,6 +130,27 @@ function DataTableComponent<T extends Record<string, any>>({
           <span className="data-table-pagination-info">
             Página {pagination.page + 1} de {pagination.totalPages} ({pagination.total} total)
           </span>
+          <div className="data-table-pagination-goto">
+            <input
+              type="number"
+              min={1}
+              max={pagination.totalPages}
+              placeholder="Pág."
+              className="data-table-pagination-goto-input"
+              value={goToPage}
+              onChange={(e) => setGoToPage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label="Ir a página"
+            />
+            <button
+              className="data-table-pagination-button"
+              onClick={handleGoToPage}
+              disabled={!goToPage}
+              aria-label="Ir a página"
+            >
+              Ir
+            </button>
+          </div>
           <button
             className="data-table-pagination-button"
             onClick={() => onPageChange?.(pagination.page + 1)}
