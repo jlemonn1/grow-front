@@ -29,3 +29,34 @@ export function getFirstDayOfMonthISO(): string {
   date.setDate(1);
   return date.toISOString().split('T')[0];
 }
+
+export function getFirstDayOfMonthISOFrom(year: number, month: number): string {
+  const date = new Date(year, month - 1, 1);
+  return date.toISOString().split('T')[0];
+}
+
+export function getLastDayOfMonthISO(year: number, month: number): string {
+  const date = new Date(year, month, 0);
+  return date.toISOString().split('T')[0];
+}
+
+export function getMonthName(monthIndex: number): string {
+  const names = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+  return names[monthIndex - 1] || '';
+}
+
+export function getShortMonthName(monthIndex: number): string {
+  const names = [
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+  ];
+  return names[monthIndex - 1] || '';
+}
+
+export function addMonths(year: number, month: number, delta: number): { year: number; month: number } {
+  const date = new Date(year, month - 1 + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}

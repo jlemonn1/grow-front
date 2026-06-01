@@ -14,7 +14,9 @@ import { CerrarCajaModal } from '@/components/caja/CerrarCajaModal';
 import { AjusteModal } from '@/components/caja/AjusteModal';
 import { CajaList } from '@/components/caja/CajaList';
 import { ExportarModal } from '@/components/caja/ExportarModal';
-import { getFirstDayOfMonthISO, getTodayISO } from '@/utils/dateUtils';
+import { MonthRangeSelector } from '@/components/caja/MonthRangeSelector';
+import type { DateRange } from '@/components/caja/MonthRangeSelector';
+import { getFirstDayOfMonthISOFrom, getLastDayOfMonthISO } from '@/utils/dateUtils';
 import type { CerrarCajaResponse } from '@/types/caja';
 import { HiOutlineDownload } from 'react-icons/hi';
 import './CajaPage.css';
@@ -34,14 +36,32 @@ export function CajaPage() {
   const [modalAjusteSalidaOpen, setModalAjusteSalidaOpen] = useState(false);
   const [modalExportarOpen, setModalExportarOpen] = useState(false);
 
-  // Cargar historial inicial
-  useEffect(() => {
+  // Rango de fechas del historial (por defecto: mes actual completo)
+  const now = new Date();
+  const [dateRange, setDateRange] = useState<DateRange>({
+    desde: getFirstDayOfMonthISOFrom(now.getFullYear(), now.getMonth() + 1),
+    hasta: getLastDayOfMonthISO(now.getFullYear(), now.getMonth() + 1),
+  });
+
+  const handleRangeChange = (range: DateRange) => {
+    setDateRange(range);
     fetchCajas({
-      desde: getFirstDayOfMonthISO(),
-      hasta: getTodayISO(),
+      desde: range.desde,
+      hasta: range.hasta,
       page: 0,
       size: 20,
     });
+  };
+
+  // Cargar historial inicial
+  useEffect(() => {
+    fetchCajas({
+      desde: dateRange.desde,
+      hasta: dateRange.hasta,
+      page: 0,
+      size: 20,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handlers
@@ -66,8 +86,8 @@ export function CajaPage() {
       );
       refetchCaja();
       fetchCajas({
-        desde: getFirstDayOfMonthISO(),
-        hasta: getTodayISO(),
+        desde: dateRange.desde,
+        hasta: dateRange.hasta,
         page: 0,
         size: 20,
       });
@@ -169,7 +189,13 @@ export function CajaPage() {
 
       {/* Historial */}
       <div className="caja-historial-section">
-        <h2>Historial de Cajas</h2>
+        <div className="caja-historial-header">
+          <h2>Historial de Cajas</h2>
+          <MonthRangeSelector
+            value={dateRange}
+            onChange={handleRangeChange}
+          />
+        </div>
         <CajaList
           cajas={cajas}
           onLoadMore={loadMore}
