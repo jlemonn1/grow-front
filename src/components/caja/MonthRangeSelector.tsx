@@ -8,6 +8,7 @@ import {
   getLastDayOfMonthISO,
   addMonths,
   getTodayISO,
+  parseISODateLocal,
 } from '@/utils/dateUtils';
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiXMark } from 'react-icons/hi2';
 import './MonthRangeSelector.css';
@@ -28,30 +29,30 @@ export function MonthRangeSelector({ value, onChange }: MonthRangeSelectorProps)
   const [customDesde, setCustomDesde] = useState(value.desde);
   const [customHasta, setCustomHasta] = useState(value.hasta);
 
-  // Vista del año en modo expandido (empieza en el año del rango actual)
-  const currentRangeDate = new Date(value.desde || getTodayISO());
-  const [viewYear, setViewYear] = useState(currentRangeDate.getFullYear());
+  // Parsear año/mes del rango actual SIN usar new Date() para evitar bugs de timezone
+  const parsedDesde = parseISODateLocal(value.desde || getTodayISO());
+
+  // Vista del año en modo expandido
+  const [viewYear, setViewYear] = useState(parsedDesde.year);
 
   // Detectar swipe en el compacto
   const touchStartX = useRef<number | null>(null);
 
   const handlePrevMonth = useCallback(() => {
-    const desdeDate = new Date(value.desde);
-    const prev = addMonths(desdeDate.getFullYear(), desdeDate.getMonth() + 1, -1);
+    const prev = addMonths(parsedDesde.year, parsedDesde.month, -1);
     onChange({
       desde: getFirstDayOfMonthISOFrom(prev.year, prev.month),
       hasta: getLastDayOfMonthISO(prev.year, prev.month),
     });
-  }, [value.desde, onChange]);
+  }, [parsedDesde.year, parsedDesde.month, onChange]);
 
   const handleNextMonth = useCallback(() => {
-    const desdeDate = new Date(value.desde);
-    const next = addMonths(desdeDate.getFullYear(), desdeDate.getMonth() + 1, 1);
+    const next = addMonths(parsedDesde.year, parsedDesde.month, 1);
     onChange({
       desde: getFirstDayOfMonthISOFrom(next.year, next.month),
       hasta: getLastDayOfMonthISO(next.year, next.month),
     });
-  }, [value.desde, onChange]);
+  }, [parsedDesde.year, parsedDesde.month, onChange]);
 
   const handleMonthSelect = (month: number) => {
     onChange({
@@ -84,12 +85,14 @@ export function MonthRangeSelector({ value, onChange }: MonthRangeSelectorProps)
     touchStartX.current = null;
   };
 
-  const desdeDate = new Date(value.desde);
-  const displayMonth = getMonthName(desdeDate.getMonth() + 1);
-  const displayYear = desdeDate.getFullYear();
+  // Datos derivados para la UI compacta
+  const displayMonthName = getMonthName(parsedDesde.month);
+  const displayYear = parsedDesde.year;
+
+  const today = new Date();
   const isCurrentMonth =
-    displayMonth === getMonthName(new Date().getMonth() + 1) &&
-    displayYear === new Date().getFullYear();
+    parsedDesde.year === today.getFullYear() &&
+    parsedDesde.month === today.getMonth() + 1;
 
   // Sincronizar custom inputs cuando cambia el value externo
   useEffect(() => {
@@ -97,8 +100,12 @@ export function MonthRangeSelector({ value, onChange }: MonthRangeSelectorProps)
     setCustomHasta(value.hasta);
   }, [value.desde, value.hasta]);
 
+  // Sincronizar viewYear si el año del rango cambia externamente
+  useEffect(() => {
+    setViewYear(parsedDesde.year);
+  }, [parsedDesde.year]);
+
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const today = new Date();
 
   return (
     <div className="month-range-selector">
@@ -128,10 +135,10 @@ export function MonthRangeSelector({ value, onChange }: MonthRangeSelectorProps)
         >
           <HiCalendar className="month-range-icon" />
           <span className="month-range-label">
-            {displayMonth} {displayYear}
+            {displayMonthName} {displayYear}
           </span>
           {!isCurrentMonth && (
-            <span className="month-range-badge">{displayMonth.slice(0, 3)}</span>
+            <span className="month-range-badge">{displayMonthName.slice(0, 3)}</span>
           )}
         </button>
 
@@ -183,7 +190,7 @@ export function MonthRangeSelector({ value, onChange }: MonthRangeSelectorProps)
               const isSelected =
                 !customMode &&
                 displayYear === viewYear &&
-                desdeDate.getMonth() + 1 === m;
+                parsedDesde.month === m;
               const isFuture =
                 viewYear > today.getFullYear() ||
                 (viewYear === today.getFullYear() && m > today.getMonth() + 1);

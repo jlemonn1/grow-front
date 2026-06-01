@@ -60,3 +60,16 @@ export function addMonths(year: number, month: number, delta: number): { year: n
   const date = new Date(year, month - 1 + delta, 1);
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
 }
+
+/**
+ * Parsea una fecha ISO (YYYY-MM-DD) extrayendo año, mes y día
+ * SIN interpretarla como UTC. Evita bugs de timezone.
+ */
+export function parseISODateLocal(dateString: string): { year: number; month: number; day: number } {
+  const [yearStr, monthStr, dayStr] = dateString.split('-');
+  return {
+    year: Number(yearStr),
+    month: Number(monthStr),
+    day: Number(dayStr),
+  };
+}
