@@ -117,11 +117,7 @@ export function CajaList({
                 <div className="caja-detalle-grid">
                   <div className="caja-detalle-item caja-detalle-positivo">
                     <span className="caja-detalle-label">Ventas</span>
-                    <span className="caja-detalle-valor text-success">{formatCurrency(caja.totalVentas)}</span>
-                  </div>
-                  <div className="caja-detalle-item caja-detalle-negativo">
-                    <span className="caja-detalle-label">Cambios</span>
-                    <span className="caja-detalle-valor text-danger">{formatCurrency(caja.totalCambios)}</span>
+                    <span className="caja-detalle-valor text-success">{formatCurrency((caja.totalVentas || 0) - (caja.totalCambios || 0))}</span>
                   </div>
                   <div className="caja-detalle-item caja-detalle-info">
                     <span className="caja-detalle-label">Suscripciones</span>
