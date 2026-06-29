@@ -91,11 +91,7 @@ export function CajaActualCard({
             </div>
             <div className="caja-movimiento-item caja-movimiento-positivo">
               <span className="caja-movimiento-label">Ventas</span>
-              <span className="caja-movimiento-valor">{formatCurrency(caja.totalVentas)}</span>
-            </div>
-            <div className="caja-movimiento-item caja-movimiento-negativo">
-              <span className="caja-movimiento-label">Cambios</span>
-              <span className="caja-movimiento-valor">{formatCurrency(caja.totalCambios)}</span>
+              <span className="caja-movimiento-valor">{formatCurrency((caja.totalVentas || 0) - (caja.totalCambios || 0))}</span>
             </div>
             <div className="caja-movimiento-item caja-movimiento-info">
               <span className="caja-movimiento-label">Suscripciones</span>
