@@ -138,14 +138,19 @@ export function HomePage() {
           const from = dateToISO(currentMonth.from, false);
           const to = dateToISO(currentMonth.to, true);
 
-          // Cargar datos en paralelo
-          const [productsData, dashboardData] = await Promise.all([
-            getSalesSummary({ from, to, groupBy: 'product' }),
-            getMonthlyDashboard(),
-          ]);
-
-          setTopProducts(productsData);
+          // Cargar dashboard mensual
+          const dashboardData = await getMonthlyDashboard();
           setDashboard(dashboardData);
+
+          // Cargar resumen de ventas: errores silenciados para no mostrar banner
+          // si el endpoint /reports/sales/summary falla con 500
+          try {
+            const productsData = await getSalesSummary({ from, to, groupBy: 'product' });
+            setTopProducts(productsData);
+          } catch (err: any) {
+            console.error('[HomePage] Error silenciado al cargar getSalesSummary:', err);
+            setTopProducts(null);
+          }
         }
       } catch (err: any) {
         showToast(err.message || 'Error al cargar datos del dashboard', 'error');

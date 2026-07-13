@@ -71,8 +71,7 @@ export function LoginPage() {
       await refreshUser();
       // Recargar configuración después del login para verificar si necesita onboarding
       await refreshConfiguration();
-      showToast('Sesión iniciada correctamente', 'success');
-      
+
       // Verificar si necesita onboarding funcional primero
       // Esperar un momento para que el contexto se actualice después de refreshConfiguration
       await new Promise(resolve => setTimeout(resolve, 100));
